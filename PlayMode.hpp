@@ -37,7 +37,7 @@ struct PlayMode : Mode {
 		Scene::Camera *camera = nullptr;
 		Scene::Drawable drawPlayer;
 		enum Status {
-			Human, Cat;
+			Human, Cat
 		};
 		Status playerStatus;
 		glm::vec3 curDir = glm::vec3(0.0f); //Direction player is currently facing, for cat
@@ -51,11 +51,11 @@ struct PlayMode : Mode {
 	struct state //Game state
 	{
 		int score = 0;
-		float stablization 1.0f;
-		float time 0.0f;
+		float stablization = 1.0f;
+		float time = 0.0f;
 
 		enum PlayState {
-			ongoing, won, lost, menu;
+			ongoing, won, lost, menu
 		};
 		PlayState playing = ongoing; 
 		//Put order here
