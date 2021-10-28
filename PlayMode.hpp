@@ -40,8 +40,9 @@ struct PlayMode : Mode {
 			Human, Cat
 		};
 		Status playerStatus;
-		glm::vec3 curDir = glm::vec3(0.0f); //Direction player is currently facing, for cat
-		glm::vec3 curVelocity = glm::vec3(0.0f); //Current momentum, for cat, mass assumed (but could change in transition)
+		glm::vec3 curDir = glm::vec3(0.0f); //Direction player is currently facing, for cat (differnet then vel vec3)
+		glm::vec3 catVelocity = glm::vec3(0.0f); //Current momentum, for cat, mass assumed (but could change in transition)
+		glm::vec3 humanAcc = glm::vec3(0.0f); 
 		//Note, velocity is added with each pump, and lost in y over time
 
 		WalkPoint walkpoint;
