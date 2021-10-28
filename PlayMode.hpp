@@ -35,5 +35,34 @@ struct PlayMode : Mode {
 		Scene::Transform *transform = nullptr;
 		//camera is at player's head and will be pitched by mouse up/down motion:
 		Scene::Camera *camera = nullptr;
+		Scene::Drawable drawPlayer;
+		enum Status {
+			Human, Cat
+		};
+		Status playerStatus;
+		glm::vec3 curDir = glm::vec3(0.0f); //Direction player is currently facing, for cat (differnet then vel vec3)
+		glm::vec3 catVelocity = glm::vec3(0.0f); //Current momentum, for cat, mass assumed (but could change in transition)
+		glm::vec3 humanAcc = glm::vec3(0.0f); 
+		//Note, velocity is added with each pump, and lost in y over time
+
+		WalkPoint walkpoint;
+		float height = 0.0f; //0 for human, > 0 for cat
 	} player;
+
+	struct state //Game state
+	{
+		int score = 0;
+		float stablization = 1.0f;
+		float time = 0.0f;
+
+		enum PlayState {
+			ongoing, won, lost, menu
+		};
+		PlayState playing = ongoing; 
+		//Put order here
+	};
+
+
+
+
 };
