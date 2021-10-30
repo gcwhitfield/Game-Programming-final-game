@@ -23,7 +23,7 @@ struct PlayMode : Mode {
 	struct Button {
 		uint8_t downs = 0;
 		uint8_t pressed = 0;
-	} left, right, down, up;
+	} left, right, down, up,space;
 
 	//local copy of the game scene (so code can change it during gameplay):
 	Scene scene;
@@ -38,24 +38,29 @@ struct PlayMode : Mode {
 		//camera is at player's head and will be pitched by mouse up/down motion:
 		Scene::Camera *camera = nullptr;
 		Scene::Drawable *drawPlayer;
+
+		glm::vec3 curDir = glm::vec3(0.0f); //Direction player is currently facing, for cat (differnet then vel vec3)
+		glm::vec3 catVelocity = glm::vec3(0.0f); //Current momentum, for cat, mass assumed (but could change in transition)11
+		//Note, velocity is added with each pump, and lost in y over time
+		float height = 0.0f; //0 for human, > 0 for cat
+		float flapVelocity = 1.0f; //What speed should a flap add?
+		float airTime = 0.0f; //Time since last landed
+
 		enum Status {
 			Human, Cat
 		};
 		Status playerStatus;
-		glm::vec3 curDir = glm::vec3(0.0f); //Direction player is currently facing, for cat (differnet then vel vec3)
-		glm::vec3 catVelocity = glm::vec3(0.0f); //Current momentum, for cat, mass assumed (but could change in transition)
-		glm::vec3 humanAcc = glm::vec3(0.0f); 
-		//Note, velocity is added with each pump, and lost in y over time
-
+		glm::vec3 humanAcc = glm::vec3(0.0f);
 		WalkPoint walkpoint;
-		float height = 0.0f; //0 for human, > 0 for cat
 	} player;
 
-	struct state //Game state
+	struct State //Game state
 	{
 		int score = 0;
 		float stablization = 1.0f;
 		float time = 0.0f;
+		float flapTimer = 0.0f;
+		float flapCooldown = 1.0f;//In seconds
 
 		enum PlayState {
 			ongoing, won, lost, menu
@@ -63,6 +68,11 @@ struct PlayMode : Mode {
 		PlayState playing = ongoing; 
 		//Put order here
 	};
+
+	float gravity = -9.81f; //Likely should be lower to make more floaty
+
+	State state;
+
 
 
 
