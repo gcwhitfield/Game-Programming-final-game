@@ -239,7 +239,7 @@ void PlayMode::update(float elapsed) {
 		sendKeys.down = (down.downs > 0);
 		sendKeys.left = (left.downs > 0);
 		sendKeys.right = (right.downs > 0);
-		player = updateCat(player, sendKeys, elapsed, gravity);
+		updateCat(&player, sendKeys, elapsed, gravity);
 	}
 
 		/*
