@@ -1,4 +1,7 @@
 #include "PlayMode.hpp"
-PlayMode::Player updateCat(PlayMode::Player player, uint8_t spaces, float elapsed, float gravity);
+#include "gl_errors.hpp"
 
-glm::vec3 updateDir(PlayMode::player);
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/quaternion.hpp>
+
+PlayMode::Player updateCat(PlayMode::Player player, PlayMode::keys, float elapsed, float gravity);

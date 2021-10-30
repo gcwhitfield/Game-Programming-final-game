@@ -233,7 +233,13 @@ void PlayMode::update(float elapsed) {
 		player.transform->position += glm::vec3(0.0f,player.height,0.0f);
 	}
 	else {
-		player = updateCat(player, (space.downs > 0), elapsed);
+		Keys sendKeys;
+		sendKeys.space = (space.downs > 0);
+		sendKeys.up = (up.downs > 0);
+		sendKeys.down = (down.downs > 0);
+		sendKeys.left = (left.downs > 0);
+		sendKeys.right = (right.downs > 0);
+		player = updateCat(player, sendKeys, elapsed, gravity);
 	}
 
 		/*

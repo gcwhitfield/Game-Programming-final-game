@@ -73,7 +73,10 @@ struct PlayMode : Mode {
 
 	State state;
 
-
+	struct Keys
+	{
+		bool space, up, down, left, right;
+	};
 
 
 
