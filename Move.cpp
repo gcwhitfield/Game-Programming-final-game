@@ -5,6 +5,12 @@
 #include <glm/gtx/quaternion.hpp>
 #define ERROR_F 0.000001f
 
+//To do: Test!!!
+
+//Move walk mesh code over to move
+
+
+
 //Updates transform and velocity of cat
 PlayMode::Player updateCat(PlayMode::Player *player, PlayMode::Keys keys, float elapsed, float gravity) {
 	//Get direction and add to horizontal velocity vector
@@ -31,11 +37,9 @@ PlayMode::Player updateCat(PlayMode::Player *player, PlayMode::Keys keys, float 
 			switch(hori) {
 			case(horiL):
 				offsetCamera = glm::vec3(-1.0f, 1.0f, 0.0f);
-				offsetCamera = glm::normalize(offsetCamera);
 				break;
 			case(horiR):
 				offsetCamera = glm::vec3(1.0f, 1.0f, 0.0f);
-				offsetCamera = glm::normalize(offsetCamera);
 				break;
 			default:
 			}
@@ -44,15 +48,12 @@ PlayMode::Player updateCat(PlayMode::Player *player, PlayMode::Keys keys, float 
 			switch (hori) {
 			case(horiL):
 				offsetCamera = glm::vec3(-1.0f, 1.0f, -1.0f);
-				offsetCamera = glm::normalize(offsetCamera);
 				break;
 			case(horiR):
 				offsetCamera = glm::vec3(1.0f, 1.0f, -1.0f);
-				offsetCamera = glm::normalize(offsetCamera);
 				break;
 			default:
 				offsetCamera = glm::vec3(0.0f, 1.0f, -1.0f);
-				offsetCamera = glm::normalize(offsetCamera);
 				break;
 			}
 
@@ -61,19 +62,18 @@ PlayMode::Player updateCat(PlayMode::Player *player, PlayMode::Keys keys, float 
 			switch (hori) {
 			case(horiL):
 				offsetCamera = glm::vec3(-1.0f, 1.0f, 1.0f);
-				offsetCamera = glm::normalize(offsetCamera);
 				break;
 			case(horiR):
 				offsetCamera = glm::vec3(1.0f, 1.0f, 1.0f);
-				offsetCamera = glm::normalize(offsetCamera);
 				break;
 			default:
 				offsetCamera = glm::vec3(0.0f, 1.0f, 1.0f);
-				offsetCamera = glm::normalize(offsetCamera);
 				break;
 			}
 
 		}
+
+		//Want vertical increase to always be the same, 1.0f, so don't normalize
 
 		//Find worldspace velocity vector, and update player's velocity with it
 		player->curDir = player->camera->transform->rotation * offsetCamera;
@@ -82,7 +82,10 @@ PlayMode::Player updateCat(PlayMode::Player *player, PlayMode::Keys keys, float 
 	}
 
 	//X,Z update
-	player->transform->positon += elapsed * glm::vec3(player->catVelocity.x, 0.0f, player->catVelocity.z); //Affects walkmesh pos only
+	{
+		float horizontalInc = 3.f; //We want horizontal speed to be more than vertical speed, but by how much I would need to test
+		player->transform->positon += glm::vec3(horizontalInc*elapsed) *  glm::vec3(player->catVelocity.x, 0.0f, player->catVelocity.z); //Affects walkmesh pos only
+	}
 
 	//y update
 	{
