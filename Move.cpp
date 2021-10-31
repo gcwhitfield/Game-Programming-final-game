@@ -4,6 +4,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 #define ERROR_F 0.000001f
+#define MAX_SPEED_H 2.5f;
 
 //To do: Test!!!
 
@@ -13,24 +14,24 @@
 
 //Updates transform and velocity of cat
 PlayMode::Player updateCat(PlayMode::Player *player, PlayMode::Keys keys, float elapsed, float gravity) {
+
+	//Get horizontal keys as an enum just to make the following code cleaner 
+	enum Horizontal {
+		horiL, horiR, horiN; //horiN adds no horizontal offset if both or neither A and D are pressed
+	};
+	int hori;
+	glm::vec3 offsetCamera = glm::vec3(0.0f, 1.0f, 0.0f);
+	if (keys.left && !keys.right && player->flapVelocity.x <= MAX_SPEED_H) {
+		hori = horiL;
+	}
+	else if (keys.right && !keys.left && player->flapVelocity.x >= -MAX_SPEED_H) {
+		hori = horiR;
+	}
+	else (keys.left && keys.right) {
+		hori = horiN;
+	}
 	//Get direction and add to horizontal velocity vector
-	if(space){
-		
-		//Get horizontal keys as an enum just to make the following code cleaner 
-		enum Horizontal {
-			horiL, horiR, horiN; //horiN adds no horizontal offset if both or neither A and D are pressed
-		};
-		int hori;
-		glm::vec3 offsetCamera = glm::vec3(0.0f,1.0f,0.0f);
-		if (keys.left && keys.right) {
-			hori = horiN;
-		}
-		else if (keys.left) {
-			hori = horiL;
-		}
-		else {
-			hori = horiR;
-		}
+	{
 
 		//Case on the player's inputted direction, and create the corresponding upward vector from the camera's perspective
 		if (!(keys.up == keys.down)) { //If both up and down are pressed, treat as if neither are pressed
@@ -73,6 +74,10 @@ PlayMode::Player updateCat(PlayMode::Player *player, PlayMode::Keys keys, float 
 
 		}
 
+		if (!keys.space) {
+			offsetCamera.y = 0.0f;
+		}
+
 		//Want vertical increase to always be the same, 1.0f, so don't normalize
 
 		//Find worldspace velocity vector, and update player's velocity with it
@@ -89,13 +94,15 @@ PlayMode::Player updateCat(PlayMode::Player *player, PlayMode::Keys keys, float 
 
 	//y update
 	{
+		float velocity = player->catVelocity.y
 		if (player->height <= ERROR_F) {
 			player->airTime = 0.0f;
+			player->height = 0.0f;
 		}
 		else {
 			player->airTime += elapsed;
-			float velocity = player->catVelocity.y + gravity * player->airTime;
-			player->height += velocity * elapsed; //Height is added to the transform only after the walkmesh position is found
+			velocity += gravity * player->airTime;
 		}
+		player->height += velocity * elapsed; //Height is added to the transform only after the walkmesh position is found
 	}
 }

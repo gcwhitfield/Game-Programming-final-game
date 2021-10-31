@@ -12,6 +12,7 @@
 #include <glm/gtx/quaternion.hpp>
 
 #include <random>
+#include "Move.hpp"
 #define ERROR_F 0.000001f
 
 GLuint starbucks_meshes_for_lit_color_texture_program = 0;
