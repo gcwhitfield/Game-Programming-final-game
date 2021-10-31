@@ -113,7 +113,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			up.pressed = false;
 			return true;
 		} else if (evt.key.keysym.sym == SDLK_s) {
-			space.pressed = false;
+			down.pressed = false;
 			return true;
 		} else if (evt.key.keysym.sym == SDLK_SPACE) {
 			space.pressed = false;
@@ -173,7 +173,6 @@ void PlayMode::update(float elapsed) {
 		updateCat(sendKeys, elapsed, gravity);
 		if( player.height >= ERROR_F)
 			move = glm::vec2(player.posDelt.x, player.posDelt.y);
-		std::cout << move.x << " " << move.y << std::endl;
 
 	}
 

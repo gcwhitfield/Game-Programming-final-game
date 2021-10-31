@@ -53,6 +53,7 @@ struct PlayMode : Mode {
 		glm::vec3 humanAcc = glm::vec3(0.0f);
 		WalkPoint walkpoint;
 		glm::vec3 posDelt;
+		int iter = 0;
 	} player;
 
 
@@ -63,7 +64,7 @@ struct PlayMode : Mode {
 		float stablization = 1.0f;
 		float time = 0.0f;
 		float flapTimer = 0.0f;
-		float flapCooldown = 0.1f;//In seconds
+		float flapCooldown = 0.05f;//In seconds
 
 		enum PlayState {
 			ongoing, won, lost, menu
@@ -72,7 +73,7 @@ struct PlayMode : Mode {
 		//Put order here
 	};
 
-	float gravity = -9.81f; //Likely should be lower to make more floaty
+	float gravity = -9.81f/3.f; //Likely should be lower to make more floaty
 
 	State state;
 
