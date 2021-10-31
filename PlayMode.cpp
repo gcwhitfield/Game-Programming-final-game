@@ -12,7 +12,6 @@
 #include <glm/gtx/quaternion.hpp>
 
 #include <random>
-#include "Move.hpp"
 #define ERROR_F 0.000001f
 
 GLuint starbucks_meshes_for_lit_color_texture_program = 0;
@@ -129,7 +128,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		if (SDL_GetRelativeMouseMode() == SDL_TRUE) {
 			glm::vec2 motion = glm::vec2(
 				evt.motion.xrel / float(window_size.y),
-				-evt.motion.yrel / float(window_size.y)
+				0.0f //-evt.motion.yrel / float(window_size.y)
 			);
 			glm::vec3 up = walkmesh->to_world_smooth_normal(player.at);
 			player.transform->rotation = glm::angleAxis(-motion.x * player.camera->fovy, up) * player.transform->rotation;
@@ -151,22 +150,32 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 void PlayMode::update(float elapsed) {
 
 	state.flapTimer += elapsed;
-	
-	//Always update direction
-	player.curDir = updateDir(player);
 
 	//player walking:
-	if(player.playerStatus == Player::Human){
-		//combine inputs into a move:
-		constexpr float PlayerSpeed = 3.0f;
-		glm::vec2 move = glm::vec2(0.0f);
-		if (left.pressed && !right.pressed) move.x = -1.0f;
-		if (!left.pressed && right.pressed) move.x = 1.0f;
-		if (down.pressed && !up.pressed) move.y = -1.0f;
-		if (!down.pressed && up.pressed) move.y = 1.0f;
+	glm::vec2 move = glm::vec2(0.0f);
+	//combine inputs into a move:
+	constexpr float PlayerSpeed = 3.0f;
+	if (left.pressed && !right.pressed) move.x = -1.0f;
+	if (!left.pressed && right.pressed) move.x = 1.0f;
+	if (down.pressed && !up.pressed) move.y = -1.0f;
+	if (!down.pressed && up.pressed) move.y = 1.0f;
+	
+	//make it so that moving diagonally doesn't go faster:
+	if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
 
-		//make it so that moving diagonally doesn't go faster:
-		if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
+	if(player.playerStatus == Player::Cat) {
+		Keys sendKeys;
+		sendKeys.space = (space.downs > 0);
+		sendKeys.up = (up.downs > 0);
+		sendKeys.down = (down.downs > 0);
+		sendKeys.left = (left.downs > 0);
+		sendKeys.right = (right.downs > 0);
+		updateCat(sendKeys, elapsed, gravity);
+		if( player.height >= ERROR_F)
+			move = glm::vec2(player.posDelt.x, player.posDelt.y);
+		std::cout << move.x << " " << move.y << std::endl;
+
+	}
 
 		//get move in world coordinate system:
 		glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
@@ -231,17 +240,7 @@ void PlayMode::update(float elapsed) {
 			);
 			player.transform->rotation = glm::normalize(adjust * player.transform->rotation);
 		}
-		player.transform->position += glm::vec3(0.0f,player.height,0.0f);
-	}
-	else {
-		Keys sendKeys;
-		sendKeys.space = (space.downs > 0);
-		sendKeys.up = (up.downs > 0);
-		sendKeys.down = (down.downs > 0);
-		sendKeys.left = (left.downs > 0);
-		sendKeys.right = (right.downs > 0);
-		updateCat(&player, sendKeys, elapsed, gravity);
-	}
+		player.transform->position += glm::vec3(0.0f,0.0f, player.height);
 
 		/*
 		glm::mat4x3 frame = camera->transform->make_local_to_parent();
@@ -257,6 +256,7 @@ void PlayMode::update(float elapsed) {
 	right.downs = 0;
 	up.downs = 0;
 	down.downs = 0;
+	space.downs = 0;
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size) {

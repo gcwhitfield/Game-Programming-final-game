@@ -11,6 +11,7 @@
 struct PlayMode : Mode {
 	PlayMode();
 	virtual ~PlayMode();
+	
 
 	//functions called by main loop:
 	virtual bool handle_event(SDL_Event const &, glm::uvec2 const &window_size) override;
@@ -39,7 +40,6 @@ struct PlayMode : Mode {
 		Scene::Camera *camera = nullptr;
 		Scene::Drawable *drawPlayer;
 
-		glm::vec3 curDir = glm::vec3(0.0f); //Direction player is currently facing, for cat (differnet then vel vec3)
 		glm::vec3 catVelocity = glm::vec3(0.0f); //Current momentum, for cat, mass assumed (but could change in transition)11
 		//Note, velocity is added with each pump, and lost in y over time
 		float height = 0.0f; //0 for human, > 0 for cat
@@ -49,10 +49,13 @@ struct PlayMode : Mode {
 		enum Status {
 			Human, Cat
 		};
-		Status playerStatus;
+		Status playerStatus = Cat;
 		glm::vec3 humanAcc = glm::vec3(0.0f);
 		WalkPoint walkpoint;
+		glm::vec3 posDelt;
 	} player;
+
+
 
 	struct State //Game state
 	{
@@ -60,7 +63,7 @@ struct PlayMode : Mode {
 		float stablization = 1.0f;
 		float time = 0.0f;
 		float flapTimer = 0.0f;
-		float flapCooldown = 1.0f;//In seconds
+		float flapCooldown = 0.1f;//In seconds
 
 		enum PlayState {
 			ongoing, won, lost, menu
@@ -73,10 +76,12 @@ struct PlayMode : Mode {
 
 	State state;
 
+	//Move
 	struct Keys
 	{
 		bool space, up, down, left, right;
 	};
+	void updateCat(Keys keys, float elapsed, float gravity);
 
 
 
