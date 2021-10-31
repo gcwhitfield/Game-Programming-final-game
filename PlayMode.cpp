@@ -227,6 +227,23 @@ void PlayMode::update(float elapsed) {
 	right.downs = 0;
 	up.downs = 0;
 	down.downs = 0;
+
+	// the manager appears periodically 
+	{
+		time_until_next_manager_appearance -= elapsed;
+		// std::cout << time_until_next_manager_appearance << std::endl;
+		// play sound queue 3 seconds before the manager appears
+		 if (time_until_next_manager_appearance < 0) {
+			// generate a random time between 5 and 10 seconds
+			std::cout << "The manager has appeared!" << std::endl;
+			size_t r = rand() % 100;
+			time_until_next_manager_appearance = 5 + 5*(r / (float)100);
+			std::cout << "The manager will appear in " << std::to_string(time_until_next_manager_appearance) << " seconds" << std::endl;
+		} else if (time_until_next_manager_appearance < 3) {
+			// TODO: PLAY SOUND CUE
+			// std::cout << "The manager is coming..." << std::endl;
+		} 
+	}
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size) {

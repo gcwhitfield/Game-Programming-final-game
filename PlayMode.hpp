@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <deque>
+#include <random>
 
 struct PlayMode : Mode {
 	PlayMode();
@@ -18,6 +19,8 @@ struct PlayMode : Mode {
 	virtual void draw(glm::uvec2 const &drawable_size) override;
 
 	//----- game state -----
+
+	float time_until_next_manager_appearance = 1.0f; // seconds
 
 	//input tracking:
 	struct Button {
