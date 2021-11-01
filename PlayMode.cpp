@@ -66,6 +66,18 @@ PlayMode::PlayMode() : scene(*starbucks_scene) {
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
 
+	for (auto &d : scene.drawables) {
+		if (d.transform->name == "Manager") {
+			manager = &d;
+			manager_here_pos = d.transform->position;
+		}
+	}
+
+	if (manager == NULL) {
+		std::cerr << "Could not find manager mesh in scene. Aborting..." << std::endl;
+		throw;
+	}
+
 }
 
 PlayMode::~PlayMode() {
@@ -227,6 +239,38 @@ void PlayMode::update(float elapsed) {
 	right.downs = 0;
 	up.downs = 0;
 	down.downs = 0;
+
+	// the manager appears periodically 
+	{
+		switch (manager_state) {
+			case AWAY: {
+				manager_next_appearance_timer -= elapsed;
+				manager->transform->position = glm::vec3(0, 0, -10000); // move the manager super far away when it's AWAY
+				if (manager_next_appearance_timer < 3) {
+					manager_state = ARRIVING;
+					// TODO: PLAY SOUND CUE
+					// play sound queue 3 seconds before the manager appears
+				} 
+			} break;
+			case ARRIVING: {
+				manager_next_appearance_timer -= elapsed;
+				if (manager_next_appearance_timer < 0) {
+					// set manager_next_appearance_timer to a random time between 5 and 10 seconds
+					size_t r = rand() % 100;
+					manager_next_appearance_timer = 5 + 5*(r / (float)100);
+					manager_state = HERE;
+				}
+			} break;
+			case HERE: {
+				manager->transform->position = manager_here_pos; // move the manager here when it is HERE
+				manager_stay_timer -= elapsed;
+				if (manager_stay_timer < 0) {
+					manager_stay_timer = 2.0f;
+					manager_state = AWAY;
+				}
+			} break;
+		}
+	}
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size) {
@@ -282,6 +326,39 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			glm::vec3(-aspect + 0.1f * H + ofs, -1.0 + + 0.1f * H + ofs, 0.0),
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0xff, 0xff, 0xff, 0x00));
+
+		// manager state display
+		switch (manager_state) {
+			case AWAY: {
+			} break;
+
+			case ARRIVING: {
+				lines.draw_text("The manager is arriving soon!",
+					glm::vec3(-aspect + 0.1f * H, 0.25 + -1.0 + 0.1f * H, 0.0),
+					glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+					glm::u8vec4(0x00, 0x00, 0x00, 0x00));
+				float ofs = 2.0f / drawable_size.y;
+				lines.draw_text("The manager is arriving soon!",
+					glm::vec3(-aspect + 0.1f * H + ofs, 0.25 + -1.0 + + 0.1f * H + ofs, 0.0),
+					glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+					glm::u8vec4(0xff, 0xff, 0xff, 0x00));
+			} break;
+
+			case HERE: {
+				lines.draw_text("THE MANAGER IS HERE!",
+					glm::vec3(-aspect + 0.1f * H, 0.25 + -1.0 + 0.1f * H, 0.0),
+					glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+					glm::u8vec4(0x00, 0x00, 0x00, 0x00));
+				float ofs = 2.0f / drawable_size.y;
+				lines.draw_text("THE MANAGER IS HERE!",
+					glm::vec3(-aspect + 0.1f * H + ofs, 0.25 + -1.0 + + 0.1f * H + ofs, 0.0),
+					glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+					glm::u8vec4(0xff, 0xff, 0xff, 0x00));
+			} break;
+		}
 	}
+
+
+
 	GL_ERRORS();
 }

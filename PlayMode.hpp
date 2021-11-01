@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <deque>
+#include <random>
 
 struct PlayMode : Mode {
 	PlayMode();
@@ -19,7 +20,18 @@ struct PlayMode : Mode {
 
 	//----- game state -----
 
-	//input tracking:
+	float manager_next_appearance_timer = 1.0f; // seconds
+	enum ManagerState {
+		AWAY, 
+		ARRIVING,
+		HERE
+	} manager_state = AWAY;
+	float manager_stay_timer = 2.0f; // seconds
+
+	Scene::Drawable* manager = NULL; // the drawable of the manager in scene.drawables
+	glm::vec3 manager_here_pos; // the location to place the manager when it is HERE
+
+	// ----- input tracking -----
 	struct Button {
 		uint8_t downs = 0;
 		uint8_t pressed = 0;
