@@ -65,9 +65,10 @@ struct PlayMode : Mode {
 
 	struct state //Game state
 	{
-		int score = 0;
+		int score = 0;	// player's total score until now
+		int goal = 0;	// the goal score need to achieve before game_timer times out
 		float stablization = 1.0f;
-		float time = 0.0f;
+		float game_timer = 0.0f;
 
 		enum PlayState {
 			ongoing, won, lost, menu
