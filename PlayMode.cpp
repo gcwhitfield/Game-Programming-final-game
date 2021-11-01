@@ -44,6 +44,11 @@ Load< WalkMeshes > phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const
 	return ret;
 });
 
+// cite: https://www.fesliyanstudios.com/royalty-free-sound-effects-download/footsteps-31
+Load< Sound::Sample > manager_footstep_sample(LoadTagDefault, []() -> Sound::Sample const* {
+	return new Sound::Sample(data_path("manager_footstep.wav"));
+	});
+
 PlayMode::PlayMode() : scene(*starbucks_scene) {
 	//create a player transform:
 	scene.transforms.emplace_back();
@@ -149,6 +154,9 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 }
 
 void PlayMode::update(float elapsed) {
+
+	// 
+
 	//player walking:
 	{
 		//combine inputs into a move:
@@ -248,7 +256,8 @@ void PlayMode::update(float elapsed) {
 				manager->transform->position = glm::vec3(0, 0, -10000); // move the manager super far away when it's AWAY
 				if (manager_next_appearance_timer < 3) {
 					manager_state = ARRIVING;
-					// TODO: PLAY SOUND CUE
+					// Play manager footstep sound queue
+					manager_footstep_sfx = Sound::loop(*manager_footstep_sample, manager_footstep_volume_min, 0.0f);
 					// play sound queue 3 seconds before the manager appears
 				} 
 			} break;
@@ -259,6 +268,14 @@ void PlayMode::update(float elapsed) {
 					size_t r = rand() % 100;
 					manager_next_appearance_timer = 5 + 5*(r / (float)100);
 					manager_state = HERE;
+					// stop manager footstep sfx
+					manager_footstep_sfx->stop();
+				}
+				else{
+					// volume of footstep gradually increase when the manager approach
+					float k = -(manager_footstep_volume_max - manager_footstep_volume_min)/3.0f;
+					float new_volume = k * manager_next_appearance_timer + manager_footstep_volume_max;
+					manager_footstep_sfx->set_volume(new_volume);
 				}
 			} break;
 			case HERE: {
