@@ -66,6 +66,18 @@ PlayMode::PlayMode() : scene(*starbucks_scene) {
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
 
+	for (auto &d : scene.drawables) {
+		if (d.transform->name == "Manager") {
+			manager = &d;
+			manager_here_pos = d.transform->position;
+		}
+	}
+
+	if (manager == NULL) {
+		std::cerr << "Could not find manager mesh in scene. Aborting..." << std::endl;
+		throw;
+	}
+
 }
 
 PlayMode::~PlayMode() {
@@ -233,6 +245,7 @@ void PlayMode::update(float elapsed) {
 		switch (manager_state) {
 			case AWAY: {
 				manager_next_appearance_timer -= elapsed;
+				manager->transform->position = glm::vec3(0, 0, -10000); // move the manager super far away when it's AWAY
 				if (manager_next_appearance_timer < 3) {
 					manager_state = ARRIVING;
 					// TODO: PLAY SOUND CUE
@@ -249,6 +262,7 @@ void PlayMode::update(float elapsed) {
 				}
 			} break;
 			case HERE: {
+				manager->transform->position = manager_here_pos; // move the manager here when it is HERE
 				manager_stay_timer -= elapsed;
 				if (manager_stay_timer < 0) {
 					manager_stay_timer = 2.0f;
