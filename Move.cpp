@@ -5,6 +5,7 @@
 #include <glm/gtx/quaternion.hpp>
 #define ERROR_F 0.000001f
 #define MAX_SPEED_H 1.5f
+#define MAX_HEIGHT 15.f
 
 //To do: Test!!!
 
@@ -12,6 +13,7 @@
 
 
 //Updates transform and velocity of cat
+//All code is in CAMERA space
 void PlayMode::updateCat(PlayMode::Keys keys, float elapsed, float gravity) {
 
 	//Get horizontal keys as an enum just to make the following code cleaner 
@@ -82,40 +84,50 @@ void PlayMode::updateCat(PlayMode::Keys keys, float elapsed, float gravity) {
 		player.iter++;
 		assert(keys.space || abs(offsetCamera.y) < ERROR_F);
 
+		float vertInc = 1.5f;
+		offsetCamera.z *= vertInc;
+
 		//Want vertical increase to always be the same, 1.0f, so don't normalize
 
 		//Find worldspace velocity vector, and update player's velocity with it
-		offsetCamera = player.camera->transform->rotation * offsetCamera;
+		//offsetCamera = player.camera->transform->rotation * offsetCamera;
 	 
 		player.catVelocity += offsetCamera * glm::vec3(player.flapVelocity);
 		player.catVelocity += offsetCamera * glm::vec3(player.flapVelocity);
 		if (player.catVelocity.x >= MAX_SPEED_H) player.catVelocity.x = MAX_SPEED_H;
 		else if (player.catVelocity.x <= MAX_SPEED_H) player.catVelocity.x = -MAX_SPEED_H;
-		if (player.catVelocity.y >= MAX_SPEED_H) player.catVelocity.y = MAX_SPEED_H;
-		else if (player.catVelocity.y <= MAX_SPEED_H) player.catVelocity.y = -MAX_SPEED_H;
-		
-		assert(keys.space || abs(offsetCamera.z) < ERROR_F);
+		if (player.catVelocity.z >= MAX_SPEED_H) player.catVelocity.z = MAX_SPEED_H;
+		else if (player.catVelocity.z <= MAX_SPEED_H) player.catVelocity.z = -MAX_SPEED_H;
+		  
 	
 
 	//X,Z update
 	
-		float horizontalInc = 0.5f; //We want horizontal speed to be more than vertical speed, but by how much I would need to test
-		player.posDelt = glm::vec3(horizontalInc * elapsed) * glm::vec3(player.catVelocity.x, player.catVelocity.y, 0.0f); //Affects walkmesh pos onl
+		float horizontalInc = 0.5f; 
+		player.posDelt = glm::vec2(horizontalInc * elapsed) * glm::vec2(player.catVelocity.x, player.catVelocity.z); //Affects walkmesh pos onl
 
 	
 
 	//y update
-		float velocity = player.catVelocity.z;
-		if (player.height <= ERROR_F) {
+		float velocity = player.catVelocity.y;
+		if ((player.height <= ERROR_F && !player.grounded) || (player.grounded && !keys.space)) {
 			player.airTime = 0.0f;
 			player.height = 0.0f;
 			player.catVelocity = glm::vec3(0.f);
 			player.posDelt = glm::vec3(0.f);
+			player.grounded = true;
 		}
 		else {
+			player.grounded = false;
 			player.airTime += elapsed;
 			velocity += gravity * player.airTime;
 		}
 		player.height += velocity * elapsed; //Height is added to the transform only after the walkmesh position is found
+		if (player.height <= ERROR_F) player.height = 0.0f;
+		if (player.height >= MAX_HEIGHT) {
+			player.height = MAX_HEIGHT;
+			player.catVelocity.y = 0.0f;
+			player.airTime = 0.0f;
+		}
 	
 }

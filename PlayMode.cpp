@@ -172,7 +172,7 @@ void PlayMode::update(float elapsed) {
 		sendKeys.right = (right.downs > 0);
 		updateCat(sendKeys, elapsed, gravity);
 		if( player.height >= ERROR_F)
-			move = glm::vec2(player.posDelt.x, player.posDelt.y);
+			move = player.posDelt;
 
 	}
 
@@ -223,7 +223,7 @@ void PlayMode::update(float elapsed) {
 				}
 			}
 		}
-
+		 
 		if (remain != glm::vec3(0.0f)) {
 			std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
 		}

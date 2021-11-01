@@ -45,6 +45,7 @@ struct PlayMode : Mode {
 		float height = 0.0f; //0 for human, > 0 for cat
 		float flapVelocity = 1.0f; //What speed should a flap add?
 		float airTime = 0.0f; //Time since last landed
+		bool grounded = true;
 
 		enum Status {
 			Human, Cat
@@ -52,7 +53,7 @@ struct PlayMode : Mode {
 		Status playerStatus = Cat;
 		glm::vec3 humanAcc = glm::vec3(0.0f);
 		WalkPoint walkpoint;
-		glm::vec3 posDelt;
+		glm::vec2 posDelt;
 		int iter = 0;
 	} player;
 
@@ -63,7 +64,7 @@ struct PlayMode : Mode {
 		int score = 0;
 		float stablization = 1.0f;
 		float time = 0.0f;
-		float flapTimer = 0.0f;
+		float flapTimer = 0.00f;
 		float flapCooldown = 0.05f;//In seconds
 
 		enum PlayState {
@@ -73,7 +74,7 @@ struct PlayMode : Mode {
 		//Put order here
 	};
 
-	float gravity = -9.81f/3.f; //Likely should be lower to make more floaty
+	float gravity = -9.81f/2.f; //Likely should be lower to make more floaty
 
 	State state;
 
