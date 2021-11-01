@@ -20,8 +20,13 @@ struct PlayMode : Mode {
 
 	//----- game state -----
 
-	float time_until_next_manager_appearance = 1.0f; // seconds
-
+	float manager_next_appearance_timer = 1.0f; // seconds
+	enum ManagerState {
+		AWAY, 
+		ARRIVING,
+		HERE
+	} manager_state = AWAY;
+	float manager_stay_timer = 2.0f; // seconds
 	//input tracking:
 	struct Button {
 		uint8_t downs = 0;
