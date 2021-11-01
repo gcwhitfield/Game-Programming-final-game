@@ -47,7 +47,7 @@ void PlayMode::updateCat(PlayMode::Keys keys, float elapsed, float gravity) {
 				break;
 			}
 		}
-		else if (keys.up) {
+		else if (!keys.up) {
 			switch (hori) {
 			case(horiL):
 				offsetCamera = glm::vec3(-1.0f, 1.0f, -1.0f);
@@ -85,7 +85,7 @@ void PlayMode::updateCat(PlayMode::Keys keys, float elapsed, float gravity) {
 		assert(keys.space || abs(offsetCamera.y) < ERROR_F);
 
 		float vertInc = 1.5f;
-		offsetCamera.z *= vertInc;
+		offsetCamera.y *= vertInc;
 
 		//Want vertical increase to always be the same, 1.0f, so don't normalize
 
@@ -93,17 +93,17 @@ void PlayMode::updateCat(PlayMode::Keys keys, float elapsed, float gravity) {
 		//offsetCamera = player.camera->transform->rotation * offsetCamera;
 	 
 		player.catVelocity += offsetCamera * glm::vec3(player.flapVelocity);
-		player.catVelocity += offsetCamera * glm::vec3(player.flapVelocity);
 		if (player.catVelocity.x >= MAX_SPEED_H) player.catVelocity.x = MAX_SPEED_H;
-		else if (player.catVelocity.x <= MAX_SPEED_H) player.catVelocity.x = -MAX_SPEED_H;
+		else if (player.catVelocity.x <= -MAX_SPEED_H) player.catVelocity.x = -MAX_SPEED_H;
 		if (player.catVelocity.z >= MAX_SPEED_H) player.catVelocity.z = MAX_SPEED_H;
-		else if (player.catVelocity.z <= MAX_SPEED_H) player.catVelocity.z = -MAX_SPEED_H;
+		else if (player.catVelocity.z <= -MAX_SPEED_H) player.catVelocity.z = -MAX_SPEED_H;
+
 		  
 	
 
 	//X,Z update
 	
-		float horizontalInc = 0.5f; 
+		float horizontalInc = 1.5f; 
 		player.posDelt = glm::vec2(horizontalInc * elapsed) * glm::vec2(player.catVelocity.x, player.catVelocity.z); //Affects walkmesh pos onl
 
 	
