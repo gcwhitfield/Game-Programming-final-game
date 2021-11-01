@@ -82,6 +82,11 @@ PlayMode::PlayMode() : scene(*starbucks_scene) {
 		std::cerr << "Could not find manager mesh in scene. Aborting..." << std::endl;
 		throw;
 	}
+	
+	// initialize timer
+	game_state.game_timer = game_state.day_period_time;
+	// TODO: mechanism of setting revenue goal
+	game_state.goal = 100;
 
 }
 
@@ -109,6 +114,9 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		} else if (evt.key.keysym.sym == SDLK_s) {
 			down.downs += 1;
 			down.pressed = true;
+			return true;
+		} else if (evt.key.keysym.sym == SDLK_r) {
+			// TODO: restart the game
 			return true;
 		}
 	} else if (evt.type == SDL_KEYUP) {
@@ -155,7 +163,30 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 
 void PlayMode::update(float elapsed) {
 
-	// 
+	// TODO: game menu
+
+	// win and lose
+	if(game_state.playing == won || game_state.playing == lost){
+		return;
+	}
+	// global timer count down
+	game_state.game_timer -= elapsed;
+	// win loss condition
+	if(game_state.game_timer <= 0.0f){
+		if(game_state.score >= game_state.goal){
+			game_state.playing = won;
+		}
+		else{
+			game_state.playing = lost;
+		}
+		return;
+	}
+	else{
+		if(manager_state == HERE && player.playerStatus == Cat){
+			game_state.playing = lost;
+			return;
+		}
+	}
 
 	//player walking:
 	{
@@ -334,15 +365,83 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 		));
 
 		constexpr float H = 0.09f;
-		lines.draw_text("Mouse motion looks; WASD moves; escape ungrabs mouse",
-			glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0),
-			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
-			glm::u8vec4(0x00, 0x00, 0x00, 0x00));
-		float ofs = 2.0f / drawable_size.y;
-		lines.draw_text("Mouse motion looks; WASD moves; escape ungrabs mouse",
-			glm::vec3(-aspect + 0.1f * H + ofs, -1.0 + + 0.1f * H + ofs, 0.0),
-			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
-			glm::u8vec4(0xff, 0xff, 0xff, 0x00));
+		// draw score
+		{
+			lines.draw_text("Score: " + std::to_string(game_state.score),
+				glm::vec3(-aspect + 0.1f * H, -0.2f + 1.0f - 0.1f * H, 0.0),
+				glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+				glm::u8vec4(0x00, 0x00, 0x00, 0x00));
+			float ofs = 2.0f / drawable_size.y;
+			lines.draw_text("Score: " + std::to_string(game_state.score),
+				glm::vec3(-aspect + 0.1f * H + ofs, -0.2f + 1.0f - 0.1f * H + ofs, 0.0),
+				glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+				glm::u8vec4(0xff, 0xff, 0xff, 0x00));	
+		}
+
+		
+		// draw goal
+		{
+			lines.draw_text("Goal: " + std::to_string(game_state.goal),
+				glm::vec3(-aspect + 0.1f * H, -0.1f + 1.0f - 0.1f * H, 0.0),
+				glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+				glm::u8vec4(0x00, 0x00, 0x00, 0x00));
+			float ofs = 2.0f / drawable_size.y;
+			lines.draw_text("Goal: " + std::to_string(game_state.goal),
+				glm::vec3(-aspect + 0.1f * H + ofs, -0.1f + 1.0f - 0.1f * H + ofs, 0.0),
+				glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+				glm::u8vec4(0xff, 0xff, 0xff, 0x00));	
+		}
+
+
+		// draw timer
+		{
+			lines.draw_text("Remain Time: " + std::to_string((int)(game_state.game_timer + 0.5f)),
+				glm::vec3(-0.05f + 0.1f * H, -0.1f + 1.0f - 0.1f * H, 0.0),
+				glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+				glm::u8vec4(0x00, 0x00, 0x00, 0x00));
+			float ofs = 2.0f / drawable_size.y;
+			lines.draw_text("Remain Time: " + std::to_string((int)(game_state.game_timer + 0.5f)),
+				glm::vec3(-0.05f + 0.1f * H + ofs, -0.1f + 1.0f - 0.1f * H + ofs, 0.0),
+				glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+				glm::u8vec4(0xff, 0xff, 0xff, 0x00));	
+		}
+
+		// game state display
+		switch (game_state.playing){
+			case ongoing: {
+				lines.draw_text("Mouse motion looks; WASD moves; escape ungrabs mouse",
+					glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0),
+					glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+					glm::u8vec4(0x00, 0x00, 0x00, 0x00));
+				float ofs = 2.0f / drawable_size.y;
+				lines.draw_text("Mouse motion looks; WASD moves; escape ungrabs mouse",
+					glm::vec3(-aspect + 0.1f * H + ofs, -1.0 + + 0.1f * H + ofs, 0.0),
+					glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+					glm::u8vec4(0xff, 0xff, 0xff, 0x00));
+			} break;
+			case won: {
+				lines.draw_text("You successfully went through today!",
+					glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0),
+					glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+					glm::u8vec4(0x00, 0x00, 0x00, 0x00));
+				float ofs = 2.0f / drawable_size.y;
+				lines.draw_text("You successfully went through today!",
+					glm::vec3(-aspect + 0.1f * H + ofs, -1.0 + + 0.1f * H + ofs, 0.0),
+					glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+					glm::u8vec4(0xff, 0xff, 0xff, 0x00));
+			} break;
+			case lost: {
+				lines.draw_text("You are fired! Press R to restart",
+					glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0),
+					glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+					glm::u8vec4(0x00, 0x00, 0x00, 0x00));
+				float ofs = 2.0f / drawable_size.y;
+				lines.draw_text("You are fired! Press R to restart",
+					glm::vec3(-aspect + 0.1f * H + ofs, -1.0 + + 0.1f * H + ofs, 0.0),
+					glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+					glm::u8vec4(0xff, 0xff, 0xff, 0x00));
+			} break;
+		}
 
 		// manager state display
 		switch (manager_state) {
