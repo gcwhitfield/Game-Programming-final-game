@@ -166,10 +166,10 @@ void PlayMode::update(float elapsed) {
 	if(player.playerStatus == Player::Cat) {
 		Keys sendKeys;
 		sendKeys.space = (space.downs > 0);
-		sendKeys.up = (up.downs > 0);
-		sendKeys.down = (down.downs > 0);
-		sendKeys.left = (left.downs > 0);
-		sendKeys.right = (right.downs > 0);
+		sendKeys.up = (up.pressed);
+		sendKeys.down = (down.pressed);
+		sendKeys.left = (left.pressed);
+		sendKeys.right = (right.pressed);
 		updateCat(sendKeys, elapsed, gravity);
 		if( player.height >= ERROR_F)
 			move = player.posDelt;

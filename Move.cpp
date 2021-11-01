@@ -78,10 +78,9 @@ void PlayMode::updateCat(PlayMode::Keys keys, float elapsed, float gravity) {
 
 
 		if (!keys.space) {
-			offsetCamera.y = 0.0f;
+			offsetCamera = glm::vec3(0.0f);
 			assert(keys.space || abs(offsetCamera.y) < ERROR_F);
 		}
-		player.iter++;
 		assert(keys.space || abs(offsetCamera.y) < ERROR_F);
 
 		float vertInc = 1.5f;
