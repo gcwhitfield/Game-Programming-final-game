@@ -26,7 +26,7 @@ struct PlayMode : Mode {
 
 	//----- game state -----
 
-	float manager_next_appearance_timer = 1.0f; // seconds
+	float manager_next_appearance_timer = 14.0f; // seconds
 	enum ManagerState {
 		AWAY, 
 		ARRIVING,
@@ -51,7 +51,7 @@ struct PlayMode : Mode {
 
 	//player info:
 	enum Status {
-		Human, Cat
+		Human, Cat, toCat, toHuman
 	};
 	struct Player {
 		Player() {}; // TODO: Implement this
@@ -70,9 +70,6 @@ struct PlayMode : Mode {
 		float airTime = 0.0f; //Time since last landed
 		bool grounded = true;
 
-		enum Status {
-			Human, Cat
-		};
 		Status playerStatus = Cat;
 		glm::vec3 humanAcc = glm::vec3(0.0f);
 		WalkPoint walkpoint;
@@ -81,7 +78,12 @@ struct PlayMode : Mode {
 
 		StarbuckItem cur_order;
 		StarbuckItem bag;
+
+		float fallTime = 0.f;
+
+
 	} player;
+	float gravity = -9.81f / 2.f;
 
 	enum PlayState {
 		ongoing, won, lost, menu
@@ -122,7 +124,6 @@ struct PlayMode : Mode {
 
 	std::map<std::string, Scene::Transform*> ingredient_transforms;
 	std::map<std::string, Customer> customers;
-	float gravity = -9.81f/2.f; //Likely should be lower to make more floaty
 
 	State state;
 
@@ -132,6 +133,7 @@ struct PlayMode : Mode {
 		bool space, up, down, left, right;
 	};
 	void updateCat(Keys keys, float elapsed, float gravity);
+	void transition(float elapsed, float gravity);
 
 
 	//order relevant

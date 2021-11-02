@@ -229,12 +229,18 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			down.downs += 1;
 			down.pressed = true;
 			return true;
-		} else if (evt.key.keysym.sym == SDLK_SPACE) {
-			if (state.flapTimer > state.flapCooldown && !space.pressed ) {
+		}
+		else if (evt.key.keysym.sym == SDLK_SPACE) {
+			if (state.flapTimer > state.flapCooldown && !space.pressed) {
 				space.downs += 1;
 				space.pressed = true;
 				state.flapTimer = 0.0f;
 			}
+			return true;
+		}
+		else if (evt.key.keysym.sym == SDLK_q) {
+			if (player.playerStatus == Cat) player.playerStatus = toHuman;
+			else if (player.playerStatus == Human) player.playerStatus = toCat;
 			return true;
 		}
 		else if (evt.key.keysym.sym == SDLK_r)
@@ -361,18 +367,20 @@ void PlayMode::update(float elapsed) {
 	//make it so that moving diagonally doesn't go faster:
 	if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
 
-	if(player.playerStatus == Player::Cat) {
-		Keys sendKeys;
-		sendKeys.space = (space.downs > 0);
-		sendKeys.up = (up.pressed);
-		sendKeys.down = (down.pressed);
-		sendKeys.left = (left.pressed);
-		sendKeys.right = (right.pressed);
-		updateCat(sendKeys, elapsed, gravity);
-		if( player.height >= ERROR_F)
-			move = player.posDelt;
+	if (player.playerStatus != toCat && player.playerStatus != toHuman) {
 
-	}
+		if (player.playerStatus == Cat) {
+			Keys sendKeys;
+			sendKeys.space = (space.downs > 0);
+			sendKeys.up = (up.pressed);
+			sendKeys.down = (down.pressed);
+			sendKeys.left = (left.pressed);
+			sendKeys.right = (right.pressed);
+			updateCat(sendKeys, elapsed, gravity);
+			if (player.height >= ERROR_F)
+				move = player.posDelt;
+
+		}
 
 		//get move in world coordinate system:
 		glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
@@ -426,13 +434,13 @@ void PlayMode::update(float elapsed) {
 				}
 			}
 		}
-		 
+
 		if (remain != glm::vec3(0.0f)) {
 			std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
 		}
 
 		//update player's position to respect walking:
-		player.transform->position= walkmesh->to_world_point(player.at);
+		player.transform->position = walkmesh->to_world_point(player.at);
 
 		{ //update player's rotation to respect local (smooth) up-vector:
 
@@ -442,7 +450,7 @@ void PlayMode::update(float elapsed) {
 			);
 			player.transform->rotation = glm::normalize(adjust * player.transform->rotation);
 		}
-		player.transform->position += glm::vec3(0.0f,0.0f, player.height);
+		player.transform->position += glm::vec3(0.0f, 0.0f, player.height);
 
 		/*
 		glm::mat4x3 frame = camera->transform->make_local_to_parent();
@@ -452,6 +460,12 @@ void PlayMode::update(float elapsed) {
 
 		camera->transform->position += move.x * right + move.y * forward;
 		*/
+	}
+	else {
+		transition(elapsed, gravity);
+		player.transform->position = walkmesh->to_world_point(player.at);
+		player.transform->position = glm::vec3(0.0f, 0.0f, player.height);
+	}
 
 	//reset button press counters:
 	left.downs = 0;

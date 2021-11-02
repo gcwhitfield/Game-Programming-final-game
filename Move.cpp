@@ -125,3 +125,19 @@ void PlayMode::updateCat(PlayMode::Keys keys, float elapsed, float gravity) {
 		}
 	
 }
+
+
+void PlayMode::transition(float elapsed, float gravity) {
+	if (player.playerStatus == toHuman) {
+		if (player.height <= ERROR_F) {
+			player.playerStatus = Human;
+		}
+		else {
+			player.fallTime += elapsed;
+			player.height += gravity * player.fallTime * elapsed;
+		}
+	}
+	else {
+		player.playerStatus = Cat;
+	}
+}
