@@ -20,3 +20,8 @@ dist/freetype-test*
 scenes/show-meshes*
 scenes/show-scene*
 # *.blend[0-9]
+*.obj
+scenes/show-meshes.exe
+*.obj
+objs/GL.obj
+objs/gl_compile_program.obj

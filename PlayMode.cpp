@@ -13,6 +13,8 @@
 
 #include <random>
 #include <iostream>
+#define ERROR_F 0.000001f
+
 //generate a new_item from the item list randomly
 std::pair<std::string, StarbuckItem> new_item()
 {
@@ -227,6 +229,13 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			down.downs += 1;
 			down.pressed = true;
 			return true;
+		} else if (evt.key.keysym.sym == SDLK_SPACE) {
+			if (state.flapTimer > state.flapCooldown && !space.pressed ) {
+				space.downs += 1;
+				space.pressed = true;
+				state.flapTimer = 0.0f;
+			}
+			return true;
 		}
 		else if (evt.key.keysym.sym == SDLK_r)
 		{
@@ -271,6 +280,9 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		{
 			down.pressed = false;
 			return true;
+		} else if (evt.key.keysym.sym == SDLK_SPACE) {
+			space.pressed = false;
+			return true;
 		}
 	}
 	else if (evt.type == SDL_MOUSEBUTTONDOWN)
@@ -305,11 +317,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	return false;
 }
 
-void PlayMode::update(float elapsed)
-{
-
-	// TODO: game menu
-
+void PlayMode::update(float elapsed) {
 	// win and lose
 	if (game_state.playing == won || game_state.playing == lost)
 	{
@@ -339,23 +347,32 @@ void PlayMode::update(float elapsed)
 		}
 	}
 
-	//player walking:
-	{
-		//combine inputs into a move:
-		constexpr float PlayerSpeed = 3.0f;
-		glm::vec2 move = glm::vec2(0.0f);
-		if (left.pressed && !right.pressed)
-			move.x = -1.0f;
-		if (!left.pressed && right.pressed)
-			move.x = 1.0f;
-		if (down.pressed && !up.pressed)
-			move.y = -1.0f;
-		if (!down.pressed && up.pressed)
-			move.y = 1.0f;
+	state.flapTimer += elapsed;
 
-		//make it so that moving diagonally doesn't go faster:
-		if (move != glm::vec2(0.0f))
-			move = glm::normalize(move) * PlayerSpeed * elapsed;
+	//player walking:
+	glm::vec2 move = glm::vec2(0.0f);
+	//combine inputs into a move:
+	constexpr float PlayerSpeed = 3.0f;
+	if (left.pressed && !right.pressed) move.x = -1.0f;
+	if (!left.pressed && right.pressed) move.x = 1.0f;
+	if (down.pressed && !up.pressed) move.y = -1.0f;
+	if (!down.pressed && up.pressed) move.y = 1.0f;
+	
+	//make it so that moving diagonally doesn't go faster:
+	if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
+
+	if(player.playerStatus == Player::Cat) {
+		Keys sendKeys;
+		sendKeys.space = (space.downs > 0);
+		sendKeys.up = (up.pressed);
+		sendKeys.down = (down.pressed);
+		sendKeys.left = (left.pressed);
+		sendKeys.right = (right.pressed);
+		updateCat(sendKeys, elapsed, gravity);
+		if( player.height >= ERROR_F)
+			move = player.posDelt;
+
+	}
 
 		//get move in world coordinate system:
 		glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
@@ -387,12 +404,11 @@ void PlayMode::update(float elapsed)
 				//rotate step to follow surface:
 				remain = rotation * remain;
 			}
-			else
-			{
+			else {
 				//ran into a wall, bounce / slide along it:
-				glm::vec3 const &a = walkmesh->vertices[player.at.indices.x];
-				glm::vec3 const &b = walkmesh->vertices[player.at.indices.y];
-				glm::vec3 const &c = walkmesh->vertices[player.at.indices.z];
+				glm::vec3 const& a = walkmesh->vertices[player.at.indices.x];
+				glm::vec3 const& b = walkmesh->vertices[player.at.indices.y];
+				glm::vec3 const& c = walkmesh->vertices[player.at.indices.z];
 				glm::vec3 along = glm::normalize(b - a);
 				glm::vec3 normal = glm::normalize(glm::cross(b - a, c - a));
 				glm::vec3 in = glm::cross(normal, along);
@@ -404,21 +420,19 @@ void PlayMode::update(float elapsed)
 					//bounce off of the wall:
 					remain += (-1.25f * d) * in;
 				}
-				else
-				{
+				else {
 					//if it's just pointing along the edge, bend slightly away from wall:
 					remain += 0.01f * d * in;
 				}
 			}
 		}
-
-		if (remain != glm::vec3(0.0f))
-		{
+		 
+		if (remain != glm::vec3(0.0f)) {
 			std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
 		}
 
 		//update player's position to respect walking:
-		player.transform->position = walkmesh->to_world_point(player.at);
+		player.transform->position= walkmesh->to_world_point(player.at);
 
 		{ //update player's rotation to respect local (smooth) up-vector:
 
@@ -428,6 +442,7 @@ void PlayMode::update(float elapsed)
 			);
 			player.transform->rotation = glm::normalize(adjust * player.transform->rotation);
 		}
+		player.transform->position += glm::vec3(0.0f,0.0f, player.height);
 
 		/*
 		glm::mat4x3 frame = camera->transform->make_local_to_parent();
@@ -437,7 +452,6 @@ void PlayMode::update(float elapsed)
 
 		camera->transform->position += move.x * right + move.y * forward;
 		*/
-	}
 
 	//reset button press counters:
 	left.downs = 0;
@@ -496,6 +510,7 @@ void PlayMode::update(float elapsed)
 		break;
 		}
 	}
+	space.downs = 0;
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size)
