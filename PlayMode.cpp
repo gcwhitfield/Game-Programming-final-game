@@ -40,7 +40,7 @@ std::ostream &operator<<(std::ostream &os, const StarbuckItem &item){
 bool collide(Scene::Transform * trans_a, Scene::Transform * trans_b, float radius = 6.0f){
 	auto a_pos = trans_a -> position;
 	auto b_pos = trans_b -> position;
-	printf("%f\n", distance2(a_pos, b_pos));
+	// printf("%f\n", distance2(a_pos, b_pos));
 	return distance2(a_pos, b_pos) < radius;
 }
 
@@ -113,7 +113,6 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 		//store ingredients information and location
 		if(ingredients.find(str) != ingredients.end()){
 			ingredient_transforms[str] = d.transform;
-			//std::cout<< str <<"  ::::  "<<d.transform->position<<std::endl;
 		}
 		//store customers ingredients information and location
 		if(str.length() >= 8 && str.substr(0,8) == "Customer"){
@@ -621,6 +620,9 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 							glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0));
 		}
 		break;
+		case menu: {
+
+		} break;
 		}
 
 		// manager state display
