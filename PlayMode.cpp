@@ -109,9 +109,7 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 		{
 			manager = &d;
 			manager_here_pos = d.transform->position;
-		} else if (d.transform->name == "Coffee") {
-			coffee = scene>
-		}
+		} 
 		//store ingredients information and location
 		if(ingredients.find(str) != ingredients.end()){
 			ingredient_transforms[str] = d.transform;
@@ -121,6 +119,11 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 			auto Cu = Customer(str, d.transform);
 			Cu.order = new_item().second;
 			customers[str] = Cu;
+		}
+		if (str == "Player") {
+			std::cout << "Player transform has been found in the blender scene" << std::endl;
+			player.transform->position = d.transform->position;
+			d.transform->position.y = 100000;
 		}
 	}
 
@@ -495,6 +498,24 @@ void PlayMode::update(float elapsed)
 			}
 		}
 		break;
+		}
+	}
+
+	{ // move the customers depending on their state
+		for(auto &[name, customer] : customers){
+			switch (customer.status) {
+				case Customer::Status::New: {
+
+				} break;
+
+				case Customer::Status::Wait: {
+
+				} break;
+				
+				case Customer::Status::Finished: {
+					customer.transform->position.y = 100000;
+				} break;
+			}
 		}
 	}
 }
