@@ -1,14 +1,18 @@
+#pragma once
 #include "Mode.hpp"
 
 #include "Scene.hpp"
 #include "WalkMesh.hpp"
 #include "Sound.hpp"
-
+#include "catcoffee.hpp"
 #include <glm/glm.hpp>
 
 #include <vector>
 #include <deque>
 #include <random>
+
+
+
 
 struct PlayMode : Mode {
 	PlayMode();
@@ -66,25 +70,62 @@ struct PlayMode : Mode {
 
 		WalkPoint walkpoint;
 		float height = 0.0f; //0 for human, > 0 for cat
+
+		StarbuckItem cur_order;
+		StarbuckItem bag;
 	} player;
 
 	enum PlayState {
 		ongoing, won, lost, menu
 	};
-	struct state //Game state
+	struct State //Game state
 	{
 		int score = 0;	// player's total score until now
 		int goal = 0;	// the goal score need to achieve before game_timer times out
 		float stablization = 1.0f;
 		float game_timer = 0.0f;
-		const float day_period_time = 60.0f; // set 60s for a day in game, temporarily
+		const float day_period_time = 600.0f; // set 60s for a day in game, temporarily
 
 
 		PlayState playing = ongoing; 
 		//Put order here
 	} game_state;
 
+	//struct customers 
+	struct Customer{
+		//Todo wait_time scaling, happiness score
+		int happiness = 0;
+		int wait_time = 30;
+		enum Status{
+			New,
+			Wait,
+			Finished
+		};
+		std::string name;
+		Scene::Transform* transform;
+		Status status;
+		StarbuckItem order;
+		Customer(){}
+		Customer(std::string nam,Scene::Transform* trans) : name(nam),transform(trans), status(Status::New){}
+		
+	};
+
+	
+	std::map<std::string, Scene::Transform*> ingredient_transforms;
+	std::map<std::string, Customer> customers;
 
 
-
+	//order relevant
+	enum OrderStatus{
+		Empty,
+		Executing,
+		Finished
+	};
+	OrderStatus order_status = Empty;
+	bool take_order();
+	bool serve_order();
+	bool grab_ingredient();
+	std::string order_message;
 };
+
+
