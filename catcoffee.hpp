@@ -3,6 +3,7 @@
 #include <set>
 #include <vector>
 #include <string>
+
 enum Ingredient
 {
     none = 0,
@@ -16,19 +17,22 @@ enum Ingredient
     water = 8
 };
 
-class item
+
+// An instance of 'IngredientList' represnets ingredients that the player must combine together to 
+// create the food item. 
+class IngredientList
 {
 public:
-    item(std::set<int> T) {
+    IngredientList(std::set<int> T) {
         for(auto &t : T)
             S.insert(t);
     }
-    ~item() {}
-    std::set<int> S;
+    ~IngredientList() {}
+    std::set<int> S; // S is a set of ingredients
     std::vector<std::string> print()
     {
         return std::vector<std::string>();
     }
 };
 
-item Frappuccino({milk,sugar, ice});
+IngredientList Frappuccino({milk, sugar, ice});

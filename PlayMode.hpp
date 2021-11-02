@@ -9,6 +9,8 @@
 #include <deque>
 #include <random>
 
+#include <unordered_set>
+
 struct PlayMode : Mode {
 	PlayMode();
 	virtual ~PlayMode();
@@ -20,6 +22,8 @@ struct PlayMode : Mode {
 
 	//----- game state -----
 
+	std::map<std::string, Scene::Drawable> ingredients_drawables;
+
 	float manager_next_appearance_timer = 1.0f; // seconds
 	enum ManagerState {
 		AWAY, 
@@ -30,6 +34,33 @@ struct PlayMode : Mode {
 
 	Scene::Drawable* manager = NULL; // the drawable of the manager in scene.drawables
 	glm::vec3 manager_here_pos; // the location to place the manager when it is HERE
+
+	// ----- customers -----
+	// 'customer_waypoints' contains the transforms of all of the "CustomerWaypoint" objects in the starbucks scene
+	// When customers are instantiated, whey will automatically move towards a waypoint and then wait for their order to be 
+	// taken there
+	std::unordered_set<Scene::Transform> customer_waypoints;
+
+	struct Customer {
+		float max_order_wait_time = 10.0f; // seconds
+		float t = 0.0f; // current wait time
+
+		enum CustomerState {
+			TRAVELING_TO_SEAT,
+			WAITING_FOR_ORDER
+		} state;
+		
+		// The customer's 'happiness' is just a gradient from 0 - 100, parameterized by 
+		// the maximum order wait time and the current time. Feel free to change this to 
+		// some other heuristic
+		float happiness() {
+			return 100.0f * (t - max_order_wait_time) / max_order_wait_time;
+		}
+
+		void update(float elapsed) {
+			t += elapsed;
+		}
+	}
 
 	// ----- input tracking -----
 	struct Button {
@@ -75,8 +106,4 @@ struct PlayMode : Mode {
 		PlayState playing = ongoing; 
 		//Put order here
 	};
-
-
-
-
 };

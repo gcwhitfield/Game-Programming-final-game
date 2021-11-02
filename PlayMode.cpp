@@ -70,6 +70,8 @@ PlayMode::PlayMode() : scene(*starbucks_scene) {
 		if (d.transform->name == "Manager") {
 			manager = &d;
 			manager_here_pos = d.transform->position;
+		} else if (d.transform->name == "Coffee") {
+			coffee = scene>
 		}
 	}
 
@@ -293,6 +295,8 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
 
 	scene.draw(*player.camera);
+
+	
 
 	/* In case you are wondering if your walkmesh is lining up with your scene, try:
 	{
