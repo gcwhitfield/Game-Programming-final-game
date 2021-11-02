@@ -65,7 +65,8 @@ struct PlayMode : Mode {
 		float stablization = 1.0f;
 		float time = 0.0f;
 		float flapTimer = 0.00f;
-		float flapCooldown = 0.05f;//In seconds
+		float flapCooldown = 0.1f;//In seconds
+
 
 		enum PlayState {
 			ongoing, won, lost, menu

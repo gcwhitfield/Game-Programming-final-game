@@ -95,7 +95,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			down.pressed = true;
 			return true;
 		} else if (evt.key.keysym.sym == SDLK_SPACE) {
-			if (state.flapTimer > state.flapCooldown) {
+			if (state.flapTimer > state.flapCooldown && !space.pressed ) {
 				space.downs += 1;
 				space.pressed = true;
 				state.flapTimer = 0.0f;
@@ -128,7 +128,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		if (SDL_GetRelativeMouseMode() == SDL_TRUE) {
 			glm::vec2 motion = glm::vec2(
 				evt.motion.xrel / float(window_size.y),
-				0.0f //-evt.motion.yrel / float(window_size.y)
+				-evt.motion.yrel / float(window_size.y)
 			);
 			glm::vec3 up = walkmesh->to_world_smooth_normal(player.at);
 			player.transform->rotation = glm::angleAxis(-motion.x * player.camera->fovy, up) * player.transform->rotation;

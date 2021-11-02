@@ -89,7 +89,7 @@ void PlayMode::updateCat(PlayMode::Keys keys, float elapsed, float gravity) {
 		//Want vertical increase to always be the same, 1.0f, so don't normalize
 
 		//Find worldspace velocity vector, and update player's velocity with it
-		//offsetCamera = player.camera->transform->rotation * offsetCamera;
+
 	 
 		player.catVelocity += offsetCamera * glm::vec3(player.flapVelocity);
 		if (player.catVelocity.x >= MAX_SPEED_H) player.catVelocity.x = MAX_SPEED_H;
