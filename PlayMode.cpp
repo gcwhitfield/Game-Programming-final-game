@@ -115,11 +115,26 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 			ingredient_transforms[str] = d.transform;
 		}
 		//store customers ingredients information and location
-		if(str.length() >= 8 && str.substr(0,8) == "Customer"){
+		if(str != "CustomerBase" && str.length() >= 8 && str.substr(0,8) == "Customer"){
 			auto Cu = Customer(str, d.transform);
 			Cu.order = new_item().second;
 			customers[str] = Cu;
 		}
+		// add the "CustomerWaypoint" transforms from the starbucks.blend scene into a 
+		// vector
+		if (str.find("CustomerWaypoint") < str.size()) {
+			customer_open_waypoints.emplace_back();
+			customer_open_waypoints.back()->position = d.transform->position;
+		}
+		// set the "CustomerBase" and "CustomerSpawnPoint" transforms to their corresponding 
+		// transforms in the starbucks.blend scene
+		if (str == "CustomerBase") {
+			customer_base = &d;
+		}
+		if (str == "CustomerSpawnPoint") {
+			customer_spawn_point = d.transform;
+		}
+		// the player starts at the location of the "Player" object in the Blender scene
 		if (str == "Player") {
 			std::cout << "Player transform has been found in the blender scene" << std::endl;
 			player.transform->position = d.transform->position;
@@ -127,11 +142,10 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 		}
 	}
 
-	if (manager == NULL)
-	{
-		std::cerr << "Could not find manager mesh in scene. Aborting..." << std::endl;
-		throw;
-	}
+	assert(customer_open_waypoints.size() > 0);
+	assert(customer_occupied_waypoints.size() == 0);
+	assert(customer_base != NULL);
+	assert(manager != NULL);
 
 	// initialize timer
 	game_state.game_timer = game_state.day_period_time;
@@ -501,19 +515,44 @@ void PlayMode::update(float elapsed)
 		}
 	}
 
-	{ // move the customers depending on their state
+	{ // spawn new customers periodically
+		customer_spawn_timer -= elapsed;
+		if (customer_spawn_timer < 0) {
+			size_t r = rand() % 100;
+			// the amount of time until the next customer spawns is governed by the 
+			// random variable 'rand_time'. 'rand_time' is uniformly distributed 
+			// between 7 and 17 seconds
+			float rand_time = 7 + 10.0f * (r / (float)100); 
+			customer_spawn_timer = rand_time;
+		}
+	}
+
+	{ // handle customer behaviour depending on state
 		for(auto &[name, customer] : customers){
 			switch (customer.status) {
 				case Customer::Status::New: {
-
+					customer.t_new += elapsed;
+					float t = (customer.new_animation_time - customer.t_new) / customer.new_animation_time; 
+					customer.transform->position = customer_spawn_point->position * t + (customer.waypoint->position * (1.0f - t));
 				} break;
 
 				case Customer::Status::Wait: {
+					customer.t_wait += elapsed;
 
+					// the customer gets angry if it waits too longs, score gets deducted
+					if (customer.t_wait > customer.max_wait_time) {
+						std::cout << "Customer [" << customer.name << "] has waited too long :(. Customer is leaving..." << std::endl;
+						game_state.score -= 10; 
+						customer.status = Customer::Status::Finished;
+					}
 				} break;
 				
 				case Customer::Status::Finished: {
-					customer.transform->position.y = 100000;
+					customer.t_finished += elapsed;
+					float t = (customer.finished_animation_time - customer.t_finished) / customer.finished_animation_time;
+					glm::vec3 desired_position = customer_spawn_point->position;
+					desired_position.y += 50.0f;
+					customer.transform->position = customer_spawn_point->position * t + (desired_position * (1.0f - t));
 				} break;
 			}
 		}
