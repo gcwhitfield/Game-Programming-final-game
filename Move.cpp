@@ -4,7 +4,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 #define ERROR_F 0.000001f
-#define MAX_SPEED_H 0.5f
+#define MAX_SPEED_H 1.5f
+#define MAX_HEIGHT 15.f
 
 //To do: Test!!!
 
@@ -12,8 +13,8 @@
 
 
 //Updates transform and velocity of cat
+//All code is in CAMERA space
 void PlayMode::updateCat(PlayMode::Keys keys, float elapsed, float gravity) {
-	std::cout << "keys: u d l r s " << keys.up << " " << keys.down << " " << keys.left << " " << keys.right << " " << keys.space << std::endl;
 
 	//Get horizontal keys as an enum just to make the following code cleaner 
 	enum Horizontal {
@@ -21,17 +22,15 @@ void PlayMode::updateCat(PlayMode::Keys keys, float elapsed, float gravity) {
 	};
 	int hori;
 	glm::vec3 offsetCamera = glm::vec3(0.0f, 1.0f, 0.0f);
-	if (keys.left && !keys.right && player.catVelocity.x <= MAX_SPEED_H) {
+	if (keys.left && !keys.right) {
 		hori = horiL;
 	}
-	else if (keys.right && !keys.left && player.catVelocity.x >= -MAX_SPEED_H) {
+	else if (keys.right && !keys.left) {
 		hori = horiR;
 	}
 	else {
 		hori = horiN;
 	}
-
-	std::cout << hori << "hori\n";
 	//Get direction and add to horizontal velocity vector
 	
 
@@ -48,7 +47,7 @@ void PlayMode::updateCat(PlayMode::Keys keys, float elapsed, float gravity) {
 				break;
 			}
 		}
-		else if (keys.up) {
+		else if (!keys.up) {
 			switch (hori) {
 			case(horiL):
 				offsetCamera = glm::vec3(-1.0f, 1.0f, -1.0f);
@@ -78,40 +77,70 @@ void PlayMode::updateCat(PlayMode::Keys keys, float elapsed, float gravity) {
 		}
 
 		if (!keys.space) {
-			std::cout << "here\n";
-			offsetCamera.y = 0.0f;
+			offsetCamera = glm::vec3(0.0f);
+			assert(keys.space || abs(offsetCamera.y) < ERROR_F);
 		}
-		assert(keys.space || offsetCamera.y == 0.0f);
+		assert(keys.space || abs(offsetCamera.y) < ERROR_F);
+
+		float vertInc = 1.5f;
+		offsetCamera.y *= vertInc;
 
 		//Want vertical increase to always be the same, 1.0f, so don't normalize
 
-		//std::cout << " and offset camera " << offsetCamera.x << " " << offsetCamera.y << " " << offsetCamera.z << std::endl;
-		//std::cout << " and vat vel " << player.catVelocity.x << " " << player.catVelocity.y << " " << player.catVelocity.z << std::endl;
-
 		//Find worldspace velocity vector, and update player's velocity with it
-		offsetCamera = player.camera->transform->rotation * offsetCamera;
-		std::swap(offsetCamera.y, offsetCamera.z); //Swap to convert to a worldspace vector
-		player.catVelocity += offsetCamera * glm::vec3(player.flapVelocity);
-		assert(keys.space || offsetCamera.z == 0.0f);
-	
 
-	//X,Z update
+	 
+		player.catVelocity += offsetCamera * glm::vec3(player.flapVelocity);
+		if (player.catVelocity.x >= MAX_SPEED_H) player.catVelocity.x = MAX_SPEED_H;
+		else if (player.catVelocity.x <= -MAX_SPEED_H) player.catVelocity.x = -MAX_SPEED_H;
+		if (player.catVelocity.z >= MAX_SPEED_H) player.catVelocity.z = MAX_SPEED_H;
+		else if (player.catVelocity.z <= -MAX_SPEED_H) player.catVelocity.z = -MAX_SPEED_H;
+
+		  
+		float horizontalInc = 1.5f; 
+		player.posDelt = glm::vec2(horizontalInc * elapsed) * glm::vec2(player.catVelocity.x, player.catVelocity.z); //Affects walkmesh pos onl
+
 	
-		float horizontalInc = 3.f; //We want horizontal speed to be more than vertical speed, but by how much I would need to test
-		player.posDelt = glm::vec3(horizontalInc * elapsed) * glm::vec3(player.catVelocity.x, player.catVelocity.y, 0.0f); //Affects walkmesh pos onl
 
 	//y update
-		float velocity = player.catVelocity.z;
-		if (player.height <= ERROR_F) {
+		float velocity = player.catVelocity.y;
+		if ((player.height <= ERROR_F && !player.grounded) || (player.grounded && !keys.space)) {
 			player.airTime = 0.0f;
 			player.height = 0.0f;
-			player.catVelocity.z = 0.0f;
+			player.catVelocity = glm::vec3(0.f);
+			player.posDelt = glm::vec3(0.f);
+			player.grounded = true;
 		}
 		else {
+			player.grounded = false;
 			player.airTime += elapsed;
 			velocity += gravity * player.airTime;
 		}
 		player.height += velocity * elapsed; //Height is added to the transform only after the walkmesh position is found
-		std::cout << "plyaer height " << player.height << std::endl;
+		if (player.height <= ERROR_F) player.height = 0.0f;
+		if (player.height >= MAX_HEIGHT) {
+			player.height = MAX_HEIGHT;
+			player.catVelocity.y = 0.0f;
+			player.airTime = 0.0f;
+		}
 	
+}
+
+
+void PlayMode::transition(float elapsed, float gravity) {
+	if (player.playerStatus == toHuman) {
+		if (player.height <= ERROR_F) {
+			player.playerStatus = Human;
+		}
+		else {
+			player.fallTime += elapsed;
+			player.height += gravity * player.fallTime * elapsed;
+			if (player.height <= ERROR_F) player.height = 0.0f;
+			player.transform->position.z = player.height;
+			
+		}
+	}
+	else {
+		player.playerStatus = Cat;
+	}
 }
