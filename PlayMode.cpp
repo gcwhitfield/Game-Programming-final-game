@@ -518,12 +518,23 @@ void PlayMode::update(float elapsed)
 	{ // spawn new customers periodically
 		customer_spawn_timer -= elapsed;
 		if (customer_spawn_timer < 0) {
+			std::cout << "A new customer has been spawned!" << std::endl;
 			size_t r = rand() % 100;
 			// the amount of time until the next customer spawns is governed by the 
 			// random variable 'rand_time'. 'rand_time' is uniformly distributed 
 			// between 7 and 17 seconds
 			float rand_time = 7 + 10.0f * (r / (float)100); 
 			customer_spawn_timer = rand_time;
+			scene.transforms.emplace_back();
+			scene.drawables.emplace_back(scene.transforms.back());
+			Scene::Drawable new_customer = scene.drawables.back();
+			new_customer.pipeline = customer_base->pipeline;
+			new_customer.transform->position = customer_spawn_point->position;
+			std::string new_customer_name = "Customer" + std::to_string(customers.size() + 1);
+			Customer c = Customer(new_customer_name, new_customer.transform->position);
+			c.order = new_item().second;
+			customers[c.name] = c;
+			
 		}
 	}
 
