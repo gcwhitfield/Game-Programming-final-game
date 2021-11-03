@@ -90,16 +90,17 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	//create a player camera attached to a child of the player transform:
 	scene.transforms.emplace_back();
 	scene.cameras.emplace_back(&scene.transforms.back());
-	player.camera = &scene.cameras.back();
-	player.camera->fovy = glm::radians(60.0f);
-	player.camera->near = 0.01f;
-	player.camera->transform->parent = player.transform;
+	player.orbitCamera.camera = &scene.cameras.back();
+	player.orbitCamera.camera->fovy = glm::radians(60.0f);
+	player.orbitCamera.camera->near = 0.01f;
+	player.orbitCamera.camera->transform->parent = player.transform;
 
 	//player's eyes are 1.8 units above the ground:
-	player.camera->transform->position = glm::vec3(0.0f, 0.0f, 1.8f);
+	player.orbitCamera.camera->transform->position = glm::vec3(0.0f, 0.0f, 1.8f);
 
 	//rotate camera facing direction (-z) to player facing direction (+y):
-	player.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	player.orbitCamera.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	player.orbitCamera.distance = 5.0f;
 
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
@@ -194,6 +195,13 @@ bool PlayMode::serve_order(){
 		}
 	}
 	return false;
+}
+
+void PlayMode::Player::OrbitCamera::updateCamera(glm::vec3 newPos) {
+	direction = newPos;
+	direction = camera->transform->rotation * glm::vec3(0.0f, 0.0f, -1.0f);
+	camera->transform->position = focalPoint - distance * direction;
+	camera->transform->rotation = -camera->transform->rotation;
 }
 
 bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
@@ -306,18 +314,21 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	{
 		if (SDL_GetRelativeMouseMode() == SDL_TRUE)
 		{
+			SDL_WarpMouseGlobal(window_size.x/2, window_size.y/2); //Allows moust to not get caught on window edge
 			glm::vec2 motion = glm::vec2(
 				evt.motion.xrel / float(window_size.y),
 				-evt.motion.yrel / float(window_size.y));
 			glm::vec3 up = walkmesh->to_world_smooth_normal(player.at);
-			player.transform->rotation = glm::angleAxis(-motion.x * player.camera->fovy, up) * player.transform->rotation;
+			player.transform->rotation = glm::angleAxis(-motion.x * player.orbitCamera.camera->fovy, up) * player.transform->rotation;
 
-			float pitch = glm::pitch(player.camera->transform->rotation);
-			pitch += motion.y * player.camera->fovy;
+			float pitch = glm::pitch(player.orbitCamera.camera->transform->rotation);
+			pitch += motion.y * player.orbitCamera.camera->fovy;
 			//camera looks down -z (basically at the player's feet) when pitch is at zero.
 			pitch = std::min(pitch, 0.95f * 3.1415926f);
 			pitch = std::max(pitch, 0.05f * 3.1415926f);
-			player.camera->transform->rotation = glm::angleAxis(pitch, glm::vec3(1.0f, 0.0f, 0.0f));
+			player.orbitCamera.camera->transform->rotation = glm::angleAxis(pitch, glm::vec3(1.0f, 0.0f, 0.0f));
+
+			player.orbitCamera.updateCamera(player.transform->position);
 
 			return true;
 		}
@@ -531,7 +542,7 @@ void PlayMode::update(float elapsed) {
 void PlayMode::draw(glm::uvec2 const &drawable_size)
 {
 	//update camera aspect ratio for drawable:
-	player.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
+	player.orbitCamera.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 
 	//set up light type and position for lit_color_texture_program:
 	// TODO: consider using the Light(s) in the scene to do this
@@ -548,7 +559,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
 
-	scene.draw(*player.camera);
+	scene.draw(*player.orbitCamera.camera);
 
 	/* In case you are wondering if your walkmesh is lining up with your scene, try:
 	{

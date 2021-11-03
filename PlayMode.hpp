@@ -26,7 +26,7 @@ struct PlayMode : Mode {
 
 	//----- game state -----
 
-	float manager_next_appearance_timer = 14.0f; // seconds
+	float manager_next_appearance_timer = 45.0f; // seconds
 	enum ManagerState {
 		AWAY, 
 		ARRIVING,
@@ -59,9 +59,19 @@ struct PlayMode : Mode {
 		WalkPoint at;
 		//transform is at player's feet and will be yawed by mouse left/right motion:
 		Scene::Transform *transform = nullptr;
-		//camera is at player's head and will be pitched by mouse up/down motion:
-		Scene::Camera *camera = nullptr;
-		Scene::Drawable *drawPlayer;
+
+		//Camera is an orbit camera
+		struct OrbitCamera {
+			Scene::Camera* camera = nullptr;
+			glm::vec3 focalPoint;
+			glm::vec3 direction;
+			float distance = 1.0f;
+
+			void updateCamera(glm::vec3 newPos);
+		};
+
+		OrbitCamera orbitCamera;
+
 
 		glm::vec3 catVelocity = glm::vec3(0.0f); //Current momentum, for cat, mass assumed (but could change in transition)11
 		//Note, velocity is added with each pump, and lost in y over time
