@@ -135,6 +135,9 @@ void PlayMode::transition(float elapsed, float gravity) {
 		else {
 			player.fallTime += elapsed;
 			player.height += gravity * player.fallTime * elapsed;
+			if (player.height <= ERROR_F) player.height = 0.0f;
+			player.transform->position.z = player.height;
+			
 		}
 	}
 	else {

@@ -80,6 +80,7 @@ struct PlayMode : Mode {
 		StarbuckItem bag;
 
 		float fallTime = 0.f;
+		glm::vec2 capturePos;
 
 
 	} player;

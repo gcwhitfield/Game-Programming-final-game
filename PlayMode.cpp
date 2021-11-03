@@ -239,7 +239,10 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			return true;
 		}
 		else if (evt.key.keysym.sym == SDLK_q) {
-			if (player.playerStatus == Cat) player.playerStatus = toHuman;
+			if (player.playerStatus == Cat) {
+				player.playerStatus = toHuman;
+				player.capturePos = glm::vec2(player.transform->position.x, player.transform->position.y);
+			}
 			else if (player.playerStatus == Human) player.playerStatus = toCat;
 			return true;
 		}
@@ -462,9 +465,7 @@ void PlayMode::update(float elapsed) {
 		*/
 	}
 	else {
-		transition(elapsed, gravity);
-		player.transform->position = walkmesh->to_world_point(player.at);
-		player.transform->position = glm::vec3(0.0f, 0.0f, player.height);
+		transition(elapsed, 2*gravity);
 	}
 
 	//reset button press counters:
