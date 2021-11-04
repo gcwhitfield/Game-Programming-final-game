@@ -44,55 +44,6 @@ public:
     ~StarbuckItem() {}
     std::string item_name;
     std::map<std::string, int> recipe;
-
-    /**
-     * Add an item in the receipe map
-     */ 
-    int add_item(std::string item_name){
-        if(this->recipe.find(item_name) != this->recipe.end()){
-            return -1;
-        }
-        this->recipe[item_name] = 0;
-        return 0;
-    }
-
-    /**
-     * Remove an item from the receipe map
-     */ 
-    int remove_item(std::string item_name){
-        if(this->recipe.find(item_name) != this->recipe.end()){
-            this->recipe.erase(item_name);
-            return -1;
-        }
-        return 0;
-    }
-
-    /**
-     * Clear the receipe map.
-     */ 
-    int clear_item(){
-        this->recipe = std::map<std::string, int>();
-        return 0;
-    }
-
-    bool operator==(const StarbuckItem& other){
-        bool res = true;
-        // everything in other is in this
-        for(const auto& item_pair : other.recipe){
-            if(this->recipe.find(item_pair.first) == this->recipe.end()){
-                res = false;
-                return res;
-            }
-        }
-        // everything in this is in other
-        for(const auto& item_pair : this->recipe){
-            if(other.recipe.find(item_pair.first) == other.recipe.end()){
-                res = false;
-                return res;
-            }
-        }
-        return res;
-    }
 };
 
 //real items
