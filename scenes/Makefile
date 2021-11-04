@@ -7,7 +7,7 @@ ifeq ($(UNAME_S),Darwin)
 else ifeq ($(UNAME_S),Linux)
 	BLENDER = ../../blender-2.93.4-linux-x64/blender -y
 else
-	BLENDER = blender
+	BLENDER = D:\Install\Blender\blender.exe
 endif
 
 EXPORT_MESHES=export-meshes.py

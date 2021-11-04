@@ -54,6 +54,10 @@ struct Scene {
 		Drawable(Transform *transform_) : transform(transform_) { assert(transform); }
 		Transform * transform;
 
+<<<<<<< HEAD
+		// if shouldDraw == false, this drawable is not shown
+=======
+>>>>>>> c641c586296426fe1dc9e3d2309271210b26f8a2
 		bool shouldDraw = true;
 
 		//Contains all the data needed to run the OpenGL pipeline:

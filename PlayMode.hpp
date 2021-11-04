@@ -59,6 +59,9 @@ struct PlayMode : Mode {
 		WalkPoint at;
 		//transform is at player's feet and will be yawed by mouse left/right motion:
 		Scene::Transform *transform = nullptr;
+		Scene::Drawable* cat;
+		Scene::Drawable* human;
+		void updateDrawable();
 
 		Scene::Drawable* cat;
 		Scene::Drawable* human;
