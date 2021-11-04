@@ -100,8 +100,6 @@ void Scene::draw(glm::mat4 const &world_to_clip, glm::mat4x3 const &world_to_lig
 		if (pipeline.vao == 0) continue;
 		//skip any drawables that don't contain any vertices:
 		if (pipeline.count == 0) continue;
-		//skip any drawable that has been made invisible
-		if (!drawable.shouldDraw) continue;
 
 
 		//Set shader program:

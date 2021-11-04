@@ -83,7 +83,6 @@ Load<Sound::Sample> manager_footstep_sample(LoadTagDefault, []() -> Sound::Sampl
 
 PlayMode::PlayMode() : scene(*starbucks_scene)
 {
-	while (true);
 	//create a player transform:
 	scene.transforms.emplace_back();
 	player.transform = &scene.transforms.back();
@@ -114,12 +113,6 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 			manager = &d;
 			manager_here_pos = d.transform->position;
 		}
-		else if (str == "Human") {
-			player.human = &d;
-		}
-		else if (str == "Cat") {
-			player.cat = &d;
-		}
 		//store ingredients information and location
 		if(ingredients.find(str) != ingredients.end()){
 			ingredient_transforms[str] = d.transform;
@@ -145,7 +138,6 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 
 	//Orders
 	player.bag.item_name = "bag";
-
 }
 
 PlayMode::~PlayMode()
@@ -170,7 +162,7 @@ bool PlayMode::take_order(){
 	return false;
 }
 bool PlayMode::grab_ingredient(){
-	for(auto &[name, ingredient_transform]: ingredient_transforms){ 
+	for(auto &[name, ingredient_transform]: ingredient_transforms){
 		if(collide(ingredient_transform, player.transform) && // distance close
 			order_status == OrderStatus::Executing//player has an order in hand
 		) 
