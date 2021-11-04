@@ -111,32 +111,45 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 			manager_here_pos = d.transform->position;
 		} 
 		//store ingredients information and location
-		if(ingredients.find(str) != ingredients.end()){
+		else if(ingredients.find(str) != ingredients.end()){
 			ingredient_transforms[str] = d.transform;
 		}
+		// add the "CustomerWaypoint" transforms from the starbucks.blend scene into a 
+		// vector
+		else if (str.find("CustomerWaypoint") < str.size() && str != "Customer") {
+			assert(str != "CustomerBase");
+			assert(str != "Customer");
+			assert(str != "CustomerSpawnPoint");
+			customer_open_waypoints.emplace_back();
+			assert(customer_open_waypoints.size() > 0);
+			customer_open_waypoints.back().position = d.transform->position;
+		}
+		else if (str == "CustomerSpawnPoint" && str != "CustomerBase") {
+			assert(str == "CustomerSpawnPoint");
+			std::cout << "CustomerSpawnPoint has been found" << std::endl;
+			customer_spawn_point = d.transform;
+		}
 		//store customers ingredients information and location
-		if(str != "CustomerBase" && str.length() >= 8 && str.substr(0,8) == "Customer"){
+		else if(str.length() >= 8 && str.substr(0,8) == "Customer" && str != "CustomerBase" && str != "CustomerWaypoint" && str != "CustomerSpawnPoint"){
+			std::cout << str << std::endl;
+			assert(str != "CustomerBase");
+			assert(str != "CustomerWaypoint");
+			assert(str != "CustomerSpawnPoint");
 			auto Cu = Customer(str, d.transform);
 			Cu.order = new_item().second;
 			customers[str] = Cu;
 		}
-		// add the "CustomerWaypoint" transforms from the starbucks.blend scene into a 
-		// vector
-		if (str.find("CustomerWaypoint") < str.size()) {
-			customer_open_waypoints.emplace_back();
-			customer_open_waypoints.back()->position = d.transform->position;
-		}
 		// set the "CustomerBase" and "CustomerSpawnPoint" transforms to their corresponding 
 		// transforms in the starbucks.blend scene
-		if (str == "CustomerBase") {
+		else if (str == "CustomerBase") {
+			assert(str == "CustomerBase");
+			std::cout << "CustomerBase has been found" << std::endl;
 			customer_base = &d;
 		}
-		if (str == "CustomerSpawnPoint") {
-			customer_spawn_point = d.transform;
-		}
 		// the player starts at the location of the "Player" object in the Blender scene
-		if (str == "Player") {
-			std::cout << "Player transform has been found in the blender scene" << std::endl;
+		else if (str == "Player") {
+			assert(str == "Player");
+			// std::cout << "Player transform has been found in the blender scene" << std::endl;
 			player.transform->position = d.transform->position;
 			d.transform->position.y = 100000;
 		}
@@ -145,6 +158,7 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	assert(customer_open_waypoints.size() > 0);
 	assert(customer_occupied_waypoints.size() == 0);
 	assert(customer_base != NULL);
+	assert(customer_spawn_point != NULL);
 	assert(manager != NULL);
 
 	// initialize timer
@@ -526,27 +540,32 @@ void PlayMode::update(float elapsed)
 			float rand_time = 7 + 10.0f * (r / (float)100); 
 			customer_spawn_timer = rand_time;
 			scene.transforms.emplace_back();
-			scene.drawables.emplace_back(scene.transforms.back());
+			scene.drawables.emplace_back(&scene.transforms.back());
 			Scene::Drawable new_customer = scene.drawables.back();
 			new_customer.pipeline = customer_base->pipeline;
 			new_customer.transform->position = customer_spawn_point->position;
 			std::string new_customer_name = "Customer" + std::to_string(customers.size() + 1);
-			Customer c = Customer(new_customer_name, new_customer.transform->position);
+			Customer c = Customer(new_customer_name, new_customer.transform);
 			c.order = new_item().second;
 			customers[c.name] = c;
-			
+
+			// give the customer a waypoint from one of the open waypoints
+			c.waypoint = customer_open_waypoints.back();
+			customer_open_waypoints.pop_back();
+			customer_occupied_waypoints.push_back(c.waypoint);
 		}
 	}
 
 	{ // handle customer behaviour depending on state
 		for(auto &[name, customer] : customers){
 			switch (customer.status) {
+				// customers fly into their seat in 'New' state
 				case Customer::Status::New: {
 					customer.t_new += elapsed;
 					float t = (customer.new_animation_time - customer.t_new) / customer.new_animation_time; 
-					customer.transform->position = customer_spawn_point->position * t + (customer.waypoint->position * (1.0f - t));
+					customer.transform->position = customer_spawn_point->position * t + (customer.waypoint.position * (1.0f - t));
 				} break;
-
+				// customers wait for their order in 'Wait' state
 				case Customer::Status::Wait: {
 					customer.t_wait += elapsed;
 
@@ -557,7 +576,7 @@ void PlayMode::update(float elapsed)
 						customer.status = Customer::Status::Finished;
 					}
 				} break;
-				
+				// customers fly away in 'Finished' state
 				case Customer::Status::Finished: {
 					customer.t_finished += elapsed;
 					float t = (customer.finished_animation_time - customer.t_finished) / customer.finished_animation_time;
