@@ -101,6 +101,7 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	//rotate camera facing direction (-z) to player facing direction (+y):
 	player.orbitCamera.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	player.orbitCamera.distance = 5.0f;
+	player.orbitCamera.updateCamera(player.transform->position);
 
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
