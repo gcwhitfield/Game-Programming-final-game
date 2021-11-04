@@ -1,3 +1,4 @@
+
 #include "PlayMode.hpp"
 #include "gl_errors.hpp"
 
@@ -19,6 +20,19 @@ void PlayMode::Player::updateDrawable() {
 		human->shouldDraw = false;
 	}
 	else{
+		cat->shouldDraw = false;
+		human->shouldDraw = true;
+	}
+}
+
+void PlayMode::Player::updateDrawable() {
+	if (playerStatus == Cat || playerStatus == toHuman) {
+		cat->transform->position = transform->position;
+		cat->shouldDraw = true;
+		human->shouldDraw = false;
+	}
+	else{
+		human->transform->position = transform->position;
 		cat->shouldDraw = false;
 		human->shouldDraw = true;
 	}
