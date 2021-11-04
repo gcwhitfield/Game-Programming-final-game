@@ -60,6 +60,10 @@ struct PlayMode : Mode {
 		//transform is at player's feet and will be yawed by mouse left/right motion:
 		Scene::Transform *transform = nullptr;
 
+		Scene::Drawable* cat;
+		Scene::Drawable* human;
+		void updateDrawable();
+
 		//Camera is an orbit camera
 		struct OrbitCamera {
 			Scene::Camera* camera = nullptr;
