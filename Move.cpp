@@ -107,8 +107,8 @@ void PlayMode::updateCat(PlayMode::Keys keys, float elapsed, float gravity) {
 		else if (player.catVelocity.z <= -MAX_SPEED_H) player.catVelocity.z = -MAX_SPEED_H;
 
 		  
-		float horizontalInc = 1.5f; 
-		player.posDelt = glm::vec2(horizontalInc * elapsed) * glm::vec2(player.catVelocity.x, player.catVelocity.z); //Affects walkmesh pos onl
+		float horizontalVelocity = 2.5; //  1.5f; 
+		player.posDelt = glm::vec2(horizontalVelocity * elapsed) * glm::vec2(player.catVelocity.x, player.catVelocity.z); //Affects walkmesh pos onl
 
 	
 
