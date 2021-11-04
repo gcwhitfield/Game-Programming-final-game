@@ -11,6 +11,16 @@
 
 //Move walk mesh code over to move
 
+void PlayMode::Player::updateDrawable() {
+	if (playerStatus == Cat || playerStatus == toHuman) {
+		cat->shouldDraw = true;
+		human->shouldDraw = false;
+	}
+	else{
+		cat->shouldDraw = false;
+		human->shouldDraw = true;
+	}
+}
 
 //Updates transform and velocity of cat
 //All code is in CAMERA space
