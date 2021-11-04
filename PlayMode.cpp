@@ -132,9 +132,9 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	}
 
 	// initialize timer
-	game_state.game_timer = game_state.day_period_time;
+	state.game_timer = state.day_period_time;
 	// TODO: mechanism of setting revenue goal
-	game_state.goal = 100;
+	state.goal = 100;
 
 	//Orders
 	player.bag.item_name = "bag";
@@ -161,24 +161,36 @@ bool PlayMode::take_order(){
 	}
 	return false;
 }
+
+/**
+ * If this item not in bag, add it in the bag.
+ * If this item already in bag, remove this item from bag.
+ */ 
 bool PlayMode::grab_ingredient(){
 	for(auto &[name, ingredient_transform]: ingredient_transforms){
 		if(collide(ingredient_transform, player.transform) && // distance close
 			order_status == OrderStatus::Executing//player has an order in hand
 		) 
 		{
-			player.bag.recipe[name] ++;
+			if(player.bag.add_item(name) != 0){
+				player.bag.remove_item(name);
+			}
 		}
 	}
 	return false;
 }
+
+/**
+ * The order and the bag must totally match.
+ * After the order is served, the whole bag is cleared.
+ */ 
 bool PlayMode::serve_order(){
 	for(auto &[name, customer] : customers){
 		
 		if(collide(customer.transform, player.transform) && // distance close
 			customer.status == Customer::Status::Wait && //customer is waiting
-			customer.order.item_name == player.cur_order.item_name &&//the order match
-			player.cur_order < player.bag // actually has all the correct ingredient
+			customer.order.item_name == player.cur_order.item_name &&//the order name match
+			player.cur_order == player.bag // actually has all the correct ingredient
 		) 
 		{
 			//serve the order
@@ -186,10 +198,13 @@ bool PlayMode::serve_order(){
 			customer.status = Customer::Status::Finished;
 			order_status = OrderStatus::Empty;
 			order_message = std::string("Succeeded in serving : ") + customer.order.item_name + "!";
-			//
-			game_state.score += 50;
-			//
-			
+			// increase score
+			state.score += 50;
+			// clear player bag, because order is served
+			player.bag.clear_item();
+			// also clear the last served order
+			player.cur_order.clear_item();
+
 			return true;
 		}
 	}
@@ -338,22 +353,22 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 
 void PlayMode::update(float elapsed) {
 	// win and lose
-	if (game_state.playing == won || game_state.playing == lost)
+	if (state.playing == won || state.playing == lost)
 	{
 		return;
 	}
 	// global timer count down
-	game_state.game_timer -= elapsed;
+	state.game_timer -= elapsed;
 	// win loss condition
-	if (game_state.game_timer <= 0.0f)
+	if (state.game_timer <= 0.0f)
 	{
-		if (game_state.score >= game_state.goal)
+		if (state.score >= state.goal)
 		{
-			game_state.playing = won;
+			state.playing = won;
 		}
 		else
 		{
-			game_state.playing = lost;
+			state.playing = lost;
 		}
 		return;
 	}
@@ -361,7 +376,7 @@ void PlayMode::update(float elapsed) {
 	{
 		if (manager_state == HERE && player.playerStatus == Cat)
 		{
-			game_state.playing = lost;
+			state.playing = lost;
 			return;
 		}
 	}
@@ -621,24 +636,24 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 		}
 		// draw score
 		{
-			draw_text("Score: " + std::to_string(game_state.score), 
+			draw_text("Score: " + std::to_string(state.score), 
 						glm::vec3(-aspect + 3.0f + 0.1f * H, -0.2f + 1.0f - 0.1f * H, 0.0f));
 		}
 
 		// draw goal
 		{
-			draw_text("Goal: " + std::to_string(game_state.goal), 
+			draw_text("Goal: " + std::to_string(state.goal), 
 						glm::vec3(-aspect + 3.0f + 0.1f * H, -0.1f + 1.0f - 0.1f * H, 0.0));
 		}
 
 		// draw timer
 		{
-			draw_text("Remain Time: " + std::to_string((int)(game_state.game_timer + 0.5f)),
+			draw_text("Remain Time: " + std::to_string((int)(state.game_timer + 0.5f)),
 							glm::vec3(-0.05f + 0.1f * H, -0.1f + 1.0f - 0.1f * H, 0.0));
 		}
 
 		// game state display
-		switch (game_state.playing)
+		switch (state.playing)
 		{
 		case ongoing:
 		{
@@ -667,23 +682,31 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 		}
 
 		// manager state display
+		auto show_current_state = [&](){
+			if(player.playerStatus == Human) return std::string("Human");
+			else if (player.playerStatus == Cat) return std::string("Cat");
+			else if (player.playerStatus == toCat) return std::string("toCat");
+			return std::string("toHuman");
+		};
 		switch (manager_state)
 		{
 		case AWAY:
 		{
+			draw_text("Currently: " + show_current_state(),
+							glm::vec3(-aspect + 0.1f * H, 0.25 + -1.0 + 0.1f * H, 0.0));
 		}
 		break;
 
 		case ARRIVING:
 		{
-			draw_text("The manager is arriving soon!",
+			draw_text("The manager is arriving soon! Currently: " + show_current_state(),
 							glm::vec3(-aspect + 0.1f * H, 0.25 + -1.0 + 0.1f * H, 0.0));
 		}
 		break;
 
 		case HERE:
 		{
-			draw_text("THE MANAGER IS HERE!",
+			draw_text("THE MANAGER IS HERE! Currently: " + show_current_state(),
 							glm::vec3(-aspect + 0.1f * H, 0.25 + -1.0 + 0.1f * H, 0.0));
 		}
 		break;
