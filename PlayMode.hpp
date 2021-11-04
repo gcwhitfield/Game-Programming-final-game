@@ -26,7 +26,7 @@ struct PlayMode : Mode {
 
 	//----- game state -----
 
-	float manager_next_appearance_timer = 45.0f; // seconds
+	float manager_next_appearance_timer = 15.0f; // seconds
 	enum ManagerState {
 		AWAY, 
 		ARRIVING,
@@ -59,6 +59,9 @@ struct PlayMode : Mode {
 		WalkPoint at;
 		//transform is at player's feet and will be yawed by mouse left/right motion:
 		Scene::Transform *transform = nullptr;
+		Scene::Drawable* cat;
+		Scene::Drawable* human;
+		void updateDrawable();
 
 		//Camera is an orbit camera
 		struct OrbitCamera {
@@ -107,12 +110,12 @@ struct PlayMode : Mode {
 		int goal = 0;	// the goal score need to achieve before game_timer times out
 		float stablization = 1.0f;
 		float game_timer = 0.0f;
-		const float day_period_time = 600.0f; // set 60s for a day in game, temporarily
+		const float day_period_time = 60.0f; // set 60s for a day in game, temporarily
 		float time = 0.0f;
 		float flapTimer = 0.00f;
 		float flapCooldown = 0.1f;//In seconds
 		PlayState playing = ongoing; 
-	} game_state;
+	} ;
 
 	//struct customers 
 	struct Customer{
