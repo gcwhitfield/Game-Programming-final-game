@@ -70,7 +70,7 @@ struct PlayMode : Mode {
 			glm::vec3 direction;
 			float distance = 1.0f;
 
-			void updateCamera(glm::vec3 newPos);
+			void updateCamera();
 		};
 
 		OrbitCamera orbitCamera;
@@ -83,7 +83,7 @@ struct PlayMode : Mode {
 		float airTime = 0.0f; //Time since last landed
 		bool grounded = true;
 
-		Status playerStatus = Cat;
+		Status playerStatus = Human;
 		glm::vec3 humanAcc = glm::vec3(0.0f);
 		WalkPoint walkpoint;
 		glm::vec2 posDelt;

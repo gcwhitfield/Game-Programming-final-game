@@ -102,7 +102,7 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	//rotate camera facing direction (-z) to player facing direction (+y):
 	player.orbitCamera.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	player.orbitCamera.distance = 5.0f;
-	player.orbitCamera.updateCamera(player.transform->position);
+	player.orbitCamera.updateCamera();
 
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
@@ -215,9 +215,9 @@ bool PlayMode::serve_order(){
 	return false;
 }
 
-void PlayMode::Player::OrbitCamera::updateCamera(glm::vec3 newPos) {
-	direction = newPos;
-	direction = camera->transform->rotation * glm::vec3(0.0f, 0.0f, -1.0f);
+void PlayMode::Player::OrbitCamera::updateCamera() {
+	focalPoint = glm::vec3(0.0f);
+	direction = glm::normalize( camera->transform->rotation* glm::vec3(0.0f, 0.0f, -1.0f));
 	camera->transform->position = focalPoint - distance * direction;
 	camera->transform->rotation = -camera->transform->rotation;
 }
@@ -346,7 +346,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			pitch = std::max(pitch, 0.05f * 3.1415926f);
 			player.orbitCamera.camera->transform->rotation = glm::angleAxis(pitch, glm::vec3(1.0f, 0.0f, 0.0f));
 
-			player.orbitCamera.updateCamera(player.transform->position);
+			player.orbitCamera.updateCamera();
 
 			return true;
 		}
@@ -356,7 +356,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 }
 
 void PlayMode::update(float elapsed) {
-	std::cout << "player transform" << player.orbitCamera.camera->transform->position.x << " " << player.orbitCamera.camera->transform->position.y << " " << player.orbitCamera.camera->transform->position.z << " " << std::endl;
+	//std::cout << "player transform" << player.orbitCamera.camera->transform->position.x << " " << player.orbitCamera.camera->transform->position.y << " " << player.orbitCamera.camera->transform->position.z << " " << std::endl;
 	// win and lose
 	if (state.playing == won || state.playing == lost)
 	{
