@@ -86,6 +86,7 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	//create a player transform:
 	scene.transforms.emplace_back();
 	player.transform = &scene.transforms.back();
+	player.transform->position = glm::vec3(-1.0f, 1.0f, 0.1f);
 
 	//create a player camera attached to a child of the player transform:
 	scene.transforms.emplace_back();
@@ -94,9 +95,11 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	player.orbitCamera.camera->fovy = glm::radians(60.0f);
 	player.orbitCamera.camera->near = 0.01f;
 	player.orbitCamera.camera->transform->parent = player.transform;
+	
 
 	//player's eyes are 1.8 units above the ground:
 	player.orbitCamera.camera->transform->position = glm::vec3(0.0f, 0.0f, 1.8f);
+
 
 	//rotate camera facing direction (-z) to player facing direction (+y):
 	player.orbitCamera.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -108,11 +111,19 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	for (auto &d : scene.drawables)
 	{
 		std::string &str = d.transform->name;
+		std::cout << "mesh name: " << str << std::endl;
 		if (str == "Manager")
 		{
 			manager = &d;
 			manager_here_pos = d.transform->position;
 		}
+		else if (str == "Human") {
+			player.human = &d;
+		}
+		else if (str == "Cat") {
+			player.cat = &d;
+		}
+
 		//store ingredients information and location
 		if(ingredients.find(str) != ingredients.end()){
 			ingredient_transforms[str] = d.transform;
@@ -130,6 +141,12 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 		std::cerr << "Could not find manager mesh in scene. Aborting..." << std::endl;
 		throw;
 	}
+
+	// set cat/human transform parent
+	player.cat->transform->parent = player.transform;
+	player.human->transform->parent = player.transform;
+	player.cat->transform->position = glm::vec3(0.0f, 0.0f, 0.44f);
+	player.human->transform->position = glm::vec3(0.0f, 0.0f, 1.34f);
 
 	// initialize timer
 	state.game_timer = state.day_period_time;
@@ -352,6 +369,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 }
 
 void PlayMode::update(float elapsed) {
+	std::cout << "player transform" << player.orbitCamera.camera->transform->position.x << " " << player.orbitCamera.camera->transform->position.y << " " << player.orbitCamera.camera->transform->position.z << " " << std::endl;
 	// win and lose
 	if (state.playing == won || state.playing == lost)
 	{
@@ -551,6 +569,9 @@ void PlayMode::update(float elapsed) {
 		}
 	}
 	space.downs = 0;
+
+	//update drawable
+	player.updateDrawable();
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size)
@@ -573,6 +594,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
 
+	// update drawable
 	scene.draw(*player.orbitCamera.camera);
 
 	/* In case you are wondering if your walkmesh is lining up with your scene, try:
@@ -672,7 +694,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 		break;
 		case lost:
 		{
-			draw_text("You are fired! Press R to restart",
+			draw_text("You are fired!",
 							glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0));
 		}
 		break;
