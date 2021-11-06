@@ -100,8 +100,8 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	player.orbitCamera.camera->transform->position = glm::vec3(0.0f, 0.0f, 1.8f);
 
 	//rotate camera facing direction (-z) to player facing direction (+y):
-	player.orbitCamera.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	player.orbitCamera.distance = 5.0f;
+	player.orbitCamera.camera->transform->rotation = glm::angleAxis(glm::radians(75.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	//
 	player.orbitCamera.updateCamera();
 
 	//start player walking at nearest walk point:
@@ -339,12 +339,20 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			glm::vec3 up = walkmesh->to_world_smooth_normal(player.at);
 			player.transform->rotation = glm::angleAxis(-motion.x * player.orbitCamera.camera->fovy, up) * player.transform->rotation;
 
-			float pitch = glm::pitch(player.orbitCamera.camera->transform->rotation);
-			pitch += motion.y * player.orbitCamera.camera->fovy;
+			
+			player.orbitCamera.truePitch += motion.y * player.orbitCamera.camera->fovy;
 			//camera looks down -z (basically at the player's feet) when pitch is at zero.
-			pitch = std::min(pitch, 0.95f * 3.1415926f);
-			pitch = std::max(pitch, 0.05f * 3.1415926f);
-			player.orbitCamera.camera->transform->rotation = glm::angleAxis(pitch, glm::vec3(1.0f, 0.0f, 0.0f));
+			player.orbitCamera.truePitch = std::min(player.orbitCamera.truePitch, 0.95f * 3.1415926f);
+			player.orbitCamera.truePitch = std::max(player.orbitCamera.truePitch, 0.05f * 3.1415926f);
+			player.orbitCamera.curPitch = player.orbitCamera.truePitch;
+			if (player.height <= player.orbitCamera.distance + ERROR_F) { //Clipping check
+				//Get minimum angle
+				float theta = asin(player.height / player.orbitCamera.distance);
+				if (player.orbitCamera.curPitch >= PI_F / 2.f + theta - ERROR_F) {
+					player.orbitCamera.curPitch = PI_F / 2.f + theta;
+				}
+			}
+			player.orbitCamera.camera->transform->rotation = glm::angleAxis(player.orbitCamera.curPitch, glm::vec3(1.0f, 0.0f, 0.0f));
 
 			player.orbitCamera.updateCamera();
 
@@ -356,7 +364,20 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 }
 
 void PlayMode::update(float elapsed) {
-	//std::cout << "player transform" << player.orbitCamera.camera->transform->position.x << " " << player.orbitCamera.camera->transform->position.y << " " << player.orbitCamera.camera->transform->position.z << " " << std::endl;
+
+	
+	//Camera update
+	
+	if (player.height <= player.orbitCamera.distance + ERROR_F) { //Clipping check
+				//Get minimum angle
+		float theta = asin(player.height / player.orbitCamera.distance);
+		if (player.orbitCamera.truePitch >= PI_F / 2.f + theta - ERROR_F - 0.1f) {
+			player.orbitCamera.curPitch = PI_F / 2.f + theta - 0.1f;
+			player.orbitCamera.camera->transform->rotation = glm::angleAxis(player.orbitCamera.curPitch, glm::vec3(1.0f, 0.0f, 0.0f));
+			player.orbitCamera.updateCamera();
+		}
+	}
+
 	// win and lose
 	if (state.playing == won || state.playing == lost)
 	{
@@ -381,8 +402,8 @@ void PlayMode::update(float elapsed) {
 	{
 		if (manager_state == HERE && player.playerStatus == Cat)
 		{
-			state.playing = lost;
-			return;
+			//state.playing = lost;
+			//return;
 		}
 	}
 

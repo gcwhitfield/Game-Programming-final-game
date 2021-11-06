@@ -11,6 +11,8 @@
 #include <deque>
 #include <random>
 
+#define PI_F 3.1415926f
+
 
 
 
@@ -26,13 +28,13 @@ struct PlayMode : Mode {
 
 	//----- game state -----
 
-	float manager_next_appearance_timer = 15.0f; // seconds
+	float manager_next_appearance_timer = 10.0f; // seconds
 	enum ManagerState {
 		AWAY, 
 		ARRIVING,
 		HERE
 	} manager_state = AWAY;
-	float manager_stay_timer = 2.0f; // seconds
+	float manager_stay_timer = 7.5f; // seconds
 	std::shared_ptr< Sound::PlayingSample > manager_footstep_sfx;
 	float manager_footstep_volume_max = 1.0f;
 	float manager_footstep_volume_min = 0.1f;
@@ -68,7 +70,9 @@ struct PlayMode : Mode {
 			Scene::Camera* camera = nullptr;
 			glm::vec3 focalPoint;
 			glm::vec3 direction;
-			float distance = 1.0f;
+			float distance = 8.0f;
+			float truePitch = 75.0f*2*PI_F/360.f;
+			float curPitch = 75.0f * 2 * PI_F / 360.f;
 
 			void updateCamera();
 		};
