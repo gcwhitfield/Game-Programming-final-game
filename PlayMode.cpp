@@ -188,6 +188,7 @@ bool PlayMode::grab_ingredient(){
 	}
 	return false;
 }
+
 bool PlayMode::serve_order(){
 	for(auto &[name, customer] : customers){
 		
@@ -291,6 +292,11 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		else if (evt.key.keysym.sym == SDLK_c) // grab ingredient
 		{
 			grab_ingredient();
+			return true;
+		}
+		else if (evt.key.keysym.sym == SDLK_v) // clear all of the ingredients from bag
+		{
+			player.bag.clear_item();
 			return true;
 		}
 	}

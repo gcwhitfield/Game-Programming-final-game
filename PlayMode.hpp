@@ -10,6 +10,7 @@
 #include <vector>
 #include <deque>
 #include <random>
+#include "Move.hpp"
 
 #define PI_F 3.1415926f
 
