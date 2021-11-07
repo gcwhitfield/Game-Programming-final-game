@@ -13,6 +13,8 @@
 
 #include <random>
 #include <iostream>
+#define ERROR_F 0.000001f
+
 //generate a new_item from the item list randomly
 std::pair<std::string, StarbuckItem> new_item()
 {
@@ -84,20 +86,23 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	//create a player transform:
 	scene.transforms.emplace_back();
 	player.transform = &scene.transforms.back();
+	player.transform->position = glm::vec3(-1.0f, 1.0f, 0.1f);
 
 	//create a player camera attached to a child of the player transform:
 	scene.transforms.emplace_back();
 	scene.cameras.emplace_back(&scene.transforms.back());
-	player.camera = &scene.cameras.back();
-	player.camera->fovy = glm::radians(60.0f);
-	player.camera->near = 0.01f;
-	player.camera->transform->parent = player.transform;
+	player.orbitCamera.camera = &scene.cameras.back();
+	player.orbitCamera.camera->fovy = glm::radians(60.0f);
+	player.orbitCamera.camera->near = 0.01f;
+	player.orbitCamera.camera->transform->parent = player.transform;
 
 	//player's eyes are 1.8 units above the ground:
-	player.camera->transform->position = glm::vec3(0.0f, 0.0f, 1.8f);
+	player.orbitCamera.camera->transform->position = glm::vec3(0.0f, 0.0f, 1.8f);
 
 	//rotate camera facing direction (-z) to player facing direction (+y):
-	player.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	player.orbitCamera.camera->transform->rotation = glm::angleAxis(glm::radians(75.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	//
+	player.orbitCamera.updateCamera();
 
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
@@ -109,7 +114,13 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 		{
 			manager = &d;
 			manager_here_pos = d.transform->position;
-		} 
+		}
+		else if (str == "Human") {
+			player.human = &d;
+		}
+		else if (str == "Cat") {
+			player.cat = &d;
+		}
 		//store ingredients information and location
 		else if(ingredients.find(str) != ingredients.end()){
 			ingredient_transforms[str] = d.transform;
@@ -164,11 +175,17 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	assert(customer_base != NULL);
 	assert(customer_spawn_point != NULL);
 	assert(manager != NULL);
+	
+	// set cat/human transform parent
+	player.cat->transform->parent = player.transform;
+	player.human->transform->parent = player.transform;
+	player.cat->transform->position = glm::vec3(0.0f, 0.0f, 0.44f);
+	player.human->transform->position = glm::vec3(0.0f, 0.0f, 1.34f);
 
 	// initialize timer
-	game_state.game_timer = game_state.day_period_time;
+	state.game_timer = state.day_period_time;
 	// TODO: mechanism of setting revenue goal
-	game_state.goal = 100;
+	state.goal = 100;
 
 	//Orders
 	player.bag.item_name = "bag";
@@ -201,18 +218,21 @@ bool PlayMode::grab_ingredient(){
 			order_status == OrderStatus::Executing//player has an order in hand
 		) 
 		{
-			player.bag.recipe[name] ++;
+			if(player.bag.add_item(name) != 0){
+				player.bag.remove_item(name);
+			}
 		}
 	}
 	return false;
 }
+
 bool PlayMode::serve_order(){
 	for(auto &[name, customer] : customers){
 		
 		if(collide(customer.transform, player.transform) && // distance close
 			customer.status == Customer::Status::Wait && //customer is waiting
 			customer.order.item_name == player.cur_order.item_name &&//the order match
-			player.cur_order < player.bag // actually has all the correct ingredient
+			player.cur_order == player.bag // actually has all the correct ingredient
 		) 
 		{
 			//serve the order
@@ -220,14 +240,24 @@ bool PlayMode::serve_order(){
 			customer.status = Customer::Status::Finished;
 			order_status = OrderStatus::Empty;
 			order_message = std::string("Succeeded in serving : ") + customer.order.item_name + "!";
-			//
-			game_state.score += 50;
-			//
+			// increase score
+			state.score += 50;
+			// clear player bag, because order is served
+			player.bag.clear_item();
+			// also clear the last served order
+			player.cur_order.clear_item();
 			
 			return true;
 		}
 	}
 	return false;
+}
+
+void PlayMode::Player::OrbitCamera::updateCamera() {
+	focalPoint = glm::vec3(0.0f);
+	direction = glm::normalize( camera->transform->rotation* glm::vec3(0.0f, 0.0f, -1.0f));
+	camera->transform->position = focalPoint - distance * direction;
+	camera->transform->rotation = -camera->transform->rotation;
 }
 
 bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
@@ -264,6 +294,22 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			down.pressed = true;
 			return true;
 		}
+		else if (evt.key.keysym.sym == SDLK_SPACE) {
+			if (state.flapTimer > state.flapCooldown && !space.pressed) {
+				space.downs += 1;
+				space.pressed = true;
+				state.flapTimer = 0.0f;
+			}
+			return true;
+		}
+		else if (evt.key.keysym.sym == SDLK_q) {
+			if (player.playerStatus == Cat) {
+				player.playerStatus = toHuman;
+				player.capturePos = glm::vec2(player.transform->position.x, player.transform->position.y);
+			}
+			else if (player.playerStatus == Human) player.playerStatus = toCat;
+			return true;
+		}
 		else if (evt.key.keysym.sym == SDLK_r)
 		{
 			// TODO: restart the game
@@ -283,6 +329,11 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		else if (evt.key.keysym.sym == SDLK_c) // grab ingredient
 		{
 			grab_ingredient();
+			return true;
+		}
+		else if (evt.key.keysym.sym == SDLK_v) // clear all of the ingredients from bag
+		{
+			player.bag.clear_item();
 			return true;
 		}
 	}
@@ -307,6 +358,9 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		{
 			down.pressed = false;
 			return true;
+		} else if (evt.key.keysym.sym == SDLK_SPACE) {
+			space.pressed = false;
+			return true;
 		}
 	}
 	else if (evt.type == SDL_MOUSEBUTTONDOWN)
@@ -321,18 +375,29 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	{
 		if (SDL_GetRelativeMouseMode() == SDL_TRUE)
 		{
+			SDL_WarpMouseGlobal(window_size.x/2, window_size.y/2); //Allows moust to not get caught on window edge
 			glm::vec2 motion = glm::vec2(
 				evt.motion.xrel / float(window_size.y),
 				-evt.motion.yrel / float(window_size.y));
 			glm::vec3 up = walkmesh->to_world_smooth_normal(player.at);
-			player.transform->rotation = glm::angleAxis(-motion.x * player.camera->fovy, up) * player.transform->rotation;
+			player.transform->rotation = glm::angleAxis(-motion.x * player.orbitCamera.camera->fovy, up) * player.transform->rotation;
 
-			float pitch = glm::pitch(player.camera->transform->rotation);
-			pitch += motion.y * player.camera->fovy;
+			
+			player.orbitCamera.truePitch += motion.y * player.orbitCamera.camera->fovy;
 			//camera looks down -z (basically at the player's feet) when pitch is at zero.
-			pitch = std::min(pitch, 0.95f * 3.1415926f);
-			pitch = std::max(pitch, 0.05f * 3.1415926f);
-			player.camera->transform->rotation = glm::angleAxis(pitch, glm::vec3(1.0f, 0.0f, 0.0f));
+			player.orbitCamera.truePitch = std::min(player.orbitCamera.truePitch, 0.95f * 3.1415926f);
+			player.orbitCamera.truePitch = std::max(player.orbitCamera.truePitch, 0.05f * 3.1415926f);
+			player.orbitCamera.curPitch = player.orbitCamera.truePitch;
+			if (player.height <= player.orbitCamera.distance + ERROR_F) { //Clipping check
+				//Get minimum angle
+				float theta = asin(player.height / player.orbitCamera.distance);
+				if (player.orbitCamera.curPitch >= PI_F / 2.f + theta - ERROR_F) {
+					player.orbitCamera.curPitch = PI_F / 2.f + theta;
+				}
+			}
+			player.orbitCamera.camera->transform->rotation = glm::angleAxis(player.orbitCamera.curPitch, glm::vec3(1.0f, 0.0f, 0.0f));
+
+			player.orbitCamera.updateCamera();
 
 			return true;
 		}
@@ -341,28 +406,38 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	return false;
 }
 
-void PlayMode::update(float elapsed)
-{
+void PlayMode::update(float elapsed) {
 
-	// TODO: game menu
+	
+	//Camera update
+	
+	if (player.height <= player.orbitCamera.distance + ERROR_F) { //Clipping check
+				//Get minimum angle
+		float theta = asin(player.height / player.orbitCamera.distance);
+		if (player.orbitCamera.truePitch >= PI_F / 2.f + theta - ERROR_F - 0.1f) {
+			player.orbitCamera.curPitch = PI_F / 2.f + theta - 0.1f;
+			player.orbitCamera.camera->transform->rotation = glm::angleAxis(player.orbitCamera.curPitch, glm::vec3(1.0f, 0.0f, 0.0f));
+			player.orbitCamera.updateCamera();
+		}
+	}
 
 	// win and lose
-	if (game_state.playing == won || game_state.playing == lost)
+	if (state.playing == won || state.playing == lost)
 	{
 		return;
 	}
 	// global timer count down
-	game_state.game_timer -= elapsed;
+	state.game_timer -= elapsed;
 	// win loss condition
-	if (game_state.game_timer <= 0.0f)
+	if (state.game_timer <= 0.0f)
 	{
-		if (game_state.score >= game_state.goal)
+		if (state.score >= state.goal)
 		{
-			game_state.playing = won;
+			state.playing = won;
 		}
 		else
 		{
-			game_state.playing = lost;
+			state.playing = lost;
 		}
 		return;
 	}
@@ -370,28 +445,39 @@ void PlayMode::update(float elapsed)
 	{
 		if (manager_state == HERE && player.playerStatus == Cat)
 		{
-			game_state.playing = lost;
-			return;
+			//state.playing = lost;
+			//return;
 		}
 	}
 
-	//player walking:
-	{
-		//combine inputs into a move:
-		constexpr float PlayerSpeed = 3.0f;
-		glm::vec2 move = glm::vec2(0.0f);
-		if (left.pressed && !right.pressed)
-			move.x = -1.0f;
-		if (!left.pressed && right.pressed)
-			move.x = 1.0f;
-		if (down.pressed && !up.pressed)
-			move.y = -1.0f;
-		if (!down.pressed && up.pressed)
-			move.y = 1.0f;
+	state.flapTimer += elapsed;
 
-		//make it so that moving diagonally doesn't go faster:
-		if (move != glm::vec2(0.0f))
-			move = glm::normalize(move) * PlayerSpeed * elapsed;
+	//player walking:
+	glm::vec2 move = glm::vec2(0.0f);
+	//combine inputs into a move:
+	constexpr float PlayerSpeed = 3.0f;
+	if (left.pressed && !right.pressed) move.x = -1.0f;
+	if (!left.pressed && right.pressed) move.x = 1.0f;
+	if (down.pressed && !up.pressed) move.y = -1.0f;
+	if (!down.pressed && up.pressed) move.y = 1.0f;
+	
+	//make it so that moving diagonally doesn't go faster:
+	if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
+
+	if (player.playerStatus != toCat && player.playerStatus != toHuman) {
+
+		if (player.playerStatus == Cat) {
+			Keys sendKeys;
+			sendKeys.space = (space.downs > 0);
+			sendKeys.up = (up.pressed);
+			sendKeys.down = (down.pressed);
+			sendKeys.left = (left.pressed);
+			sendKeys.right = (right.pressed);
+			updateCat(sendKeys, elapsed, gravity);
+			if (player.height >= ERROR_F)
+				move = player.posDelt;
+
+		}
 
 		//get move in world coordinate system:
 		glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
@@ -423,12 +509,11 @@ void PlayMode::update(float elapsed)
 				//rotate step to follow surface:
 				remain = rotation * remain;
 			}
-			else
-			{
+			else {
 				//ran into a wall, bounce / slide along it:
-				glm::vec3 const &a = walkmesh->vertices[player.at.indices.x];
-				glm::vec3 const &b = walkmesh->vertices[player.at.indices.y];
-				glm::vec3 const &c = walkmesh->vertices[player.at.indices.z];
+				glm::vec3 const& a = walkmesh->vertices[player.at.indices.x];
+				glm::vec3 const& b = walkmesh->vertices[player.at.indices.y];
+				glm::vec3 const& c = walkmesh->vertices[player.at.indices.z];
 				glm::vec3 along = glm::normalize(b - a);
 				glm::vec3 normal = glm::normalize(glm::cross(b - a, c - a));
 				glm::vec3 in = glm::cross(normal, along);
@@ -440,16 +525,14 @@ void PlayMode::update(float elapsed)
 					//bounce off of the wall:
 					remain += (-1.25f * d) * in;
 				}
-				else
-				{
+				else {
 					//if it's just pointing along the edge, bend slightly away from wall:
 					remain += 0.01f * d * in;
 				}
 			}
 		}
 
-		if (remain != glm::vec3(0.0f))
-		{
+		if (remain != glm::vec3(0.0f)) {
 			std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
 		}
 
@@ -464,6 +547,7 @@ void PlayMode::update(float elapsed)
 			);
 			player.transform->rotation = glm::normalize(adjust * player.transform->rotation);
 		}
+		player.transform->position += glm::vec3(0.0f, 0.0f, player.height);
 
 		/*
 		glm::mat4x3 frame = camera->transform->make_local_to_parent();
@@ -473,6 +557,9 @@ void PlayMode::update(float elapsed)
 
 		camera->transform->position += move.x * right + move.y * forward;
 		*/
+	}
+	else {
+		transition(elapsed, 2*gravity);
 	}
 
 	//reset button press counters:
@@ -584,7 +671,7 @@ void PlayMode::update(float elapsed)
 					// the customer gets angry if it waits too longs, score gets deducted
 					if (customer.t_wait > customer.max_wait_time) {
 						std::cout << "Customer [" << customer.name << "] has waited too long :(. Customer is leaving..." << std::endl;
-						game_state.score -= 10; 
+						state.score -= 10; 
 						customer.status = Customer::Status::Finished;
 					}
 
@@ -601,12 +688,17 @@ void PlayMode::update(float elapsed)
 			}
 		}
 	}
+
+	space.downs = 0;
+
+	//update drawable
+	player.updateDrawable();
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size)
 {
 	//update camera aspect ratio for drawable:
-	player.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
+	player.orbitCamera.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 
 	//set up light type and position for lit_color_texture_program:
 	// TODO: consider using the Light(s) in the scene to do this
@@ -623,7 +715,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
 
-	scene.draw(*player.camera);
+	scene.draw(*player.orbitCamera.camera);
 
 	
 
@@ -688,24 +780,24 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 		}
 		// draw score
 		{
-			draw_text("Score: " + std::to_string(game_state.score), 
+			draw_text("Score: " + std::to_string(state.score), 
 						glm::vec3(-aspect + 3.0f + 0.1f * H, -0.2f + 1.0f - 0.1f * H, 0.0f));
 		}
 
 		// draw goal
 		{
-			draw_text("Goal: " + std::to_string(game_state.goal), 
+			draw_text("Goal: " + std::to_string(state.goal), 
 						glm::vec3(-aspect + 3.0f + 0.1f * H, -0.1f + 1.0f - 0.1f * H, 0.0));
 		}
 
 		// draw timer
 		{
-			draw_text("Remain Time: " + std::to_string((int)(game_state.game_timer + 0.5f)),
+			draw_text("Remain Time: " + std::to_string((int)(state.game_timer + 0.5f)),
 							glm::vec3(-0.05f + 0.1f * H, -0.1f + 1.0f - 0.1f * H, 0.0));
 		}
 
 		// game state display
-		switch (game_state.playing)
+		switch (state.playing)
 		{
 		case ongoing:
 		{

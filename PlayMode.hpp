@@ -10,12 +10,16 @@
 #include <vector>
 #include <deque>
 #include <random>
+#include "Move.hpp"
+
+#define PI_F 3.1415926f
 
 #include <unordered_set>
 
 struct PlayMode : Mode {
 	PlayMode();
 	virtual ~PlayMode();
+	
 
 	//functions called by main loop:
 	virtual bool handle_event(SDL_Event const &, glm::uvec2 const &window_size) override;
@@ -26,13 +30,14 @@ struct PlayMode : Mode {
 
 	std::map<std::string, Scene::Drawable> ingredients_drawables;
 
-	float manager_next_appearance_timer = 1.0f; // seconds
+	float manager_next_appearance_timer = 10.0f; // seconds
+
 	enum ManagerState {
 		AWAY, 
 		ARRIVING,
 		HERE
 	} manager_state = AWAY;
-	float manager_stay_timer = 2.0f; // seconds
+	float manager_stay_timer = 7.5f; // seconds
 	std::shared_ptr< Sound::PlayingSample > manager_footstep_sfx;
 	float manager_footstep_volume_max = 1.0f;
 	float manager_footstep_volume_min = 0.1f;
@@ -103,14 +108,14 @@ struct PlayMode : Mode {
 	struct Button {
 		uint8_t downs = 0;
 		uint8_t pressed = 0;
-	} left, right, down, up;
+	} left, right, down, up,space;
 
 	//local copy of the game scene (so code can change it during gameplay):
 	Scene scene;
 
 	//player info:
 	enum Status {
-		Human, Cat
+		Human, Cat, toCat, toHuman
 	};
 	struct Player {
 		Player() {}; // TODO: Implement this
@@ -118,41 +123,78 @@ struct PlayMode : Mode {
 		WalkPoint at;
 		//transform is at player's feet and will be yawed by mouse left/right motion:
 		Scene::Transform *transform = nullptr;
-		//camera is at player's head and will be pitched by mouse up/down motion:
-		Scene::Camera *camera = nullptr;
-		Scene::Drawable *drawPlayer;
-		
-		Status playerStatus = Human;
-		glm::vec3 curDir = glm::vec3(0.0f); //Direction player is currently facing, for cat (differnet then vel vec3)
-		glm::vec3 catVelocity = glm::vec3(0.0f); //Current momentum, for cat, mass assumed (but could change in transition)
-		glm::vec3 humanAcc = glm::vec3(0.0f); 
-		//Note, velocity is added with each pump, and lost in y over time
+		Scene::Drawable* cat;
+		Scene::Drawable* human;
+		void updateDrawable();
 
-		WalkPoint walkpoint;
+		//Camera is an orbit camera
+		struct OrbitCamera {
+			Scene::Camera* camera = nullptr;
+			glm::vec3 focalPoint;
+			glm::vec3 direction;
+			float distance = 8.0f;
+			float truePitch = 75.0f*2*PI_F/360.f;
+			float curPitch = 75.0f * 2 * PI_F / 360.f;
+
+			void updateCamera();
+		};
+
+		OrbitCamera orbitCamera;
+
+
+		glm::vec3 catVelocity = glm::vec3(0.0f); //Current momentum, for cat, mass assumed (but could change in transition)11
+		//Note, velocity is added with each pump, and lost in y over time
 		float height = 0.0f; //0 for human, > 0 for cat
+		float flapVelocity = 1.0f; //What speed should a flap add?
+		float airTime = 0.0f; //Time since last landed
+		bool grounded = true;
+
+		Status playerStatus = Human;
+		glm::vec3 humanAcc = glm::vec3(0.0f);
+		WalkPoint walkpoint;
+		glm::vec2 posDelt;
+		int iter = 0;
 
 		StarbuckItem cur_order;
 		StarbuckItem bag;
+
+		float fallTime = 0.f;
+		glm::vec2 capturePos;
+
+
 	} player;
+	float gravity = -9.81f / 2.f;
 
 	enum PlayState {
 		ongoing, won, lost, menu
-	};
+	};	
+
+
 	struct State //Game state
 	{
 		int score = 0;	// player's total score until now
 		int goal = 0;	// the goal score need to achieve before game_timer times out
 		float stablization = 1.0f;
 		float game_timer = 0.0f;
-		const float day_period_time = 600.0f; // set 60s for a day in game, temporarily
-
-
+		const float day_period_time = 60.0f; // set 60s for a day in game, temporarily
+		float time = 0.0f;
+		float flapTimer = 0.00f;
+		float flapCooldown = 0.1f;//In seconds
 		PlayState playing = ongoing; 
-		//Put order here
-	} game_state;
+	} ;
 
 
 	std::map<std::string, Scene::Transform*> ingredient_transforms;
+
+	State state;
+
+	//Move
+	struct Keys
+	{
+		bool space, up, down, left, right;
+	};
+	void updateCat(Keys keys, float elapsed, float gravity);
+	void transition(float elapsed, float gravity);
 
 
 	//order relevant
