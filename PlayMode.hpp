@@ -92,7 +92,8 @@ struct PlayMode : Mode {
 		enum Status{
 			New,
 			Wait,
-			Finished
+			Finished,
+			Inactive // state used for customers that are no longer in-play
 		};
 		std::string name;
 		Scene::Transform* transform;

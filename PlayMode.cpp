@@ -133,7 +133,7 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 			assert(str != "CustomerSpawnPoint");
 			customer_open_waypoints.emplace_back();
 			assert(customer_open_waypoints.size() > 0);
-			customer_open_waypoints.back().position = d.transform->position;
+			customer_open_waypoints.back() = *(d.transform);
 		}
 		else if (str == "CustomerSpawnPoint" && str != "CustomerBase") {
 			assert(str == "CustomerSpawnPoint");
@@ -657,7 +657,7 @@ void PlayMode::update(float elapsed) {
 					std::cout << "New" << std::endl;
 					customer.t_new += elapsed;
 					float t = (customer.new_animation_time - customer.t_new) / customer.new_animation_time; 
-					customer.transform->position = customer_spawn_point->position * t + (customer.waypoint.position * (1.0f - t));
+					customer.transform->position = customer_spawn_point->position * (1.0f - t) + (customer.waypoint.position * t);
 					if (customer.t_new > customer.new_animation_time) {
 						customer.status = Customer::Status::Wait;
 					}
@@ -683,8 +683,21 @@ void PlayMode::update(float elapsed) {
 					float t = (customer.finished_animation_time - customer.t_finished) / customer.finished_animation_time;
 					glm::vec3 desired_position = customer_spawn_point->position;
 					desired_position.y += 50.0f;
-					customer.transform->position = customer_spawn_point->position * t + (desired_position * (1.0f - t));
+					customer.transform->position = customer_spawn_point->position * (1.0f - t) + (desired_position * t);
+					if (customer.t_finished > customer.finished_animation_time) {
+						customer.transform->position.x = 1000000; // move the customer super far away
+						const Scene::Transform t = Scene::Transform(customer.waypoint);
+						customer_occupied_waypoints.remove(t);
+
+		
+						customer_open_waypoints.emplace_back();
+						customer_open_waypoints.back() = customer.waypoint;
+						customer.status = Customer::Status::Inactive;
+					}
 				} break;
+				case Customer::Status::Inactive: {
+					// do nothing
+				}
 			}
 		}
 	}
