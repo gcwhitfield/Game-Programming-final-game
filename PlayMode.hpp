@@ -51,6 +51,16 @@ struct PlayMode : Mode {
 	float customer_spawn_timer = 5.0f; // a new customer is spawned once this timer reaches 0.
 	
 	struct Customer{
+
+
+		// initialize various variables related to animation
+		void init() {
+			t_new = 0.0f;
+			t_wait = 0.0f;
+			t_finished = 0.0f;
+			status = Status::New;
+		}
+		
 		//Todo max_wait_time scaling, happiness score
 		int happiness() {
 			return 100.0f * (t_wait - max_wait_time) / max_wait_time;

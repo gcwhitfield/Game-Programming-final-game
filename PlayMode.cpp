@@ -155,6 +155,10 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 		}
 	}
 
+	for (auto &w : customer_open_waypoints) {
+		std::cout << "Cusotmer waypoint: " << w.position << std::endl;
+	}
+
 	assert(customer_open_waypoints.size() > 0);
 	assert(customer_occupied_waypoints.size() == 0);
 	assert(customer_base != NULL);
@@ -547,12 +551,14 @@ void PlayMode::update(float elapsed)
 			std::string new_customer_name = "Customer" + std::to_string(customers.size() + 1);
 			Customer c = Customer(new_customer_name, new_customer.transform);
 			c.order = new_item().second;
+			c.init();
 			customers[c.name] = c;
 
 			// give the customer a waypoint from one of the open waypoints
 			c.waypoint = customer_open_waypoints.back();
+			customer_occupied_waypoints.emplace_back();
+			customer_occupied_waypoints.back() = c.waypoint;
 			customer_open_waypoints.pop_back();
-			customer_occupied_waypoints.push_back(c.waypoint);
 		}
 	}
 
@@ -561,13 +567,19 @@ void PlayMode::update(float elapsed)
 			switch (customer.status) {
 				// customers fly into their seat in 'New' state
 				case Customer::Status::New: {
+					std::cout << "New" << std::endl;
 					customer.t_new += elapsed;
 					float t = (customer.new_animation_time - customer.t_new) / customer.new_animation_time; 
 					customer.transform->position = customer_spawn_point->position * t + (customer.waypoint.position * (1.0f - t));
+					if (customer.t_new > customer.new_animation_time) {
+						customer.status = Customer::Status::Wait;
+					}
 				} break;
 				// customers wait for their order in 'Wait' state
 				case Customer::Status::Wait: {
+					std::cout << "Wait" << std::endl;
 					customer.t_wait += elapsed;
+					customer.transform->position = customer.waypoint.position;
 
 					// the customer gets angry if it waits too longs, score gets deducted
 					if (customer.t_wait > customer.max_wait_time) {
@@ -575,9 +587,11 @@ void PlayMode::update(float elapsed)
 						game_state.score -= 10; 
 						customer.status = Customer::Status::Finished;
 					}
+
 				} break;
 				// customers fly away in 'Finished' state
 				case Customer::Status::Finished: {
+					std::cout << "Finished" << std::endl;
 					customer.t_finished += elapsed;
 					float t = (customer.finished_animation_time - customer.t_finished) / customer.finished_animation_time;
 					glm::vec3 desired_position = customer_spawn_point->position;
