@@ -1,0 +1,6 @@
+#name - to match with scene lights, not used in code, ids will be used instead
+#x y z (world space, float) R G B (int) intensity (float)
+#type (P - point light, S - spot light)
+0
+-10.0 10.0 10.0 255 0 0 15.0
+S
