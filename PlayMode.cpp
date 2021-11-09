@@ -139,6 +139,13 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 		throw;
 	}
 
+	assert(player.cat);
+	assert(player.cat->transform);
+	assert(player.cat->transform->parent);
+	assert(player.human);
+	assert(player.human->transform);
+	assert(player.human->transform->parent);
+
 	// set cat/human transform parent
 	player.cat->transform->parent = player.transform;
 	player.human->transform->parent = player.transform;
@@ -371,7 +378,14 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 
 void PlayMode::update(float elapsed) {
 
-	
+	assert(player.cat);
+	assert(player.cat->transform);
+	assert(player.cat->transform->parent);
+	assert(player.human);
+	assert(player.human->transform);
+	assert(player.human->transform->parent);
+
+
 	//Camera update
 	
 	if (player.height <= player.orbitCamera.distance + ERROR_F) { //Clipping check
