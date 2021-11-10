@@ -10,7 +10,6 @@
 #include <vector>
 #include <deque>
 #include <random>
-#include "Move.hpp"
 
 #define PI_F 3.1415926f
 
@@ -60,6 +59,7 @@ struct PlayMode : Mode {
 		Player() {}; // TODO: Implement this
 		~Player() {}; // TODO: Implement this
 		WalkPoint at;
+		WalkPoint outOfBounds;
 		//transform is at player's feet and will be yawed by mouse left/right motion:
 		Scene::Transform *transform = nullptr;
 		Scene::Drawable* cat;
@@ -87,6 +87,7 @@ struct PlayMode : Mode {
 		float flapVelocity = 1.0f; //What speed should a flap add?
 		float airTime = 0.0f; //Time since last landed
 		bool grounded = true;
+		bool lastCollision = false;
 
 		Status playerStatus = Human;
 		glm::vec3 humanAcc = glm::vec3(0.0f);
@@ -103,6 +104,9 @@ struct PlayMode : Mode {
 
 	} player;
 	float gravity = -9.81f / 2.f;
+	void decidePos(glm::vec3 bounds, glm::vec3 at);
+	void getBoundedPos(glm::vec2 move, WalkMesh const* boundWalkmesh, WalkMesh const* walkmesh);
+	float objectHeight = 5.0f;
 
 	enum PlayState {
 		ongoing, won, lost, menu

@@ -69,10 +69,12 @@ Load<Scene> starbucks_scene(LoadTagDefault, []() -> Scene const * {
 	});
 });
 
-WalkMesh const *walkmesh = nullptr;
+WalkMesh const* walkmesh = nullptr;
+WalkMesh const* boundWalkmesh = nullptr;
 Load<WalkMeshes> phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
 	WalkMeshes *ret = new WalkMeshes(data_path("starbucks.w"));
 	walkmesh = &ret->lookup("WalkMesh");
+	boundWalkmesh = &ret->lookup("BoundsWalkMesh");
 	return ret;
 });
 
@@ -101,11 +103,12 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 
 	//rotate camera facing direction (-z) to player facing direction (+y):
 	player.orbitCamera.camera->transform->rotation = glm::angleAxis(glm::radians(75.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	//
+	
 	player.orbitCamera.updateCamera();
 
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
+	player.outOfBounds = boundWalkmesh->nearest_walk_point(player.transform->position);
 
 	for (auto &d : scene.drawables)
 	{
@@ -141,10 +144,10 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 
 	assert(player.cat);
 	assert(player.cat->transform);
-	assert(player.cat->transform->parent);
+	//assert(player.cat->transform->parent);
 	assert(player.human);
 	assert(player.human->transform);
-	assert(player.human->transform->parent);
+	//assert(player.human->transform->parent);
 
 	// set cat/human transform parent
 	player.cat->transform->parent = player.transform;
@@ -358,10 +361,10 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			player.orbitCamera.truePitch = std::min(player.orbitCamera.truePitch, 0.95f * 3.1415926f);
 			player.orbitCamera.truePitch = std::max(player.orbitCamera.truePitch, 0.05f * 3.1415926f);
 			player.orbitCamera.curPitch = player.orbitCamera.truePitch;
-			if (player.height <= player.orbitCamera.distance + ERROR_F) { //Clipping check
+			if (player.height <= player.orbitCamera.distance + ERROR_F) { //Camera clipping check
 				//Get minimum angle
 				float theta = asin(player.height / player.orbitCamera.distance);
-				if (player.orbitCamera.curPitch >= PI_F / 2.f + theta - ERROR_F) {
+				if (player.orbitCamera.curPitch >= PI_F / 2.f + theta - ERROR_F) { //If at or above minimum angle, cap so can't see below walkmesh
 					player.orbitCamera.curPitch = PI_F / 2.f + theta;
 				}
 			}
@@ -380,15 +383,12 @@ void PlayMode::update(float elapsed) {
 
 	assert(player.cat);
 	assert(player.cat->transform);
-	assert(player.cat->transform->parent);
 	assert(player.human);
 	assert(player.human->transform);
-	assert(player.human->transform->parent);
-
 
 	//Camera update
 	
-	if (player.height <= player.orbitCamera.distance + ERROR_F) { //Clipping check
+	if (player.height <= player.orbitCamera.distance + ERROR_F) { //Camera clipping check
 				//Get minimum angle
 		float theta = asin(player.height / player.orbitCamera.distance);
 		if (player.orbitCamera.truePitch >= PI_F / 2.f + theta - ERROR_F - 0.1f) {
@@ -443,7 +443,7 @@ void PlayMode::update(float elapsed) {
 
 	if (player.playerStatus != toCat && player.playerStatus != toHuman) {
 
-		if (player.playerStatus == Cat) {
+		if (player.playerStatus == Cat) { //If cat, get move from updateCat if in flight
 			Keys sendKeys;
 			sendKeys.space = (space.downs > 0);
 			sendKeys.up = (up.pressed);
@@ -463,8 +463,9 @@ void PlayMode::update(float elapsed) {
 		// some awkward case, code will not infinite loop:
 		for (uint32_t iter = 0; iter < 10; ++iter)
 		{
-			if (remain == glm::vec3(0.0f))
+			if (remain == glm::vec3(0.0f)) {
 				break;
+			}
 			WalkPoint end;
 			float time;
 			walkmesh->walk_in_triangle(player.at, remain, &end, &time);
@@ -513,8 +514,12 @@ void PlayMode::update(float elapsed) {
 			std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
 		}
 
-		//update player's position to respect walking:
-		player.transform->position = walkmesh->to_world_point(player.at);
+
+		//update player's position to respect walking if human:
+		if (player.playerStatus != Cat) 
+			player.transform->position = walkmesh->to_world_point(player.at);
+		else //Extra steps to account for cat collision
+			getBoundedPos(move, boundWalkmesh, walkmesh);
 
 		{ //update player's rotation to respect local (smooth) up-vector:
 
@@ -598,7 +603,7 @@ void PlayMode::update(float elapsed) {
 	}
 	space.downs = 0;
 
-	//update drawable
+	//update visability of cat and human
 	player.updateDrawable();
 }
 
@@ -624,17 +629,17 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 
 	scene.draw(*player.orbitCamera.camera);
 
-	/* In case you are wondering if your walkmesh is lining up with your scene, try:
+	 /*//In case you are wondering if your walkmesh is lining up with your scene, try:
 	{
 		glDisable(GL_DEPTH_TEST);
-		DrawLines lines(player.camera->make_projection() * glm::mat4(player.camera->transform->make_world_to_local()));
-		for (auto const &tri : walkmesh->triangles) {
-			lines.draw(walkmesh->vertices[tri.x], walkmesh->vertices[tri.y], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-			lines.draw(walkmesh->vertices[tri.y], walkmesh->vertices[tri.z], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-			lines.draw(walkmesh->vertices[tri.z], walkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+		DrawLines lines(player.orbitCamera.camera->make_projection() * glm::mat4(player.orbitCamera.camera->transform->make_world_to_local()));
+		for (auto const &tri : boundWalkmesh->triangles) {
+			lines.draw(boundWalkmesh->vertices[tri.x], boundWalkmesh->vertices[tri.y], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+			lines.draw(boundWalkmesh->vertices[tri.y], boundWalkmesh->vertices[tri.z], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+			lines.draw(boundWalkmesh->vertices[tri.z], boundWalkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
 		}
-	}
-	*/
+	}*/
+	
 
 	{ //use DrawLines to overlay some text:
 		glDisable(GL_DEPTH_TEST);

@@ -7,7 +7,7 @@
 #define MAX_SPEED_H 1.5f
 #define MAX_HEIGHT 15.f
 
-//To do: Test!!!
+//To do: Resolve issues with bounded walkmesh, test control speed for flight
 
 //Move walk mesh code over to move
 
@@ -117,6 +117,8 @@ void PlayMode::updateCat(PlayMode::Keys keys, float elapsed, float gravity) {
 		if ((player.height <= ERROR_F && !player.grounded) || (player.grounded && !keys.space)) {
 			player.airTime = 0.0f;
 			player.height = 0.0f;
+			if (player.lastCollision)
+				player.height = objectHeight;
 			player.catVelocity = glm::vec3(0.f);
 			player.posDelt = glm::vec3(0.f);
 			player.grounded = true;
@@ -136,7 +138,7 @@ void PlayMode::updateCat(PlayMode::Keys keys, float elapsed, float gravity) {
 	
 }
 
-
+//Update player status from cat to human or viceversa, instant for second, drops object to ground for first
 void PlayMode::transition(float elapsed, float gravity) {
 	if (player.playerStatus == toHuman) {
 		if (player.height <= ERROR_F) {
@@ -153,4 +155,119 @@ void PlayMode::transition(float elapsed, float gravity) {
 	else {
 		player.playerStatus = Cat;
 	}
+}
+
+//Decide whether the cat has hit a collision, and if so, how
+void PlayMode::decidePos(glm::vec3 inBounds, glm::vec3 at) {
+	auto posDif = [this](glm::vec3 inBounds, glm::vec3 at) {
+		return glm::length(inBounds - at);
+	};
+	if (posDif(inBounds,at) <= ERROR_F) { //If positions are close, assume no object is at player
+		player.transform->position.x = at.x;
+		player.transform->position.y = at.y;
+		player.lastCollision = false;
+		if (player.height >= ERROR_F)
+			player.grounded = false;
+	}
+	else { //Player is over the collision bounds
+		if (player.lastCollision) { //If the player collided last frame, don't push off
+			if (player.height <= objectHeight + ERROR_F) { //If "in" object, treat as if grounded on object
+				player.height = objectHeight;
+				player.catVelocity = glm::vec3(0.0f);
+				player.grounded = true;
+				player.airTime = 0.0f;
+			}
+			else
+				player.grounded = false;
+			player.transform->position.x = inBounds.x;
+			player.transform->position.y = inBounds.y;
+			player.lastCollision = true;
+		}
+		else { //Last frame, the player hadn't collided yet
+			if (player.height >= ERROR_F)
+				player.grounded = false;
+			if (player.height >= objectHeight) { //Allow over object, and treat frame as collision
+				player.lastCollision = true;
+				player.transform->position.x = inBounds.x;
+				player.transform->position.y = inBounds.y;
+			}
+			else { //Block player from moving further
+				player.lastCollision = false;
+				player.transform->position.x = at.x;
+				player.transform->position.y = at.y;
+			}
+		}
+	}
+	player.transform->position.z = 0.0f;
+
+}
+
+void PlayMode::getBoundedPos(glm::vec2 move, WalkMesh const* boundWalkmesh, WalkMesh const* walkmesh) {
+	
+	//Get bounded walkmesh position for cat, then use to get new position for cat
+
+	glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
+
+	//Get position on bounded walkmesh, exactly as done for walkmesh ebfore
+	for (uint32_t iter = 0; iter < 10; ++iter)
+	{
+		if (remain == glm::vec3(0.0f))
+			break;
+		WalkPoint end;
+		float time;
+		boundWalkmesh->walk_in_triangle(player.outOfBounds, remain, &end, &time);
+		player.outOfBounds = end;
+		if (time == 1.0f)
+		{
+			//finished within triangle:
+			remain = glm::vec3(0.0f);
+			break;
+		}
+		//some step remains:
+		remain *= (1.0f - time);
+		//try to step over edge:
+		glm::quat rotation;
+		if (boundWalkmesh->cross_edge(player.outOfBounds, &end, &rotation))
+		{
+			//stepped to a new triangle:
+			player.outOfBounds = end;
+			//rotate step to follow surface:
+			remain = rotation * remain;
+		}
+		else {
+			//ran into a wall, bounce / slide along it:
+			glm::vec3 const& a = boundWalkmesh->vertices[player.outOfBounds.indices.x];
+			glm::vec3 const& b = boundWalkmesh->vertices[player.outOfBounds.indices.y];
+			glm::vec3 const& c = boundWalkmesh->vertices[player.outOfBounds.indices.z];
+			glm::vec3 along = glm::normalize(b - a);
+			glm::vec3 normal = glm::normalize(glm::cross(b - a, c - a));
+			glm::vec3 in = glm::cross(normal, along);
+
+			//check how much 'remain' is pointing out of the triangle:
+			float d = glm::dot(remain, in);
+			if (d < 0.0f)
+			{
+				//bounce off of the wall:
+				remain += (-1.25f * d) * in;
+			}
+			else {
+				//if it's just pointing along the edge, bend slightly away from wall:
+				remain += 0.01f * d * in;
+			}
+		}
+	}
+
+	if (remain != glm::vec3(0.0f)) {
+		std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
+	}
+
+	//Get worldspace posiitions on both walkmeshes
+	glm::vec3 at = walkmesh->to_world_point(player.at);
+	assert(boundWalkmesh != NULL);
+	glm::vec3 inBound = boundWalkmesh->to_world_point(player.outOfBounds);
+
+	//Updatte proper cat position
+	decidePos(inBound, at);
+	player.outOfBounds = boundWalkmesh->nearest_walk_point(player.transform->position);
+	player.at = walkmesh->nearest_walk_point(player.transform->position);
 }

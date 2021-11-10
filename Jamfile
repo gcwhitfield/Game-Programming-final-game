@@ -139,7 +139,7 @@ if $(OS) = NT { #Windows
 GAME_NAMES =
 	WalkMesh
 	PlayMode
-	Move
+	Movement
 	main
 	LitColorTextureProgram
 	#ColorTextureProgram #not used right now, but you might want it
