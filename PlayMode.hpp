@@ -88,6 +88,7 @@ struct PlayMode : Mode {
 		float airTime = 0.0f; //Time since last landed
 		bool grounded = true;
 		bool lastCollision = false;
+		bool firstHit = false;
 
 		Status playerStatus = Human;
 		glm::vec3 humanAcc = glm::vec3(0.0f);
@@ -156,7 +157,7 @@ struct PlayMode : Mode {
 		bool space, up, down, left, right;
 	};
 	void updateCat(Keys keys, float elapsed, float gravity);
-	void transition(float elapsed, float gravity);
+	void transition(float elapsed, float gravity, WalkMesh const* boundWalkmesh, WalkMesh const* walkmesh);
 
 
 	//order relevant

@@ -451,7 +451,7 @@ void PlayMode::update(float elapsed) {
 			sendKeys.left = (left.pressed);
 			sendKeys.right = (right.pressed);
 			updateCat(sendKeys, elapsed, gravity);
-			if (player.height >= ERROR_F)
+			if (!player.grounded)
 				move = player.posDelt;
 
 		}
@@ -529,7 +529,7 @@ void PlayMode::update(float elapsed) {
 			);
 			player.transform->rotation = glm::normalize(adjust * player.transform->rotation);
 		}
-		player.transform->position += glm::vec3(0.0f, 0.0f, player.height);
+		player.transform->position += glm::vec3(0.0f, 0.0f, player.height + 0.1f);
 
 		/*
 		glm::mat4x3 frame = camera->transform->make_local_to_parent();
@@ -541,7 +541,7 @@ void PlayMode::update(float elapsed) {
 		*/
 	}
 	else {
-		transition(elapsed, 2*gravity);
+		transition(elapsed, 2*gravity, boundWalkmesh, walkmesh);
 	}
 
 	//reset button press counters:

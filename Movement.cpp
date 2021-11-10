@@ -139,7 +139,7 @@ void PlayMode::updateCat(PlayMode::Keys keys, float elapsed, float gravity) {
 }
 
 //Update player status from cat to human or viceversa, instant for second, drops object to ground for first
-void PlayMode::transition(float elapsed, float gravity) {
+void PlayMode::transition(float elapsed, float gravity, WalkMesh const* boundWalkmesh, WalkMesh const* walkmesh) {
 	if (player.playerStatus == toHuman) {
 		if (player.height <= ERROR_F) {
 			player.playerStatus = Human;
@@ -149,7 +149,12 @@ void PlayMode::transition(float elapsed, float gravity) {
 			player.height += gravity * player.fallTime * elapsed;
 			if (player.height <= ERROR_F) player.height = 0.0f;
 			player.transform->position.z = player.height;
-			
+			player.lastCollision = false;
+			glm::vec3 atPos = walkmesh->to_world_point(player.at);
+			player.transform->position.x = atPos.x;
+			player.transform->position.y = atPos.y;
+			player.outOfBounds = boundWalkmesh->nearest_walk_point(player.transform->position);
+			player.at = walkmesh->nearest_walk_point(player.transform->position);
 		}
 	}
 	else {
@@ -168,6 +173,7 @@ void PlayMode::decidePos(glm::vec3 inBounds, glm::vec3 at) {
 		player.lastCollision = false;
 		if (player.height >= ERROR_F)
 			player.grounded = false;
+		player.firstHit = false; //Reset whther a collision has occured at all
 	}
 	else { //Player is over the collision bounds
 		if (player.lastCollision) { //If the player collided last frame, don't push off
@@ -177,8 +183,9 @@ void PlayMode::decidePos(glm::vec3 inBounds, glm::vec3 at) {
 				player.grounded = true;
 				player.airTime = 0.0f;
 			}
-			else
+			else {
 				player.grounded = false;
+			}
 			player.transform->position.x = inBounds.x;
 			player.transform->position.y = inBounds.y;
 			player.lastCollision = true;
@@ -195,6 +202,7 @@ void PlayMode::decidePos(glm::vec3 inBounds, glm::vec3 at) {
 				player.lastCollision = false;
 				player.transform->position.x = at.x;
 				player.transform->position.y = at.y;
+				player.firstHit = true; //Cannot spill more than once
 			}
 		}
 	}
