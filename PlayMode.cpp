@@ -131,9 +131,12 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 			assert(str != "CustomerBase");
 			assert(str != "Customer");
 			assert(str != "CustomerSpawnPoint");
-			customer_open_waypoints.emplace_back();
-			assert(customer_open_waypoints.size() > 0);
-			customer_open_waypoints.back() = *(d.transform);
+			// std::pair<Scene::Transform, bool> p = std::make_pair(*(const_cast<Scene::Transform*>((d.transform))), true);
+			std::pair<Scene::Transform, bool> p = std::make_pair(*(d.transform), true);
+			customer_waypoints.insert(p);
+			// customer_open_waypoints.emplace_back();
+			// assert(customer_open_waypoints.size() > 0);
+			// customer_open_waypoints.back() = *(d.transform);
 		}
 		else if (str == "CustomerSpawnPoint" && str != "CustomerBase") {
 			assert(str == "CustomerSpawnPoint");
@@ -166,12 +169,12 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 		}
 	}
 
-	for (auto &w : customer_open_waypoints) {
+	for (auto &[w, is_open] : customer_waypoints) {
+		(void)is_open; // avoid 'variable not used' with is_open
 		std::cout << "Cusotmer waypoint: " << w.position << std::endl;
 	}
 
-	assert(customer_open_waypoints.size() > 0);
-	assert(customer_occupied_waypoints.size() == 0);
+	assert(customer_waypoints.size() > 0);
 	assert(customer_base != NULL);
 	assert(customer_spawn_point != NULL);
 	assert(manager != NULL);
@@ -642,10 +645,25 @@ void PlayMode::update(float elapsed) {
 			customers[c.name] = c;
 
 			// give the customer a waypoint from one of the open waypoints
-			c.waypoint = customer_open_waypoints.back();
-			customer_occupied_waypoints.emplace_back();
-			customer_occupied_waypoints.back() = c.waypoint;
-			customer_open_waypoints.pop_back();
+			bool has_set_cwaypoint = false;
+			for (auto &[waypoint, is_available]: customer_waypoints) {
+				if (is_available) {
+					c.waypoint = waypoint;
+					is_available = false;
+					has_set_cwaypoint = true;
+					break;
+				}
+			}
+			if (!has_set_cwaypoint) {
+				std::cerr << "All of the waypoints are full, could not find waypoint for customer " 
+				"As a workaround, this customer's waypoint will be set to the origin" << std::endl;
+				c.waypoint.position = glm::vec3(0, 0, 0);
+			}
+
+			// c.waypoint = customer_open_waypoints.back();
+			// customer_occupied_waypoints.emplace_back();
+			// customer_occupied_waypoints.back() = c.waypoint;
+			// customer_open_waypoints.pop_back();
 		}
 	}
 
@@ -686,12 +704,13 @@ void PlayMode::update(float elapsed) {
 					customer.transform->position = customer_spawn_point->position * (1.0f - t) + (desired_position * t);
 					if (customer.t_finished > customer.finished_animation_time) {
 						customer.transform->position.x = 1000000; // move the customer super far away
-						const Scene::Transform t = Scene::Transform(customer.waypoint);
-						customer_occupied_waypoints.remove(t);
+						customer_waypoints[customer.waypoint] = true;
 
-		
-						customer_open_waypoints.emplace_back();
-						customer_open_waypoints.back() = customer.waypoint;
+						// customer_occupied_waypoints.remove(t);
+
+						// customer
+						// customer_open_waypoints.emplace_back();
+						// customer_open_waypoints.back() = customer.waypoint;
 						customer.status = Customer::Status::Inactive;
 					}
 				} break;

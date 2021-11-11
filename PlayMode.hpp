@@ -49,8 +49,13 @@ struct PlayMode : Mode {
 	Scene::Drawable *customer_base; // the base object from which new customers will get cloned 
 
 	// In starbucks.blend, there are various 'CustomerWaypoint' objects placed throughout the scene
-	std::list<Scene::Transform> customer_open_waypoints; // a set of transforms of unoccupied seats in starbucks
-	std::list<Scene::Transform> customer_occupied_waypoints; // a set of occupied seats in starbucks
+	// when the value is set to 'true' it means that the waypoint is UNOCCUPIED and a customer caan
+	// go to it.
+	// when the value is set to 'false' it means that the waypoint is OCCUPIED and there is a customer using the
+	// waypoint
+	std::map<Scene::Transform, bool> customer_waypoints;
+	// std::list<Scene::Transform> customer_open_waypoints; // a set of transforms of unoccupied seats in starbucks
+	// std::list<Scene::Transform> customer_occupied_waypoints; // a set of occupied seats in starbucks
 	Scene::Transform* customer_spawn_point = NULL; // the place where new customers get spawned. This will eventually be outside the 
 	// front door of the starbucks
 	float customer_spawn_timer = 5.0f; // a new customer is spawned once this timer reaches 0.
