@@ -14,6 +14,7 @@
 #include <random>
 #include <iostream>
 #define ERROR_F 0.000001f
+#define HEIGHT_CLIP 0.255f
 
 //generate a new_item from the item list randomly
 std::pair<std::string, StarbuckItem> new_item()
@@ -162,6 +163,11 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 
 	//Orders
 	player.bag.item_name = "bag";
+
+
+	for (auto const& light : scene.lights) {
+		std::cout << "li pos " << light.energy.x << " " << light.energy.y << " " << light.energy.z << std::endl;
+	}
 }
 
 PlayMode::~PlayMode()
@@ -529,7 +535,7 @@ void PlayMode::update(float elapsed) {
 			);
 			player.transform->rotation = glm::normalize(adjust * player.transform->rotation);
 		}
-		player.transform->position += glm::vec3(0.0f, 0.0f, player.height + 0.1f);
+		player.transform->position += glm::vec3(0.0f, 0.0f, player.height + HEIGHT_CLIP);
 
 		/*
 		glm::mat4x3 frame = camera->transform->make_local_to_parent();
@@ -612,12 +618,65 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 	//update camera aspect ratio for drawable:
 	player.orbitCamera.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 
-	//set up light type and position for lit_color_texture_program:
-	// TODO: consider using the Light(s) in the scene to do this
+
 	glUseProgram(lit_color_texture_program->program);
-	glUniform1i(lit_color_texture_program->LIGHT_TYPE_int, 1);
-	glUniform3fv(lit_color_texture_program->LIGHT_DIRECTION_vec3, 1, glm::value_ptr(glm::vec3(0.0f, 0.0f, -1.0f)));
-	glUniform3fv(lit_color_texture_program->LIGHT_ENERGY_vec3, 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 0.95f)));
+
+	//Load light arrays
+	//Code modified from https://github.com/15-466/15-466-f19-base6/blob/master/DemoLightingForwardMode.cpp
+
+	uint32_t lightCount = std::min<uint32_t>((uint32_t)scene.lights.size(), lit_color_texture_program->maxLights);
+
+	std::vector< int32_t > light_type; light_type.reserve(lightCount);
+	std::vector< glm::vec3 > light_location; light_location.reserve(lightCount);
+	std::vector< glm::vec3 > light_direction; light_direction.reserve(lightCount);
+	std::vector< glm::vec3 > light_energy; light_energy.reserve(lightCount);
+	std::vector< float > light_cutoff; light_cutoff.reserve(lightCount);
+
+	for (auto const& light : scene.lights) {
+		glm::mat4 light_to_world = light.transform->make_local_to_world();
+		//set up lighting information for this light:
+		light_location.emplace_back(glm::vec3(light_to_world[3]));
+		light_direction.emplace_back(glm::vec3(-light_to_world[2]));
+		light_energy.emplace_back(light.energy);
+		//light_energy.emplace_back(glm::vec3(1.0f));
+		glm::vec3 direction = light_direction.back();
+		std::cout << light.transform->position.x << " " << light.transform->position .y << " " << light.transform->position.z << " location\n";
+		std::cout << direction.x << " " << direction.y << " " << direction.z << " light_direction\n";
+		std::cout << light.energy.x << " " << light.energy.y << " " << light.energy.z << " energy\n";
+
+		if (light.type == Scene::Light::Point) {
+			light_type.emplace_back(0);
+			light_cutoff.emplace_back(1.0f);
+		}
+		else if (light.type == Scene::Light::Hemisphere) {
+			light_type.emplace_back(1);
+			light_cutoff.emplace_back(1.0f);
+		}
+		else if (light.type == Scene::Light::Spot) {
+			light_type.emplace_back(2);
+			light_cutoff.emplace_back(std::cos(0.5f * light.spot_fov));
+		}
+		else if (light.type == Scene::Light::Directional) {
+			light_type.emplace_back(3);
+			light_cutoff.emplace_back(1.0f);
+		}
+
+		//skip remaining lights if maximum light count reached:
+		if (light_type.size() == lightCount) break;
+	}
+
+
+
+	glUniform1ui(lit_color_texture_program->LIGHT_COUNT_uint, lightCount);
+
+	glUniform1iv(lit_color_texture_program->LIGHT_TYPE_int_array, lightCount, light_type.data());
+	glUniform3fv(lit_color_texture_program->LIGHT_LOCATION_vec3_array, lightCount, glm::value_ptr(light_location[0]));
+	glUniform3fv(lit_color_texture_program->LIGHT_DIRECTION_vec3_array, lightCount, glm::value_ptr(light_direction[0]));
+	glUniform3fv(lit_color_texture_program->LIGHT_ENERGY_vec3_array, lightCount, glm::value_ptr(light_energy[0]));
+	glUniform1fv(lit_color_texture_program->LIGHT_CUTOFF_float_array, lightCount, light_cutoff.data());
+
+	GL_ERRORS();
+
 	glUseProgram(0);
 
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
@@ -628,6 +687,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 	glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
 
 	scene.draw(*player.orbitCamera.camera);
+	GL_ERRORS();
 
 	 /*//In case you are wondering if your walkmesh is lining up with your scene, try:
 	{
