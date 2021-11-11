@@ -662,6 +662,11 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 
 	glUniform1ui(lit_color_texture_program->LIGHT_COUNT_uint, lightCount);
 
+	GL_ERRORS();
+	glUniform1f(lit_color_texture_program->LIGHT_COUNT_float, (float)lightCount);
+
+	GL_ERRORS();
+
 	glUniform1iv(lit_color_texture_program->LIGHT_TYPE_int_array, lightCount, light_type.data());
 	glUniform3fv(lit_color_texture_program->LIGHT_LOCATION_vec3_array, lightCount, glm::value_ptr(light_location[0]));
 	glUniform3fv(lit_color_texture_program->LIGHT_DIRECTION_vec3_array, lightCount, glm::value_ptr(light_direction[0]));

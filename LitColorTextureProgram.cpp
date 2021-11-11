@@ -16,6 +16,7 @@ Load< LitColorTextureProgram > lit_color_texture_program(LoadTagEarly, []() -> L
 	lit_color_texture_program_pipeline.NORMAL_TO_LIGHT_mat3 = ret->NORMAL_TO_LIGHT_mat3;
 
 	lit_color_texture_program_pipeline.LIGHT_COUNT_uint = ret->LIGHT_COUNT_uint;
+	lit_color_texture_program_pipeline.LIGHT_COUNT_float = ret->LIGHT_COUNT_float;
 	
 	lit_color_texture_program_pipeline.LIGHT_TYPE_int_array = ret->LIGHT_TYPE_int_array;
 	lit_color_texture_program_pipeline.LIGHT_LOCATION_vec3_array = ret->LIGHT_LOCATION_vec3_array;
@@ -119,6 +120,7 @@ LitColorTextureProgram::LitColorTextureProgram() {
 		"#version 330\n"
 		"uniform sampler2D TEX;\n"
 		"uniform uint LIGHT_COUNT;\n"
+		"uniform float LIGHT_COUNT_F;\n"
 		"uniform int LIGHT_TYPE[" + std::to_string(maxLights) + "];\n"
 		"uniform vec3 LIGHT_LOCATION[" + std::to_string(maxLights) + "];\n"
 		"uniform vec3 LIGHT_DIRECTION[" + std::to_string(maxLights) + "];\n"
@@ -140,12 +142,13 @@ LitColorTextureProgram::LitColorTextureProgram() {
 		"		vec3 lightDirection = LIGHT_DIRECTION[light];\n"
 		"		vec3 lightEnergy = LIGHT_ENERGY[light];\n"
 		"		float lightCutoff = LIGHT_CUTOFF[light];\n"
-		"		lightColor += lightEnergy / vec3(LIGHT_COUNT);\n"	
+		"		lightColor += lightEnergy / vec3(LIGHT_COUNT_F);\n"	
 		"		if (lightType == 0) { //point light \n"
 		"			vec3 l = (lightLocation - position);\n"
 		"			float dis2 = dot(l,l);\n"
 		"			l = normalize(l);\n"
 		"			float nl = max(0.0, dot(n, l)) / max(1.0, dis2);\n"
+		"			if(dis2 > 50.0f) nl = 0.0f;\n"
 		"			total += nl * lightEnergy;\n"
 		"		} else if (lightType == 1) { //hemi light \n"
 		"			total += (dot(n,-lightDirection) * 0.5 + 0.5) * lightEnergy;\n"
@@ -156,9 +159,13 @@ LitColorTextureProgram::LitColorTextureProgram() {
 		"			float nl = max(0.0, dot(n, l)) / max(1.0, dis2);\n"
 		"			float c = dot(l,-lightDirection);\n"
 		"			nl *= smoothstep(lightCutoff,mix(lightCutoff,1.0,0.1), c);\n"
+		"			if(dis2 > 100.0f) nl = 0.0f;\n"
 		"			total += nl * lightEnergy;\n"
 		"		} else { //(lightType == 3) //directional light \n"
-		"			total += max(0.0, dot(n,-lightDirection)) * lightEnergy;\n"
+		"			vec3 l = (lightLocation - position);\n"
+		"			float dis2 = dot(l,l);\n"
+		"			if(dis2 <= 100.0f)\n"	
+		"				total += max(0.0, dot(n,-lightDirection)) * lightEnergy;\n"
 		"		}\n"
 		"	}\n"
 		"	float intensity = length(total);\n"
@@ -190,6 +197,7 @@ LitColorTextureProgram::LitColorTextureProgram() {
 	NORMAL_TO_LIGHT_mat3 = glGetUniformLocation(program, "NORMAL_TO_LIGHT");
 
 	LIGHT_COUNT_uint = glGetUniformLocation(program, "LIGHT_COUNT");
+	LIGHT_COUNT_float = glGetUniformLocation(program, "LIGHT_COUNT_F");
 
 	LIGHT_TYPE_int_array = glGetUniformLocation(program, "LIGHT_TYPE");
 	LIGHT_LOCATION_vec3_array = glGetUniformLocation(program, "LIGHT_LOCATION");
