@@ -110,6 +110,7 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	for (auto &d : scene.drawables)
 	{
 		std::string &str = d.transform->name;
+		std::cout <<str <<std::endl;
 		if (str == "Manager")
 		{
 			manager = &d;
@@ -132,7 +133,7 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 			assert(str != "Customer");
 			assert(str != "CustomerSpawnPoint");
 			// std::pair<Scene::Transform, bool> p = std::make_pair(*(const_cast<Scene::Transform*>((d.transform))), true);
-			std::pair<Scene::Transform, bool> p = std::make_pair(*(d.transform), true);
+			std::pair<Scene::Transform*, bool> p = std::make_pair(d.transform, true);
 			customer_waypoints.insert(p);
 			// customer_open_waypoints.emplace_back();
 			// assert(customer_open_waypoints.size() > 0);
@@ -169,9 +170,26 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 		}
 	}
 
+	// give the customers in the scene a waypoint
+	for (auto &[name, customer]: customers) {
+		for (auto &[waypoint, is_open]: customer_waypoints) {
+			if (is_open) {
+				customer.waypoint = waypoint;
+				is_open = false;
+				assert(customer_waypoints[waypoint] == false);
+				break;
+			}
+		}
+	}
+
+	// PARANOIA none of the customers should have null waypoint
+	for (auto &[name, customer]: customers) {
+		assert(customer.waypoint != NULL);
+	}
+
 	for (auto &[w, is_open] : customer_waypoints) {
 		(void)is_open; // avoid 'variable not used' with is_open
-		std::cout << "Cusotmer waypoint: " << w.position << std::endl;
+		std::cout << "Cusotmer waypoint: " << w->position << std::endl;
 	}
 
 	assert(customer_waypoints.size() > 0);
@@ -642,14 +660,15 @@ void PlayMode::update(float elapsed) {
 			Customer c = Customer(new_customer_name, new_customer.transform);
 			c.order = new_item().second;
 			c.init();
-			customers[c.name] = c;
+			// c.waypoint = new Scene::Transform();
+			// c.waypoint->position = glm::vec3(0, 0, 0);
 
-			// give the customer a waypoint from one of the open waypoints
+			// give the customer a waypoint from one of the open waypoint
 			bool has_set_cwaypoint = false;
-			for (auto &[waypoint, is_available]: customer_waypoints) {
-				if (is_available) {
+			for (auto &[waypoint, is_open]: customer_waypoints) {
+				if (is_open) {
 					c.waypoint = waypoint;
-					is_available = false;
+					is_open = false;
 					has_set_cwaypoint = true;
 					break;
 				}
@@ -657,13 +676,14 @@ void PlayMode::update(float elapsed) {
 			if (!has_set_cwaypoint) {
 				std::cerr << "All of the waypoints are full, could not find waypoint for customer " 
 				"As a workaround, this customer's waypoint will be set to the origin" << std::endl;
-				c.waypoint.position = glm::vec3(0, 0, 0);
+				c.waypoint = new Scene::Transform();
+				c.waypoint->position = glm::vec3(0, 0, 0);
+				c.waypoint->rotation = glm::vec3(0, 0, 0);
+				c.waypoint->scale = glm::vec3(1, 1, 1);
 			}
 
-			// c.waypoint = customer_open_waypoints.back();
-			// customer_occupied_waypoints.emplace_back();
-			// customer_occupied_waypoints.back() = c.waypoint;
-			// customer_open_waypoints.pop_back();
+			customers[c.name] = c;
+			assert(c.waypoint != NULL);
 		}
 	}
 
@@ -675,7 +695,10 @@ void PlayMode::update(float elapsed) {
 					std::cout << "New" << std::endl;
 					customer.t_new += elapsed;
 					float t = (customer.new_animation_time - customer.t_new) / customer.new_animation_time; 
-					customer.transform->position = customer_spawn_point->position * (1.0f - t) + (customer.waypoint.position * t);
+					assert(customer.transform != NULL);
+					assert(customer_spawn_point != NULL);
+					assert(customer.waypoint != NULL);
+					customer.transform->position = customer_spawn_point->position * (1.0f - t) + (customer.waypoint->position * t);
 					if (customer.t_new > customer.new_animation_time) {
 						customer.status = Customer::Status::Wait;
 					}
@@ -684,7 +707,7 @@ void PlayMode::update(float elapsed) {
 				case Customer::Status::Wait: {
 					std::cout << "Wait" << std::endl;
 					customer.t_wait += elapsed;
-					customer.transform->position = customer.waypoint.position;
+					customer.transform->position = customer.waypoint->position;
 
 					// the customer gets angry if it waits too longs, score gets deducted
 					if (customer.t_wait > customer.max_wait_time) {
@@ -705,12 +728,6 @@ void PlayMode::update(float elapsed) {
 					if (customer.t_finished > customer.finished_animation_time) {
 						customer.transform->position.x = 1000000; // move the customer super far away
 						customer_waypoints[customer.waypoint] = true;
-
-						// customer_occupied_waypoints.remove(t);
-
-						// customer
-						// customer_open_waypoints.emplace_back();
-						// customer_open_waypoints.back() = customer.waypoint;
 						customer.status = Customer::Status::Inactive;
 					}
 				} break;

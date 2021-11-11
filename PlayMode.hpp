@@ -53,7 +53,7 @@ struct PlayMode : Mode {
 	// go to it.
 	// when the value is set to 'false' it means that the waypoint is OCCUPIED and there is a customer using the
 	// waypoint
-	std::map<Scene::Transform, bool> customer_waypoints;
+	std::map<Scene::Transform*, bool> customer_waypoints;
 	// std::list<Scene::Transform> customer_open_waypoints; // a set of transforms of unoccupied seats in starbucks
 	// std::list<Scene::Transform> customer_occupied_waypoints; // a set of occupied seats in starbucks
 	Scene::Transform* customer_spawn_point = NULL; // the place where new customers get spawned. This will eventually be outside the 
@@ -78,7 +78,7 @@ struct PlayMode : Mode {
 
 		// the customer travels towards the waypoint in 'New' state and away from the 
 		// waypoint in 'Finished' state
-		Scene::Transform waypoint;
+		Scene::Transform *waypoint;
 
 		// ----- New -----
 		// the amount of time that it takes for the customer to arrive at their seat
