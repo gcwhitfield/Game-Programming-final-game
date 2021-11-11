@@ -15,13 +15,14 @@ Load< LitColorTextureProgram > lit_color_texture_program(LoadTagEarly, []() -> L
 	lit_color_texture_program_pipeline.OBJECT_TO_LIGHT_mat4x3 = ret->OBJECT_TO_LIGHT_mat4x3;
 	lit_color_texture_program_pipeline.NORMAL_TO_LIGHT_mat3 = ret->NORMAL_TO_LIGHT_mat3;
 
-	/* This will be used later if/when we build a light loop into the Scene:
-	lit_color_texture_program_pipeline.LIGHT_TYPE_int = ret->LIGHT_TYPE_int;
-	lit_color_texture_program_pipeline.LIGHT_LOCATION_vec3 = ret->LIGHT_LOCATION_vec3;
-	lit_color_texture_program_pipeline.LIGHT_DIRECTION_vec3 = ret->LIGHT_DIRECTION_vec3;
-	lit_color_texture_program_pipeline.LIGHT_ENERGY_vec3 = ret->LIGHT_ENERGY_vec3;
-	lit_color_texture_program_pipeline.LIGHT_CUTOFF_float = ret->LIGHT_CUTOFF_float;
-	*/
+	lit_color_texture_program_pipeline.LIGHT_COUNT_uint = ret->LIGHT_COUNT_uint;
+	lit_color_texture_program_pipeline.LIGHT_COUNT_float = ret->LIGHT_COUNT_float;
+	
+	lit_color_texture_program_pipeline.LIGHT_TYPE_int_array = ret->LIGHT_TYPE_int_array;
+	lit_color_texture_program_pipeline.LIGHT_LOCATION_vec3_array = ret->LIGHT_LOCATION_vec3_array;
+	lit_color_texture_program_pipeline.LIGHT_DIRECTION_vec3_array = ret->LIGHT_DIRECTION_vec3_array;
+	lit_color_texture_program_pipeline.LIGHT_ENERGY_vec3_array = ret->LIGHT_ENERGY_vec3_array;
+	lit_color_texture_program_pipeline.LIGHT_CUTOFF_float_array = ret->LIGHT_CUTOFF_float_array;
 
 	//make a 1-pixel white texture to bind by default:
 	GLuint tex;
@@ -42,6 +43,8 @@ Load< LitColorTextureProgram > lit_color_texture_program(LoadTagEarly, []() -> L
 
 	return ret;
 });
+
+//https://www.lighthouse3d.com/tutorials/glsl-12-tutorial/toon-shader-version-ii/ used as starting point for cel shading code
 
 LitColorTextureProgram::LitColorTextureProgram() {
 	//Compile vertex and fragment shaders using the convenient 'gl_compile_program' helper function:
@@ -66,15 +69,16 @@ LitColorTextureProgram::LitColorTextureProgram() {
 		"	color = Color;\n"
 		"	texCoord = TexCoord;\n"
 		"}\n"
-	,
+		,
 		//fragment shader:
-		"#version 330\n"
+		/*"#version 330\n"
 		"uniform sampler2D TEX;\n"
-		"uniform int LIGHT_TYPE;\n"
-		"uniform vec3 LIGHT_LOCATION;\n"
-		"uniform vec3 LIGHT_DIRECTION;\n"
-		"uniform vec3 LIGHT_ENERGY;\n"
-		"uniform float LIGHT_CUTOFF;\n"
+		"uniform uint LIGHT_COUNT;\n"
+		"uniform int LIGHT_TYPE[" + std::to_string(maxLights) + "];\n"
+		"uniform vec3 LIGHT_LOCATION[" + std::to_string(maxLights) + "];\n"
+		"uniform vec3 LIGHT_DIRECTION[" + std::to_string(maxLights) + "];\n"
+		"uniform vec3 LIGHT_ENERGY[" + std::to_string(maxLights) + "];\n"
+		"uniform float LIGHT_CUTOFF[" + std::to_string(maxLights) + "];\n"
 		"in vec3 position;\n"
 		"in vec3 normal;\n"
 		"in vec4 color;\n"
@@ -82,28 +86,100 @@ LitColorTextureProgram::LitColorTextureProgram() {
 		"out vec4 fragColor;\n"
 		"void main() {\n"
 		"	vec3 n = normalize(normal);\n"
-		"	vec3 e;\n"
-		"	if (LIGHT_TYPE == 0) { //point light \n"
-		"		vec3 l = (LIGHT_LOCATION - position);\n"
-		"		float dis2 = dot(l,l);\n"
-		"		l = normalize(l);\n"
-		"		float nl = max(0.0, dot(n, l)) / max(1.0, dis2);\n"
-		"		e = nl * LIGHT_ENERGY;\n"
-		"	} else if (LIGHT_TYPE == 1) { //hemi light \n"
-		"		e = (dot(n,-LIGHT_DIRECTION) * 0.5 + 0.5) * LIGHT_ENERGY;\n"
-		"	} else if (LIGHT_TYPE == 2) { //spot light \n"
-		"		vec3 l = (LIGHT_LOCATION - position);\n"
-		"		float dis2 = dot(l,l);\n"
-		"		l = normalize(l);\n"
-		"		float nl = max(0.0, dot(n, l)) / max(1.0, dis2);\n"
-		"		float c = dot(l,-LIGHT_DIRECTION);\n"
-		"		nl *= smoothstep(LIGHT_CUTOFF,mix(LIGHT_CUTOFF,1.0,0.1), c);\n"
-		"		e = nl * LIGHT_ENERGY;\n"
-		"	} else { //(LIGHT_TYPE == 3) //directional light \n"
-		"		e = max(0.0, dot(n,-LIGHT_DIRECTION)) * LIGHT_ENERGY;\n"
-		"	}\n"
 		"	vec4 albedo = texture(TEX, texCoord) * color;\n"
-		"	fragColor = vec4(e*albedo.rgb, albedo.a);\n"
+		"   vec3 total = vec3(0.0f);\n"
+		"	for(uint light = 0u; light < LIGHT_COUNT; ++light){ \n"
+		//		intensity = dot(lightDir, normalize(normal));
+		"		int lightType = LIGHT_TYPE[light];\n"
+		"		vec3 lightLocation = LIGHT_LOCATION[light];\n"
+		"		vec3 lightDirection = LIGHT_DIRECTION[light];\n"
+		"		vec3 lightEnergy = LIGHT_ENERGY[light];\n"
+		"		float lightCutoff = LIGHT_CUTOFF[light];\n"
+		"		if (lightType == 0) { //point light \n"
+		"			vec3 l = (lightLocation - position);\n"
+		"			float dis2 = dot(l,l);\n"
+		"			l = normalize(l);\n"
+		"			float nl = max(0.0, dot(n, l)) / max(1.0, dis2);\n"
+		"			total += nl * lightEnergy;\n"
+		"		} else if (lightType == 1) { //hemi light \n"
+		"			total += (dot(n,-lightDirection) * 0.5 + 0.5) * lightEnergy;\n"
+		"		} else if (lightType == 2) { //spot light \n"
+		"			vec3 l = (lightLocation - position);\n"
+		"			float dis2 = dot(l,l);\n"
+		"			l = normalize(l);\n"
+		"			float nl = max(0.0, dot(n, l)) / max(1.0, dis2);\n"
+		"			float c = dot(l,-lightDirection);\n"
+		"			nl *= smoothstep(lightCutoff,mix(lightCutoff,1.0,0.1), c);\n"
+		"			total += nl * lightEnergy;\n"
+		"		} else { //(lightType == 3) //directional light \n"
+		"			total += max(0.0, dot(n,-lightDirection)) * lightEnergy;\n"
+		"		}\n"
+		"	}\n"
+		"	fragColor = vec4(total*albedo.rgb, albedo.a);\n"
+		"}\n"*/
+		"#version 330\n"
+		"uniform sampler2D TEX;\n"
+		"uniform uint LIGHT_COUNT;\n"
+		"uniform float LIGHT_COUNT_F;\n"
+		"uniform int LIGHT_TYPE[" + std::to_string(maxLights) + "];\n"
+		"uniform vec3 LIGHT_LOCATION[" + std::to_string(maxLights) + "];\n"
+		"uniform vec3 LIGHT_DIRECTION[" + std::to_string(maxLights) + "];\n"
+		"uniform vec3 LIGHT_ENERGY[" + std::to_string(maxLights) + "];\n"
+		"uniform float LIGHT_CUTOFF[" + std::to_string(maxLights) + "];\n"
+		"in vec3 position;\n"
+		"in vec3 normal;\n"
+		"in vec4 color;\n"
+		"in vec2 texCoord;\n"
+		"out vec4 fragColor;\n"
+		"void main() {\n"
+		"	vec3 n = normalize(normal);\n"
+		"	vec4 albedo = texture(TEX, texCoord) * color;\n"
+		"   vec3 total = vec3(0.0f);\n"
+		"	vec3 lightColor = vec3(0.0f);\n"	
+		"	for(uint light = 0u; light < LIGHT_COUNT; ++light){ \n"
+		"		int lightType = LIGHT_TYPE[light];\n"
+		"		vec3 lightLocation = LIGHT_LOCATION[light];\n"
+		"		vec3 lightDirection = LIGHT_DIRECTION[light];\n"
+		"		vec3 lightEnergy = LIGHT_ENERGY[light];\n"
+		"		float lightCutoff = LIGHT_CUTOFF[light];\n"
+		"		lightColor += lightEnergy / vec3(LIGHT_COUNT_F);\n"	
+		"		if (lightType == 0) { //point light \n"
+		"			vec3 l = (lightLocation - position);\n"
+		"			float dis2 = dot(l,l);\n"
+		"			l = normalize(l);\n"
+		"			float nl = max(0.0, dot(n, l)) / max(1.0, dis2);\n"
+		"			if(dis2 > 50.0f) nl = 0.0f;\n"
+		"			total += nl * lightEnergy;\n"
+		"		} else if (lightType == 1) { //hemi light \n"
+		"			total += (dot(n,-lightDirection) * 0.5 + 0.5) * lightEnergy;\n"
+		"		} else if (lightType == 2) { //spot light \n"
+		"			vec3 l = (lightLocation - position);\n"
+		"			float dis2 = dot(l,l);\n"
+		"			l = normalize(l);\n"
+		"			float nl = max(0.0, dot(n, l)) / max(1.0, dis2);\n"
+		"			float c = dot(l,-lightDirection);\n"
+		"			nl *= smoothstep(lightCutoff,mix(lightCutoff,1.0,0.1), c);\n"
+		"			if(dis2 > 100.0f) nl = 0.0f;\n"
+		"			total += nl * lightEnergy;\n"
+		"		} else { //(lightType == 3) //directional light \n"
+		"			vec3 l = (lightLocation - position);\n"
+		"			float dis2 = dot(l,l);\n"
+		"			if(dis2 <= 100.0f)\n"	
+		"				total += max(0.0, dot(n,-lightDirection)) * lightEnergy;\n"
+		"		}\n"
+		"	}\n"
+		"	float intensity = length(total);\n"
+		"	if(intensity > 0.8)\n"
+		"		total = vec3(0.8f)*lightColor;\n"
+		"	else if(intensity > 0.6)\n"
+		"		total = vec3(0.6f)*lightColor;\n"
+		"	else if(intensity > 0.4)\n"
+		"		total = vec3(0.4f)*lightColor;\n"
+		"	else if(intensity > 0.05)\n"
+		"		total = vec3(0.2f)*lightColor;\n"
+		"	else\n"
+		"		total = vec3(0.1f);\n"	
+		"	fragColor = vec4(total*albedo.rgb, albedo.a);\n"
 		"}\n"
 	);
 	//As you can see above, adjacent strings in C/C++ are concatenated.
@@ -120,11 +196,14 @@ LitColorTextureProgram::LitColorTextureProgram() {
 	OBJECT_TO_LIGHT_mat4x3 = glGetUniformLocation(program, "OBJECT_TO_LIGHT");
 	NORMAL_TO_LIGHT_mat3 = glGetUniformLocation(program, "NORMAL_TO_LIGHT");
 
-	LIGHT_TYPE_int = glGetUniformLocation(program, "LIGHT_TYPE");
-	LIGHT_LOCATION_vec3 = glGetUniformLocation(program, "LIGHT_LOCATION");
-	LIGHT_DIRECTION_vec3 = glGetUniformLocation(program, "LIGHT_DIRECTION");
-	LIGHT_ENERGY_vec3 = glGetUniformLocation(program, "LIGHT_ENERGY");
-	LIGHT_CUTOFF_float = glGetUniformLocation(program, "LIGHT_CUTOFF");
+	LIGHT_COUNT_uint = glGetUniformLocation(program, "LIGHT_COUNT");
+	LIGHT_COUNT_float = glGetUniformLocation(program, "LIGHT_COUNT_F");
+
+	LIGHT_TYPE_int_array = glGetUniformLocation(program, "LIGHT_TYPE");
+	LIGHT_LOCATION_vec3_array = glGetUniformLocation(program, "LIGHT_LOCATION");
+	LIGHT_DIRECTION_vec3_array = glGetUniformLocation(program, "LIGHT_DIRECTION");
+	LIGHT_ENERGY_vec3_array = glGetUniformLocation(program, "LIGHT_ENERGY");
+	LIGHT_CUTOFF_float_array = glGetUniformLocation(program, "LIGHT_CUTOFF");
 
 
 	GLuint TEX_sampler2D = glGetUniformLocation(program, "TEX");

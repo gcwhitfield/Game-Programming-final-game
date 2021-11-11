@@ -14,6 +14,7 @@
 #include <random>
 #include <iostream>
 #define ERROR_F 0.000001f
+#define HEIGHT_CLIP 0.255f
 
 //generate a new_item from the item list randomly
 std::pair<std::string, StarbuckItem> new_item()
@@ -69,10 +70,12 @@ Load<Scene> starbucks_scene(LoadTagDefault, []() -> Scene const * {
 	});
 });
 
-WalkMesh const *walkmesh = nullptr;
+WalkMesh const* walkmesh = nullptr;
+WalkMesh const* boundWalkmesh = nullptr;
 Load<WalkMeshes> phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
 	WalkMeshes *ret = new WalkMeshes(data_path("starbucks.w"));
 	walkmesh = &ret->lookup("WalkMesh");
+	boundWalkmesh = &ret->lookup("BoundsWalkMesh");
 	return ret;
 });
 
@@ -101,11 +104,12 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 
 	//rotate camera facing direction (-z) to player facing direction (+y):
 	player.orbitCamera.camera->transform->rotation = glm::angleAxis(glm::radians(75.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	//
+	
 	player.orbitCamera.updateCamera();
 
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
+	player.outOfBounds = boundWalkmesh->nearest_walk_point(player.transform->position);
 
 	for (auto &d : scene.drawables)
 	{
@@ -193,6 +197,13 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	assert(customer_spawn_point != NULL);
 	assert(manager != NULL);
 	
+	assert(player.cat);
+	assert(player.cat->transform);
+	//assert(player.cat->transform->parent);
+	assert(player.human);
+	assert(player.human->transform);
+	//assert(player.human->transform->parent);
+
 	// set cat/human transform parent
 	player.cat->transform->parent = player.transform;
 	player.human->transform->parent = player.transform;
@@ -206,6 +217,9 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 
 	//Orders
 	player.bag.item_name = "bag";
+	for (auto& light : scene.lights) {
+		std::cout << light.energy.x << " " << light.energy.y << " " << light.energy.z << std::endl;
+	}
 }
 
 PlayMode::~PlayMode()
@@ -405,10 +419,10 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			player.orbitCamera.truePitch = std::min(player.orbitCamera.truePitch, 0.95f * 3.1415926f);
 			player.orbitCamera.truePitch = std::max(player.orbitCamera.truePitch, 0.05f * 3.1415926f);
 			player.orbitCamera.curPitch = player.orbitCamera.truePitch;
-			if (player.height <= player.orbitCamera.distance + ERROR_F) { //Clipping check
+			if (player.height <= player.orbitCamera.distance + ERROR_F) { //Camera clipping check
 				//Get minimum angle
 				float theta = asin(player.height / player.orbitCamera.distance);
-				if (player.orbitCamera.curPitch >= PI_F / 2.f + theta - ERROR_F) {
+				if (player.orbitCamera.curPitch >= PI_F / 2.f + theta - ERROR_F) { //If at or above minimum angle, cap so can't see below walkmesh
 					player.orbitCamera.curPitch = PI_F / 2.f + theta;
 				}
 			}
@@ -425,10 +439,14 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 
 void PlayMode::update(float elapsed) {
 
-	
+	assert(player.cat);
+	assert(player.cat->transform);
+	assert(player.human);
+	assert(player.human->transform);
+
 	//Camera update
 	
-	if (player.height <= player.orbitCamera.distance + ERROR_F) { //Clipping check
+	if (player.height <= player.orbitCamera.distance + ERROR_F) { //Camera clipping check
 				//Get minimum angle
 		float theta = asin(player.height / player.orbitCamera.distance);
 		if (player.orbitCamera.truePitch >= PI_F / 2.f + theta - ERROR_F - 0.1f) {
@@ -483,7 +501,7 @@ void PlayMode::update(float elapsed) {
 
 	if (player.playerStatus != toCat && player.playerStatus != toHuman) {
 
-		if (player.playerStatus == Cat) {
+		if (player.playerStatus == Cat) { //If cat, get move from updateCat if in flight
 			Keys sendKeys;
 			sendKeys.space = (space.downs > 0);
 			sendKeys.up = (up.pressed);
@@ -491,7 +509,7 @@ void PlayMode::update(float elapsed) {
 			sendKeys.left = (left.pressed);
 			sendKeys.right = (right.pressed);
 			updateCat(sendKeys, elapsed, gravity);
-			if (player.height >= ERROR_F)
+			if (!player.grounded)
 				move = player.posDelt;
 
 		}
@@ -503,8 +521,9 @@ void PlayMode::update(float elapsed) {
 		// some awkward case, code will not infinite loop:
 		for (uint32_t iter = 0; iter < 10; ++iter)
 		{
-			if (remain == glm::vec3(0.0f))
+			if (remain == glm::vec3(0.0f)) {
 				break;
+			}
 			WalkPoint end;
 			float time;
 			walkmesh->walk_in_triangle(player.at, remain, &end, &time);
@@ -553,8 +572,12 @@ void PlayMode::update(float elapsed) {
 			std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
 		}
 
-		//update player's position to respect walking:
-		player.transform->position = walkmesh->to_world_point(player.at);
+
+		//update player's position to respect walking if human:
+		if (player.playerStatus != Cat) 
+			player.transform->position = walkmesh->to_world_point(player.at);
+		else //Extra steps to account for cat collision
+			getBoundedPos(move, boundWalkmesh, walkmesh);
 
 		{ //update player's rotation to respect local (smooth) up-vector:
 
@@ -564,7 +587,7 @@ void PlayMode::update(float elapsed) {
 			);
 			player.transform->rotation = glm::normalize(adjust * player.transform->rotation);
 		}
-		player.transform->position += glm::vec3(0.0f, 0.0f, player.height);
+		player.transform->position += glm::vec3(0.0f, 0.0f, player.height + HEIGHT_CLIP);
 
 		/*
 		glm::mat4x3 frame = camera->transform->make_local_to_parent();
@@ -576,7 +599,7 @@ void PlayMode::update(float elapsed) {
 		*/
 	}
 	else {
-		transition(elapsed, 2*gravity);
+		transition(elapsed, 2*gravity, boundWalkmesh, walkmesh);
 	}
 
 	//reset button press counters:
@@ -729,7 +752,7 @@ void PlayMode::update(float elapsed) {
 
 	space.downs = 0;
 
-	//update drawable
+	//update visability of cat and human
 	player.updateDrawable();
 }
 
@@ -738,12 +761,65 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 	//update camera aspect ratio for drawable:
 	player.orbitCamera.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 
-	//set up light type and position for lit_color_texture_program:
-	// TODO: consider using the Light(s) in the scene to do this
+
 	glUseProgram(lit_color_texture_program->program);
-	glUniform1i(lit_color_texture_program->LIGHT_TYPE_int, 1);
-	glUniform3fv(lit_color_texture_program->LIGHT_DIRECTION_vec3, 1, glm::value_ptr(glm::vec3(0.0f, 0.0f, -1.0f)));
-	glUniform3fv(lit_color_texture_program->LIGHT_ENERGY_vec3, 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 0.95f)));
+
+	//Load light arrays
+	//Code modified from https://github.com/15-466/15-466-f19-base6/blob/master/DemoLightingForwardMode.cpp
+
+	uint32_t lightCount = std::min<uint32_t>((uint32_t)scene.lights.size(), lit_color_texture_program->maxLights);
+
+	std::vector< int32_t > light_type; light_type.reserve(lightCount);
+	std::vector< glm::vec3 > light_location; light_location.reserve(lightCount);
+	std::vector< glm::vec3 > light_direction; light_direction.reserve(lightCount);
+	std::vector< glm::vec3 > light_energy; light_energy.reserve(lightCount);
+	std::vector< float > light_cutoff; light_cutoff.reserve(lightCount);
+
+	for (auto const& light : scene.lights) {
+		glm::mat4 light_to_world = light.transform->make_local_to_world();
+		//set up lighting information for this light:
+		light_location.emplace_back(glm::vec3(light_to_world[3]));
+		light_direction.emplace_back(glm::vec3(-light_to_world[2]));
+		light_energy.emplace_back(light.energy);
+
+		if (light.type == Scene::Light::Point) {
+			light_type.emplace_back(0);
+			light_cutoff.emplace_back(1.0f);
+		}
+		else if (light.type == Scene::Light::Hemisphere) {
+			light_type.emplace_back(1);
+			light_cutoff.emplace_back(1.0f);
+		}
+		else if (light.type == Scene::Light::Spot) {
+			light_type.emplace_back(2);
+			light_cutoff.emplace_back(std::cos(0.5f * light.spot_fov));
+		}
+		else if (light.type == Scene::Light::Directional) {
+			light_type.emplace_back(3);
+			light_cutoff.emplace_back(1.0f);
+		}
+
+		//skip remaining lights if maximum light count reached:
+		if (light_type.size() == lightCount) break;
+	}
+
+
+	 
+	glUniform1ui(lit_color_texture_program->LIGHT_COUNT_uint, lightCount);
+
+	GL_ERRORS();
+	glUniform1f(lit_color_texture_program->LIGHT_COUNT_float, (float)lightCount);
+
+	GL_ERRORS();
+
+	glUniform1iv(lit_color_texture_program->LIGHT_TYPE_int_array, lightCount, light_type.data());
+	glUniform3fv(lit_color_texture_program->LIGHT_LOCATION_vec3_array, lightCount, glm::value_ptr(light_location[0]));
+	glUniform3fv(lit_color_texture_program->LIGHT_DIRECTION_vec3_array, lightCount, glm::value_ptr(light_direction[0]));
+	glUniform3fv(lit_color_texture_program->LIGHT_ENERGY_vec3_array, lightCount, glm::value_ptr(light_energy[0]));
+	glUniform1fv(lit_color_texture_program->LIGHT_CUTOFF_float_array, lightCount, light_cutoff.data());
+
+	GL_ERRORS();
+
 	glUseProgram(0);
 
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
@@ -754,20 +830,19 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 	glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
 
 	scene.draw(*player.orbitCamera.camera);
+	GL_ERRORS();
 
-	
-
-	/* In case you are wondering if your walkmesh is lining up with your scene, try:
+	 /*//In case you are wondering if your walkmesh is lining up with your scene, try:
 	{
 		glDisable(GL_DEPTH_TEST);
-		DrawLines lines(player.camera->make_projection() * glm::mat4(player.camera->transform->make_world_to_local()));
-		for (auto const &tri : walkmesh->triangles) {
-			lines.draw(walkmesh->vertices[tri.x], walkmesh->vertices[tri.y], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-			lines.draw(walkmesh->vertices[tri.y], walkmesh->vertices[tri.z], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-			lines.draw(walkmesh->vertices[tri.z], walkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+		DrawLines lines(player.orbitCamera.camera->make_projection() * glm::mat4(player.orbitCamera.camera->transform->make_world_to_local()));
+		for (auto const &tri : boundWalkmesh->triangles) {
+			lines.draw(boundWalkmesh->vertices[tri.x], boundWalkmesh->vertices[tri.y], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+			lines.draw(boundWalkmesh->vertices[tri.y], boundWalkmesh->vertices[tri.z], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+			lines.draw(boundWalkmesh->vertices[tri.z], boundWalkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
 		}
-	}
-	*/
+	}*/
+	
 
 	{ //use DrawLines to overlay some text:
 		glDisable(GL_DEPTH_TEST);

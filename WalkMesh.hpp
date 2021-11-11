@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <iostream>
 
 //"WalkPoint" represents location on the WalkMesh as barycentric coordinates on a triangle:
 struct WalkPoint {

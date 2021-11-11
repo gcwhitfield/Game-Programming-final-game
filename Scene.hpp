@@ -23,6 +23,7 @@
 #include <unordered_map>
 
 struct Scene {
+
 	struct Transform {
 		//Transform names are useful for debugging and looking up locations in a loaded scene:
 		std::string name;
@@ -72,6 +73,17 @@ struct Scene {
 			GLuint OBJECT_TO_CLIP_mat4 = -1U; //uniform location for object to clip space matrix
 			GLuint OBJECT_TO_LIGHT_mat4x3 = -1U; //uniform location for object to light space (== world space) matrix
 			GLuint NORMAL_TO_LIGHT_mat3 = -1U; //uniform location for normal to light space (== world space) matrix
+
+			//Lighting
+			GLuint LIGHT_COUNT_uint = -1U;
+			GLuint LIGHT_COUNT_float = -1U;
+
+
+			GLuint LIGHT_TYPE_int_array = -1U;
+			GLuint LIGHT_LOCATION_vec3_array = -1U;
+			GLuint LIGHT_DIRECTION_vec3_array = -1U;
+			GLuint LIGHT_ENERGY_vec3_array = -1U;
+			GLuint LIGHT_CUTOFF_float_array = -1U;
 
 			std::function< void() > set_uniforms; //(optional) function to set any other useful uniforms
 
