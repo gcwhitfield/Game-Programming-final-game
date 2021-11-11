@@ -163,10 +163,8 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 
 	//Orders
 	player.bag.item_name = "bag";
-
-
-	for (auto const& light : scene.lights) {
-		std::cout << "li pos " << light.energy.x << " " << light.energy.y << " " << light.energy.z << std::endl;
+	for (auto& light : scene.lights) {
+		std::cout << light.energy.x << " " << light.energy.y << " " << light.energy.z << std::endl;
 	}
 }
 
@@ -638,11 +636,6 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 		light_location.emplace_back(glm::vec3(light_to_world[3]));
 		light_direction.emplace_back(glm::vec3(-light_to_world[2]));
 		light_energy.emplace_back(light.energy);
-		//light_energy.emplace_back(glm::vec3(1.0f));
-		glm::vec3 direction = light_direction.back();
-		std::cout << light.transform->position.x << " " << light.transform->position .y << " " << light.transform->position.z << " location\n";
-		std::cout << direction.x << " " << direction.y << " " << direction.z << " light_direction\n";
-		std::cout << light.energy.x << " " << light.energy.y << " " << light.energy.z << " energy\n";
 
 		if (light.type == Scene::Light::Point) {
 			light_type.emplace_back(0);
