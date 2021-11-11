@@ -653,11 +653,11 @@ void PlayMode::update(float elapsed) {
 			customer_spawn_timer = rand_time;
 			scene.transforms.emplace_back();
 			scene.drawables.emplace_back(&scene.transforms.back());
-			Scene::Drawable new_customer = scene.drawables.back();
-			new_customer.pipeline = customer_base->pipeline;
-			new_customer.transform->position = customer_spawn_point->position;
+			Scene::Drawable *new_customer = &scene.drawables.back();
+			new_customer->pipeline = customer_base->pipeline;
+			new_customer->transform->position = customer_spawn_point->position;
 			std::string new_customer_name = "Customer" + std::to_string(customers.size() + 1);
-			Customer c = Customer(new_customer_name, new_customer.transform);
+			Customer c = Customer(new_customer_name, new_customer->transform);
 			c.order = new_item().second;
 			c.init();
 			// c.waypoint = new Scene::Transform();
@@ -692,20 +692,20 @@ void PlayMode::update(float elapsed) {
 			switch (customer.status) {
 				// customers fly into their seat in 'New' state
 				case Customer::Status::New: {
-					std::cout << "New" << std::endl;
+					// std::cout << "New" << std::endl;
 					customer.t_new += elapsed;
 					float t = (customer.new_animation_time - customer.t_new) / customer.new_animation_time; 
 					assert(customer.transform != NULL);
 					assert(customer_spawn_point != NULL);
 					assert(customer.waypoint != NULL);
-					customer.transform->position = customer_spawn_point->position * (1.0f - t) + (customer.waypoint->position * t);
+					customer.transform->position = customer_spawn_point->position * t + (customer.waypoint->position * (1.0f - t));
 					if (customer.t_new > customer.new_animation_time) {
 						customer.status = Customer::Status::Wait;
 					}
 				} break;
 				// customers wait for their order in 'Wait' state
 				case Customer::Status::Wait: {
-					std::cout << "Wait" << std::endl;
+					// std::cout << "Wait" << std::endl;
 					customer.t_wait += elapsed;
 					customer.transform->position = customer.waypoint->position;
 
@@ -719,7 +719,7 @@ void PlayMode::update(float elapsed) {
 				} break;
 				// customers fly away in 'Finished' state
 				case Customer::Status::Finished: {
-					std::cout << "Finished" << std::endl;
+					// std::cout << "Finished" << std::endl;
 					customer.t_finished += elapsed;
 					float t = (customer.finished_animation_time - customer.t_finished) / customer.finished_animation_time;
 					glm::vec3 desired_position = customer_spawn_point->position;
