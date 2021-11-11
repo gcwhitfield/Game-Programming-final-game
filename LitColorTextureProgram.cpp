@@ -106,7 +106,7 @@ LitColorTextureProgram::LitColorTextureProgram() {
 		"			total += max(0.0, dot(n,-LIGHT_DIRECTION[light])) * LIGHT_ENERGY[light];\n"
 		"		}\n"
 		"	}\n"
-		"	fragColor = vec4(total*albedo.rgb, albedo.a);\n"
+		"	fragColor = vec4(total*albedo.rgb, albedo.a);\n" 
 		//"	fragColor = vec4(LIGHT_ENERGY[1],albedo.a);\n"
 		"}\n"
 	);

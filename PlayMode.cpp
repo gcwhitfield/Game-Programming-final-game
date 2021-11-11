@@ -666,7 +666,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 	}
 
 
-
+	 
 	glUniform1ui(lit_color_texture_program->LIGHT_COUNT_uint, lightCount);
 
 	glUniform1iv(lit_color_texture_program->LIGHT_TYPE_int_array, lightCount, light_type.data());
