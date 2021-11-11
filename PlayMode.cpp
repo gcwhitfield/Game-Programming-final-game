@@ -42,7 +42,7 @@ std::ostream &operator<<(std::ostream &os, const StarbuckItem &item){
 bool collide(Scene::Transform * trans_a, Scene::Transform * trans_b, float radius = 6.0f){
 	auto a_pos = trans_a -> position;
 	auto b_pos = trans_b -> position;
-	// printf("%f\n", distance2(a_pos, b_pos));
+	printf("%f\n", distance2(a_pos, b_pos));
 	return distance2(a_pos, b_pos) < radius;
 }
 
@@ -132,12 +132,8 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 			assert(str != "CustomerBase");
 			assert(str != "Customer");
 			assert(str != "CustomerSpawnPoint");
-			// std::pair<Scene::Transform, bool> p = std::make_pair(*(const_cast<Scene::Transform*>((d.transform))), true);
 			std::pair<Scene::Transform*, bool> p = std::make_pair(d.transform, true);
 			customer_waypoints.insert(p);
-			// customer_open_waypoints.emplace_back();
-			// assert(customer_open_waypoints.size() > 0);
-			// customer_open_waypoints.back() = *(d.transform);
 		}
 		else if (str == "CustomerSpawnPoint" && str != "CustomerBase") {
 			assert(str == "CustomerSpawnPoint");
@@ -660,9 +656,6 @@ void PlayMode::update(float elapsed) {
 			Customer c = Customer(new_customer_name, new_customer->transform);
 			c.order = new_item().second;
 			c.init();
-			// c.waypoint = new Scene::Transform();
-			// c.waypoint->position = glm::vec3(0, 0, 0);
-
 			// give the customer a waypoint from one of the open waypoint
 			bool has_set_cwaypoint = false;
 			for (auto &[waypoint, is_open]: customer_waypoints) {
@@ -690,25 +683,22 @@ void PlayMode::update(float elapsed) {
 	{ // handle customer behaviour depending on state
 		for(auto &[name, customer] : customers){
 			switch (customer.status) {
-				// customers fly into their seat in 'New' state
 				case Customer::Status::New: {
-					// std::cout << "New" << std::endl;
-					customer.t_new += elapsed;
-					float t = (customer.new_animation_time - customer.t_new) / customer.new_animation_time; 
-					assert(customer.transform != NULL);
-					assert(customer_spawn_point != NULL);
-					assert(customer.waypoint != NULL);
-					customer.transform->position = customer_spawn_point->position * t + (customer.waypoint->position * (1.0f - t));
-					if (customer.t_new > customer.new_animation_time) {
-						customer.status = Customer::Status::Wait;
+					// customers fly into their seat in the beginning of 'New' state
+					if (customer.t_new < customer.new_animation_time) {
+						// std::cout << "New" << std::endl;
+						customer.t_new += elapsed;
+						float t = (customer.new_animation_time - customer.t_new) / customer.new_animation_time; 
+						assert(customer.transform != NULL);
+						assert(customer_spawn_point != NULL);
+						assert(customer.waypoint != NULL);
+						customer.transform->position = customer_spawn_point->position * t + (customer.waypoint->position * (1.0f - t));
 					}
 				} break;
 				// customers wait for their order in 'Wait' state
 				case Customer::Status::Wait: {
-					// std::cout << "Wait" << std::endl;
 					customer.t_wait += elapsed;
 					customer.transform->position = customer.waypoint->position;
-
 					// the customer gets angry if it waits too longs, score gets deducted
 					if (customer.t_wait > customer.max_wait_time) {
 						std::cout << "Customer [" << customer.name << "] has waited too long :(. Customer is leaving..." << std::endl;
@@ -719,7 +709,6 @@ void PlayMode::update(float elapsed) {
 				} break;
 				// customers fly away in 'Finished' state
 				case Customer::Status::Finished: {
-					// std::cout << "Finished" << std::endl;
 					customer.t_finished += elapsed;
 					float t = (customer.finished_animation_time - customer.t_finished) / customer.finished_animation_time;
 					glm::vec3 desired_position = customer_spawn_point->position;
