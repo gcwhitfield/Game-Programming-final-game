@@ -29,6 +29,7 @@ struct LitColorTextureProgram {
 	GLuint LIGHT_ENERGY_vec3_array = -1U;
 	GLuint LIGHT_CUTOFF_float_array = -1U;
 	GLuint LIGHT_COUNT_uint = -1U;
+	GLuint LIGHT_COUNT_float = -1U;
 
 	GLuint maxLights = 40U;
 	

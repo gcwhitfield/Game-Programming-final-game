@@ -16,6 +16,7 @@ Load< LitColorTextureProgram > lit_color_texture_program(LoadTagEarly, []() -> L
 	lit_color_texture_program_pipeline.NORMAL_TO_LIGHT_mat3 = ret->NORMAL_TO_LIGHT_mat3;
 
 	lit_color_texture_program_pipeline.LIGHT_COUNT_uint = ret->LIGHT_COUNT_uint;
+	lit_color_texture_program_pipeline.LIGHT_COUNT_float = ret->LIGHT_COUNT_float;
 	
 	lit_color_texture_program_pipeline.LIGHT_TYPE_int_array = ret->LIGHT_TYPE_int_array;
 	lit_color_texture_program_pipeline.LIGHT_LOCATION_vec3_array = ret->LIGHT_LOCATION_vec3_array;
@@ -43,6 +44,8 @@ Load< LitColorTextureProgram > lit_color_texture_program(LoadTagEarly, []() -> L
 	return ret;
 });
 
+//https://www.lighthouse3d.com/tutorials/glsl-12-tutorial/toon-shader-version-ii/ used as starting point for cel shading code
+
 LitColorTextureProgram::LitColorTextureProgram() {
 	//Compile vertex and fragment shaders using the convenient 'gl_compile_program' helper function:
 	program = gl_compile_program(
@@ -68,7 +71,7 @@ LitColorTextureProgram::LitColorTextureProgram() {
 		"}\n"
 		,
 		//fragment shader:
-		"#version 330\n"
+		/*"#version 330\n"
 		"uniform sampler2D TEX;\n"
 		"uniform uint LIGHT_COUNT;\n"
 		"uniform int LIGHT_TYPE[" + std::to_string(maxLights) + "];\n"
@@ -86,28 +89,97 @@ LitColorTextureProgram::LitColorTextureProgram() {
 		"	vec4 albedo = texture(TEX, texCoord) * color;\n"
 		"   vec3 total = vec3(0.0f);\n"
 		"	for(uint light = 0u; light < LIGHT_COUNT; ++light){ \n"
-		"		if (LIGHT_TYPE[light] == 0) { //point light \n"
-		"			vec3 l = (LIGHT_LOCATION[light] - position);\n"
+		//		intensity = dot(lightDir, normalize(normal));
+		"		int lightType = LIGHT_TYPE[light];\n"
+		"		vec3 lightLocation = LIGHT_LOCATION[light];\n"
+		"		vec3 lightDirection = LIGHT_DIRECTION[light];\n"
+		"		vec3 lightEnergy = LIGHT_ENERGY[light];\n"
+		"		float lightCutoff = LIGHT_CUTOFF[light];\n"
+		"		if (lightType == 0) { //point light \n"
+		"			vec3 l = (lightLocation - position);\n"
 		"			float dis2 = dot(l,l);\n"
 		"			l = normalize(l);\n"
 		"			float nl = max(0.0, dot(n, l)) / max(1.0, dis2);\n"
-		"			total += nl * LIGHT_ENERGY[light];\n"
-		"		} else if (LIGHT_TYPE[light] == 1) { //hemi light \n"
-		"			total += (dot(n,-LIGHT_DIRECTION[light]) * 0.5 + 0.5) * LIGHT_ENERGY[light];\n"
-		"		} else if (LIGHT_TYPE[light] == 2) { //spot light \n"
-		"			vec3 l = (LIGHT_LOCATION[light] - position);\n"
+		"			total += nl * lightEnergy;\n"
+		"		} else if (lightType == 1) { //hemi light \n"
+		"			total += (dot(n,-lightDirection) * 0.5 + 0.5) * lightEnergy;\n"
+		"		} else if (lightType == 2) { //spot light \n"
+		"			vec3 l = (lightLocation - position);\n"
 		"			float dis2 = dot(l,l);\n"
 		"			l = normalize(l);\n"
 		"			float nl = max(0.0, dot(n, l)) / max(1.0, dis2);\n"
-		"			float c = dot(l,-LIGHT_DIRECTION[light]);\n"
-		"			nl *= smoothstep(LIGHT_CUTOFF[light],mix(LIGHT_CUTOFF[light],1.0,0.1), c);\n"
-		"			total += nl * LIGHT_ENERGY[light];\n"
-		"		} else { //(LIGHT_TYPE[light] == 3) //directional light \n"
-		"			total += max(0.0, dot(n,-LIGHT_DIRECTION[light])) * LIGHT_ENERGY[light];\n"
+		"			float c = dot(l,-lightDirection);\n"
+		"			nl *= smoothstep(lightCutoff,mix(lightCutoff,1.0,0.1), c);\n"
+		"			total += nl * lightEnergy;\n"
+		"		} else { //(lightType == 3) //directional light \n"
+		"			total += max(0.0, dot(n,-lightDirection)) * lightEnergy;\n"
 		"		}\n"
 		"	}\n"
-		"	fragColor = vec4(total*albedo.rgb, albedo.a);\n" 
-		//"	fragColor = vec4(LIGHT_ENERGY[1],albedo.a);\n"
+		"	fragColor = vec4(total*albedo.rgb, albedo.a);\n"
+		"}\n"*/
+		"#version 330\n"
+		"uniform sampler2D TEX;\n"
+		"uniform uint LIGHT_COUNT;\n"
+		"uniform float LIGHT_COUNT_F;\n"
+		"uniform int LIGHT_TYPE[" + std::to_string(maxLights) + "];\n"
+		"uniform vec3 LIGHT_LOCATION[" + std::to_string(maxLights) + "];\n"
+		"uniform vec3 LIGHT_DIRECTION[" + std::to_string(maxLights) + "];\n"
+		"uniform vec3 LIGHT_ENERGY[" + std::to_string(maxLights) + "];\n"
+		"uniform float LIGHT_CUTOFF[" + std::to_string(maxLights) + "];\n"
+		"in vec3 position;\n"
+		"in vec3 normal;\n"
+		"in vec4 color;\n"
+		"in vec2 texCoord;\n"
+		"out vec4 fragColor;\n"
+		"void main() {\n"
+		"	vec3 n = normalize(normal);\n"
+		"	vec4 albedo = texture(TEX, texCoord) * color;\n"
+		"   vec3 total = vec3(0.0f);\n"
+		"	vec3 lightColor = vec3(0.0f);\n"	
+		"	for(uint light = 0u; light < LIGHT_COUNT; ++light){ \n"
+		"		int lightType = LIGHT_TYPE[light];\n"
+		"		vec3 lightLocation = LIGHT_LOCATION[light];\n"
+		"		vec3 lightDirection = LIGHT_DIRECTION[light];\n"
+		"		vec3 lightEnergy = LIGHT_ENERGY[light];\n"
+		"		float lightCutoff = LIGHT_CUTOFF[light];\n"
+		"		lightColor += lightEnergy / vec3(LIGHT_COUNT_F);\n"	
+		"		if (lightType == 0) { //point light \n"
+		"			vec3 l = (lightLocation - position);\n"
+		"			float dis2 = dot(l,l);\n"
+		"			l = normalize(l);\n"
+		"			float nl = max(0.0, dot(n, l)) / max(1.0, dis2);\n"
+		"			if(dis2 > 50.0f) nl = 0.0f;\n"
+		"			total += nl * lightEnergy;\n"
+		"		} else if (lightType == 1) { //hemi light \n"
+		"			total += (dot(n,-lightDirection) * 0.5 + 0.5) * lightEnergy;\n"
+		"		} else if (lightType == 2) { //spot light \n"
+		"			vec3 l = (lightLocation - position);\n"
+		"			float dis2 = dot(l,l);\n"
+		"			l = normalize(l);\n"
+		"			float nl = max(0.0, dot(n, l)) / max(1.0, dis2);\n"
+		"			float c = dot(l,-lightDirection);\n"
+		"			nl *= smoothstep(lightCutoff,mix(lightCutoff,1.0,0.1), c);\n"
+		"			if(dis2 > 100.0f) nl = 0.0f;\n"
+		"			total += nl * lightEnergy;\n"
+		"		} else { //(lightType == 3) //directional light \n"
+		"			vec3 l = (lightLocation - position);\n"
+		"			float dis2 = dot(l,l);\n"
+		"			if(dis2 <= 100.0f)\n"	
+		"				total += max(0.0, dot(n,-lightDirection)) * lightEnergy;\n"
+		"		}\n"
+		"	}\n"
+		"	float intensity = length(total);\n"
+		"	if(intensity > 0.8)\n"
+		"		total = vec3(0.8f)*lightColor;\n"
+		"	else if(intensity > 0.6)\n"
+		"		total = vec3(0.6f)*lightColor;\n"
+		"	else if(intensity > 0.4)\n"
+		"		total = vec3(0.4f)*lightColor;\n"
+		"	else if(intensity > 0.2)\n"
+		"		total = vec3(0.2f)*lightColor;\n"
+		"	else\n"
+		"		total = vec3(0.0f);\n"	
+		"	fragColor = vec4(total*albedo.rgb, albedo.a);\n"
 		"}\n"
 	);
 	//As you can see above, adjacent strings in C/C++ are concatenated.
@@ -125,6 +197,7 @@ LitColorTextureProgram::LitColorTextureProgram() {
 	NORMAL_TO_LIGHT_mat3 = glGetUniformLocation(program, "NORMAL_TO_LIGHT");
 
 	LIGHT_COUNT_uint = glGetUniformLocation(program, "LIGHT_COUNT");
+	LIGHT_COUNT_float = glGetUniformLocation(program, "LIGHT_COUNT_F");
 
 	LIGHT_TYPE_int_array = glGetUniformLocation(program, "LIGHT_TYPE");
 	LIGHT_LOCATION_vec3_array = glGetUniformLocation(program, "LIGHT_LOCATION");

@@ -75,6 +75,7 @@ struct Scene {
 
 			//Lighting
 			GLuint LIGHT_COUNT_uint = -1U;
+			GLuint LIGHT_COUNT_float = -1U;
 
 
 			GLuint LIGHT_TYPE_int_array = -1U;
