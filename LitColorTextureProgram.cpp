@@ -178,7 +178,7 @@ LitColorTextureProgram::LitColorTextureProgram() {
 		"	else if(intensity > 0.05)\n"
 		"		total = vec3(0.2f)*lightColor;\n"
 		"	else\n"
-		"		total = vec3(0.0f);\n"	
+		"		total = vec3(0.08f)*lightColor;\n"	
 		"	fragColor = vec4(total*albedo.rgb, albedo.a);\n"
 		"}\n"
 	);
