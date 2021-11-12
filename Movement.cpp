@@ -164,7 +164,7 @@ void PlayMode::transition(float elapsed, float gravity, WalkMesh const* boundWal
 
 //Decide whether the cat has hit a collision, and if so, how
 void PlayMode::decidePos(glm::vec3 inBounds, glm::vec3 at) {
-	auto posDif = [this](glm::vec3 inBounds, glm::vec3 at) {
+	auto posDif = [](glm::vec3 inBounds, glm::vec3 at) {
 		return glm::length(inBounds - at);
 	};
 	if (posDif(inBounds,at) <= ERROR_F) { //If positions are close, assume no object is at player

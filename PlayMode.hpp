@@ -13,8 +13,7 @@
 
 #define PI_F 3.1415926f
 
-
-
+#include <unordered_set>
 
 struct PlayMode : Mode {
 	PlayMode();
@@ -28,7 +27,10 @@ struct PlayMode : Mode {
 
 	//----- game state -----
 
+	std::map<std::string, Scene::Drawable> ingredients_drawables;
+
 	float manager_next_appearance_timer = 10.0f; // seconds
+
 	enum ManagerState {
 		AWAY, 
 		ARRIVING,
@@ -41,6 +43,71 @@ struct PlayMode : Mode {
 
 	Scene::Drawable* manager = NULL; // the drawable of the manager in scene.drawables
 	glm::vec3 manager_here_pos; // the location to place the manager when it is HERE
+
+	// ----- customers -----
+	Scene::Drawable *customer_base; // the base object from which new customers will get cloned 
+
+	// In starbucks.blend, there are various 'CustomerWaypoint' objects placed throughout the scene
+	// when the value is set to 'true' it means that the waypoint is UNOCCUPIED and a customer caan
+	// go to it.
+	// when the value is set to 'false' it means that the waypoint is OCCUPIED and there is a customer using the
+	// waypoint
+	std::map<Scene::Transform*, bool> customer_waypoints;
+	// std::list<Scene::Transform> customer_open_waypoints; // a set of transforms of unoccupied seats in starbucks
+	// std::list<Scene::Transform> customer_occupied_waypoints; // a set of occupied seats in starbucks
+	Scene::Transform* customer_spawn_point = NULL; // the place where new customers get spawned. This will eventually be outside the 
+	// front door of the starbucks
+	float customer_spawn_timer = 5.0f; // a new customer is spawned once this timer reaches 0.
+	
+	struct Customer{
+
+
+		// initialize various variables related to animation
+		void init() {
+			t_new = 0.0f;
+			t_wait = 0.0f;
+			t_finished = 0.0f;
+			status = Status::New;
+		}
+		
+		//Todo max_wait_time scaling, happiness score
+		int happiness() {
+			return 100.0f * (t_wait - max_wait_time) / max_wait_time;
+		}
+
+		// the customer travels towards the waypoint in 'New' state and away from the 
+		// waypoint in 'Finished' state
+		Scene::Transform *waypoint;
+
+		// ----- New -----
+		// the amount of time that it takes for the customer to arrive at their seat
+		float new_animation_time = 2.0f; // in seconds
+		float t_new = 0.0f; // current timestamp of New animation
+
+		// ----- Wait -----
+		float t_wait = 0; // the current amount of time that the customer has waited
+		float max_wait_time = 30; // the maximum time that a customer will wait for an order
+		
+		// ----- Finished ----
+		// the amount of time that it takes for the customer to fly away from their seat
+		float finished_animation_time = 2.0f; // in seconds
+		float t_finished = 0.0f; // cirrent timestamp of Finished animation
+		
+		enum Status{
+			New,
+			Wait,
+			Finished,
+			Inactive // state used for customers that are no longer in-play
+		};
+		std::string name;
+		Scene::Transform* transform;
+		Status status;
+		StarbuckItem order;
+		Customer(){}
+		Customer(std::string nam,Scene::Transform* trans) : name(nam),transform(trans), status(Status::New){}
+	};
+	
+	std::map<std::string, Customer> customers;
 
 	// ----- input tracking -----
 	struct Button {
@@ -127,27 +194,8 @@ struct PlayMode : Mode {
 		PlayState playing = ongoing; 
 	} ;
 
-	//struct customers 
-	struct Customer{
-		//Todo wait_time scaling, happiness score
-		int happiness = 0;
-		int wait_time = 30;
-		enum Status{
-			New,
-			Wait,
-			Finished
-		};
-		std::string name;
-		Scene::Transform* transform;
-		Status status;
-		StarbuckItem order;
-		Customer(){}
-		Customer(std::string nam,Scene::Transform* trans) : name(nam),transform(trans), status(Status::New){}
-		
-	};
 
 	std::map<std::string, Scene::Transform*> ingredient_transforms;
-	std::map<std::string, Customer> customers;
 
 	State state;
 
