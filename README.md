@@ -13,6 +13,8 @@ How To Play:
 (TODO: describe the controls and (if needed) goals/strategy.)
 
 Sources: (TODO: list a source URL for any assets you did not create yourself. Make sure you have a license for the asset.)
+bike ding sound clip, used for the "order complete" SFX - https://freesound.org/people/JohnsonBrandEditing/sounds/173932/
+slide whistle sound clip, used for "order spilled" SFX - https://freesound.org/people/jcookvoice/sounds/586529/
 
 This game was built with [NEST](NEST.md).
 

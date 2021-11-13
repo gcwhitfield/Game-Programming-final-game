@@ -245,7 +245,7 @@ bool PlayMode::take_order(){
 }
 bool PlayMode::grab_ingredient(){
 	for(auto &[name, ingredient_transform]: ingredient_transforms){
-		if(collide(ingredient_transform, player.transform) && // distance close
+		if(collide(ingredient_transform, player.transform, 8) && // distance close
 			order_status == OrderStatus::Executing//player has an order in hand
 		) 
 		{
