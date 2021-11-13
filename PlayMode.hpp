@@ -72,7 +72,7 @@ struct PlayMode : Mode {
 		
 		//Todo max_wait_time scaling, happiness score
 		int happiness() {
-			return 100.0f * (t_wait - max_wait_time) / max_wait_time;
+			return (int)(100.0f * (t_wait - max_wait_time) / max_wait_time);
 		}
 
 		// the customer travels towards the waypoint in 'New' state and away from the 
