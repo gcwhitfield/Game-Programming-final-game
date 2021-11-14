@@ -143,6 +143,8 @@ struct PlayMode : Mode {
 			float curPitch = 75.0f * 2 * PI_F / 360.f;
 
 			void updateCamera();
+			void walkCamera();
+			WalkPoint at;
 		};
 
 		OrbitCamera orbitCamera;
@@ -181,7 +183,7 @@ struct PlayMode : Mode {
 	};	
 
 	enum Proximity {
-		Customer, Ingredient, Empty
+		CustomerProx, IngredientProx, NoProx
 	};
 
 
@@ -196,7 +198,7 @@ struct PlayMode : Mode {
 		float flapTimer = 0.00f;
 		float flapCooldown = 0.1f;//In seconds
 		PlayState playing = ongoing; 
-		Proximity proximity = Empty;
+		Proximity proximity = NoProx;
 	} ;
 
 	void updateProximity();

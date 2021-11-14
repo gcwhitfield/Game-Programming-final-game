@@ -43,7 +43,6 @@ std::ostream &operator<<(std::ostream &os, const StarbuckItem &item){
 bool collide(Scene::Transform * trans_a, Scene::Transform * trans_b, float radius = 6.0f){
 	auto a_pos = trans_a -> position;
 	auto b_pos = trans_b -> position;
-	printf("%f\n", distance2(a_pos, b_pos));
 	return distance2(a_pos, b_pos) < radius;
 }
 
@@ -114,7 +113,7 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	for (auto &d : scene.drawables)
 	{
 		std::string &str = d.transform->name;
-		std::cout <<str <<std::endl;
+		//std::cout <<str <<std::endl;
 		if (str == "Manager")
 		{
 			manager = &d;
@@ -141,12 +140,12 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 		}
 		else if (str == "CustomerSpawnPoint" && str != "CustomerBase") {
 			assert(str == "CustomerSpawnPoint");
-			std::cout << "CustomerSpawnPoint has been found" << std::endl;
+			//std::cout << "CustomerSpawnPoint has been found" << std::endl;
 			customer_spawn_point = d.transform;
 		}
 		//store customers ingredients information and location
 		else if(str.length() >= 8 && str.substr(0,8) == "Customer" && str != "CustomerBase" && str != "CustomerWaypoint" && str != "CustomerSpawnPoint"){
-			std::cout << str << std::endl;
+			//std::cout << str << std::endl;
 			assert(str != "CustomerBase");
 			assert(str != "CustomerWaypoint");
 			assert(str != "CustomerSpawnPoint");
@@ -158,7 +157,7 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 		// transforms in the starbucks.blend scene
 		else if (str == "CustomerBase") {
 			assert(str == "CustomerBase");
-			std::cout << "CustomerBase has been found" << std::endl;
+		//	std::cout << "CustomerBase has been found" << std::endl;
 			customer_base = &d;
 		}
 		// the player starts at the location of the "Player" object in the Blender scene
@@ -189,7 +188,7 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 
 	for (auto &[w, is_open] : customer_waypoints) {
 		(void)is_open; // avoid 'variable not used' with is_open
-		std::cout << "Cusotmer waypoint: " << w->position << std::endl;
+		//std::cout << "Cusotmer waypoint: " << w->position << std::endl;
 	}
 
 	assert(customer_waypoints.size() > 0);
@@ -218,7 +217,7 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	//Orders
 	player.bag.item_name = "bag";
 	for (auto& light : scene.lights) {
-		std::cout << light.energy.x << " " << light.energy.y << " " << light.energy.z << std::endl;
+	//	std::cout << light.energy.x << " " << light.energy.y << " " << light.energy.z << std::endl;
 	}
 }
 
@@ -286,9 +285,53 @@ bool PlayMode::serve_order(){
 
 void PlayMode::Player::OrbitCamera::updateCamera() {
 	focalPoint = glm::vec3(0.0f);
-	direction = glm::normalize( camera->transform->rotation* glm::vec3(0.0f, 0.0f, -1.0f));
+	direction = glm::normalize(camera->transform->rotation * glm::vec3(0.0f, 0.0f, -1.0f));
 	camera->transform->position = focalPoint - distance * direction;
 	camera->transform->rotation = -camera->transform->rotation;
+	walkCamera();
+}
+
+
+void PlayMode::Player::OrbitCamera::walkCamera() {
+	at = walkmesh->nearest_walk_point(focalPoint - distance * direction);
+	std::cout << "walkpoint info " << "indices " << at.indices.x << " " << at.indices.y << " " << at.indices.z << " weights " << at.weights.x << " " << at.weights.y << " " << at.weights.z << std::endl;
+	glm::vec3 inBounds = walkmesh->to_world_point(at);
+	std::cout << "walkmesh " << inBounds.x << " " << inBounds.y << " " << inBounds.z << std::endl;
+	std::cout << "camera " << camera->transform->position.x << " " << camera->transform->position.y << " " << camera->transform->position.z << std::endl;
+	inBounds.z = camera->transform->position.z;
+	camera->transform->position = inBounds;
+}
+
+void PlayMode::updateProximity() {
+	auto getDistance = [this](Scene::Transform* a, Scene::Transform* b) {
+		return glm::length(a->position- b->position);
+	};
+	std::pair<bool, float> closestC, closestI;
+	closestC = std::make_pair(false, INFINITY);
+	closestI = std::make_pair(false, INFINITY);
+	for (auto& [name, customer] : customers) {
+		if (collide(customer.transform, player.transform))
+		{
+			float dist = getDistance(customer.transform, player.transform);
+			if (!closestC.first || dist < closestC.second)
+				closestC = std::make_pair(true, dist);
+		}
+	}
+	for (auto& [name, ingredient_transform] : ingredient_transforms) {
+		if (collide(ingredient_transform, player.transform, 10.f))
+		{
+			float dist = getDistance(ingredient_transform, player.transform);
+			if (!closestI.first || dist < closestI.second)
+				closestI = std::make_pair(true, dist);
+		}
+	}
+	if (!(closestC.first || closestI.first))
+		state.proximity = Proximity::NoProx;
+	else if (!closestC.first || closestI.second < closestC.second)
+		state.proximity = Proximity::IngredientProx;
+	else
+		state.proximity = Proximity::CustomerProx;
+
 }
 
 bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
@@ -333,38 +376,9 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			}
 			return true;
 		}
-		else if (evt.key.keysym.sym == SDLK_q) {
-			if (player.playerStatus == Cat) {
-				player.playerStatus = toHuman;
-				player.capturePos = glm::vec2(player.transform->position.x, player.transform->position.y);
-			}
-			else if (player.playerStatus == Human) player.playerStatus = toCat;
-			return true;
-		}
 		else if (evt.key.keysym.sym == SDLK_r)
 		{
 			// TODO: restart the game
-			return true;
-		}
-		//Order related controls
-		else if (evt.key.keysym.sym == SDLK_z) //take the order
-		{
-			take_order();
-			return true;
-		}
-		else if (evt.key.keysym.sym == SDLK_x) // serve the order
-		{
-			serve_order();
-			return true;
-		}
-		else if (evt.key.keysym.sym == SDLK_c) // grab ingredient
-		{
-			grab_ingredient();
-			return true;
-		}
-		else if (evt.key.keysym.sym == SDLK_v) // clear all of the ingredients from bag
-		{
-			player.bag.clear_item();
 			return true;
 		}
 	}
@@ -399,6 +413,32 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		if (SDL_GetRelativeMouseMode() == SDL_FALSE)
 		{
 			SDL_SetRelativeMouseMode(SDL_TRUE);
+			return true;
+		}
+		if (evt.button.button == SDL_BUTTON_LEFT) {
+			switch (state.proximity)
+			{
+
+			case(Proximity::CustomerProx):
+				if (order_status == OrderStatus::Empty)
+					take_order();
+				else
+					serve_order();
+				break;
+			case(Proximity::IngredientProx):
+				grab_ingredient();
+				break;
+			default:
+				break;
+			}
+			return true;
+		}
+		else if (evt.button.button == SDL_BUTTON_RIGHT) {
+			if (player.playerStatus == Cat) {
+				player.playerStatus = toHuman;
+				player.capturePos = glm::vec2(player.transform->position.x, player.transform->position.y);
+			}
+			else if (player.playerStatus == Human) player.playerStatus = toCat;
 			return true;
 		}
 	}
@@ -455,6 +495,8 @@ void PlayMode::update(float elapsed) {
 			player.orbitCamera.updateCamera();
 		}
 	}
+
+	player.orbitCamera.walkCamera();
 
 	// win and lose
 	if (state.playing == won || state.playing == lost)
@@ -663,7 +705,7 @@ void PlayMode::update(float elapsed) {
 	{ // spawn new customers periodically
 		customer_spawn_timer -= elapsed;
 		if (customer_spawn_timer < 0) {
-			std::cout << "A new customer has been spawned!" << std::endl;
+			//std::cout << "A new customer has been spawned!" << std::endl;
 			size_t r = rand() % 100;
 			// the amount of time until the next customer spawns is governed by the 
 			// random variable 'rand_time'. 'rand_time' is uniformly distributed 
@@ -724,7 +766,7 @@ void PlayMode::update(float elapsed) {
 					customer.transform->position = customer.waypoint->position;
 					// the customer gets angry if it waits too longs, score gets deducted
 					if (customer.t_wait > customer.max_wait_time) {
-						std::cout << "Customer [" << customer.name << "] has waited too long :(. Customer is leaving..." << std::endl;
+						//std::cout << "Customer [" << customer.name << "] has waited too long :(. Customer is leaving..." << std::endl;
 						state.score -= 10; 
 						customer.status = Customer::Status::Finished;
 					}
@@ -754,6 +796,7 @@ void PlayMode::update(float elapsed) {
 
 	//update visability of cat and human
 	player.updateDrawable();
+	updateProximity(); //Update nearest action for next control event
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size)
