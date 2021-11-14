@@ -180,6 +180,10 @@ struct PlayMode : Mode {
 		ongoing, won, lost, menu
 	};	
 
+	enum Proximity {
+		Customer, Ingredient, Empty
+	};
+
 
 	struct State //Game state
 	{
@@ -192,7 +196,10 @@ struct PlayMode : Mode {
 		float flapTimer = 0.00f;
 		float flapCooldown = 0.1f;//In seconds
 		PlayState playing = ongoing; 
+		Proximity proximity = Empty;
 	} ;
+
+	void updateProximity();
 
 
 	std::map<std::string, Scene::Transform*> ingredient_transforms;
