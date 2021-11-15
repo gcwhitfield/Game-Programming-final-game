@@ -29,6 +29,15 @@ std::pair<std::string, StarbuckItem> new_item()
 		it++;
 	return *it;
 }
+std::string new_customer_name()
+{
+	std::random_device r;
+	std::default_random_engine e1(r());
+	size_t sz = customernames.size() - 1;
+	std::uniform_int_distribution<int> uniform_dist(0, static_cast<int>(sz));
+	int choice = uniform_dist(e1);
+	return customernames[choice];
+}
 //debugging printing information for recipe
 std::ostream &operator<<(std::ostream &os, const glm::vec3 &pos)
 {
@@ -45,11 +54,15 @@ std::ostream &operator<<(std::ostream &os, const StarbuckItem &item)
 std::ostream &operator<<(std::ostream &os, const PlayMode::Customer &customer)
 {
 	os << "item name : " << customer.order.item_name;
-	os << ",   status : " ;
-	if(customer.status == PlayMode::Customer::Status::Finished)  os <<"Finished";
-	if(customer.status == PlayMode::Customer::Status::New)  os <<"New";
-	if(customer.status == PlayMode::Customer::Status::Wait)  os <<"Wait";
-	if(customer.status == PlayMode::Customer::Status::Inactive)  os <<"Inactive";
+	os << ",   status : ";
+	if (customer.status == PlayMode::Customer::Status::Finished)
+		os << "Finished";
+	if (customer.status == PlayMode::Customer::Status::New)
+		os << "New";
+	if (customer.status == PlayMode::Customer::Status::Wait)
+		os << "Wait";
+	if (customer.status == PlayMode::Customer::Status::Inactive)
+		os << "Inactive";
 	return os;
 }
 bool collide(Scene::Transform *trans_a, Scene::Transform *trans_b, float radius = 6.0f)
@@ -94,6 +107,14 @@ Load<WalkMeshes> phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const *
 // cite: https://www.fesliyanstudios.com/royalty-free-sound-effects-download/footsteps-31
 Load<Sound::Sample> manager_footstep_sample(LoadTagDefault, []() -> Sound::Sample const * {
 	return new Sound::Sample(data_path("manager_footstep.wav"));
+});
+
+Load<Sound::Sample> order_complete_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("BellDing.wav"));
+});
+
+Load<Sound::Sample> background_music_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("[Loop]WelcomeToStarbucks.wav"));
 });
 
 PlayMode::PlayMode() : scene(*starbucks_scene)
@@ -245,6 +266,8 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	/*for (auto& light : scene.lights) {
 		std::cout << light.energy.x << " " << light.energy.y << " " << light.energy.z << std::endl;
 	}*/
+
+	Sound::loop(*background_music_sample);
 }
 
 PlayMode::~PlayMode()
@@ -292,7 +315,7 @@ bool PlayMode::serve_order()
 	//std::cout<<"name:"<<player.cur_order.item_name<<std::endl;
 	for (auto &[name, customer] : customers)
 	{
-		std::cout<<customer<<std::endl;
+		//std::cout<<customer<<std::endl;
 		if (collide(customer.transform, player.transform) &&		  // distance close
 			customer.status == Customer::Status::Wait &&			  //customer is waiting
 			customer.order.item_name == player.cur_order.item_name && //the order match
@@ -311,6 +334,8 @@ bool PlayMode::serve_order()
 			// also clear the last served order
 			player.cur_order.clear_item();
 
+			Sound::play(*order_complete_sample, 0.5f);
+
 			return true;
 		}
 	}
@@ -323,46 +348,56 @@ void PlayMode::Player::OrbitCamera::updateCamera()
 	direction = glm::normalize(camera->transform->rotation * glm::vec3(0.0f, 0.0f, -1.0f));
 	camera->transform->position = focalPoint - distance * direction;
 	camera->transform->rotation = -camera->transform->rotation;
-	walkCamera();
 }
 
 void PlayMode::Player::OrbitCamera::walkCamera()
 {
-	at = walkmesh->nearest_walk_point(focalPoint - distance * direction);
-	//std::cout << "walkpoint info " << "indices " << at.indices.x << " " << at.indices.y << " " << at.indices.z << " weights " << at.weights.x << " " << at.weights.y << " " << at.weights.z << std::endl;
-	glm::vec3 inBounds = walkmesh->to_world_point(at);
-	//std::cout << "walkmesh " << inBounds.x << " " << inBounds.y << " " << inBounds.z << std::endl;
-	//std::cout << "camera " << camera->transform->position.x << " " << camera->transform->position.y << " " << camera->transform->position.z << std::endl;
-	inBounds.z = camera->transform->position.z;
-	camera->transform->position = inBounds;
+	glm::vec3 worldPos = camera->transform->make_local_to_world() * glm::vec4(camera->transform->position.x, camera->transform->position.y, camera->transform->position.z, 1.f);
+	worldPos.z = 0.0f;
+	at = boundWalkmesh->nearest_walk_point(worldPos);
+	glm::vec3 inBounds = boundWalkmesh->to_world_point(at);
+	float curLength = length(inBounds - worldPos);
+	if (curLength > 0.0001f)
+	{
+		float height = camera->transform->position.z;
+		camera->transform->position = focalPoint - (distance - curLength) * direction;
+		camera->transform->position.z = height;
+	}
 }
 
 void PlayMode::updateProximity()
 {
-	auto getDistance = [this](Scene::Transform *a, Scene::Transform *b) {
+	auto getDistance = [](Scene::Transform *a, Scene::Transform *b) {
 		return glm::length(a->position - b->position);
 	};
 	std::pair<bool, float> closestC, closestI;
 	closestC = std::make_pair(false, INFINITY);
 	closestI = std::make_pair(false, INFINITY);
+
 	for (auto &[name, customer] : customers)
 	{
 		if (collide(customer.transform, player.transform))
 		{
 			float dist = getDistance(customer.transform, player.transform);
 			if (!closestC.first || dist < closestC.second)
+			{
 				closestC = std::make_pair(true, dist);
+				closest_customer_name = customer.name;
+			}
 		}
 	}
 	//int cnt = 0;
 	for (auto &[name, ingredient_transform] : ingredient_transforms)
 	{
 		// cnt++;
-		if (collide(ingredient_transform, player.transform, 4.5f))
+		if (collide(ingredient_transform, player.transform))
 		{
 			float dist = getDistance(ingredient_transform, player.transform);
 			if (!closestI.first || dist < closestI.second)
+			{
+				closest_ingredient_name = ingredient_transform->name;
 				closestI = std::make_pair(true, dist);
+			}
 		}
 	}
 	//std::cout<<cnt<<' '<<closestC.second<<' '<<closestI.second<<std::endl;
@@ -511,8 +546,8 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			player.transform->rotation = glm::angleAxis(-motion.x * player.orbitCamera.camera->fovy, up) * player.transform->rotation;
 			player.orbitCamera.truePitch += motion.y * player.orbitCamera.camera->fovy;
 			//camera looks down -z (basically at the player's feet) when pitch is at zero.
-			player.orbitCamera.truePitch = std::min(player.orbitCamera.truePitch, 0.95f * PI_F);
-			player.orbitCamera.truePitch = std::max(player.orbitCamera.truePitch, 0.05f * PI_F);
+			player.orbitCamera.truePitch = std::min(player.orbitCamera.truePitch, 0.95f * 3.1415926f);
+			player.orbitCamera.truePitch = std::max(player.orbitCamera.truePitch, 0.05f * 3.1415926f);
 			player.orbitCamera.curPitch = player.orbitCamera.truePitch;
 			if (player.height <= player.orbitCamera.distance + ERROR_F)
 			{ //Camera clipping check
@@ -552,11 +587,12 @@ void PlayMode::update(float elapsed)
 		{
 			player.orbitCamera.curPitch = PI_F / 2.f + theta - 0.1f;
 			player.orbitCamera.camera->transform->rotation = glm::angleAxis(player.orbitCamera.curPitch, glm::vec3(1.0f, 0.0f, 0.0f));
-			player.orbitCamera.updateCamera();
 		}
 	}
 
+	player.orbitCamera.updateCamera();
 	player.orbitCamera.walkCamera();
+	manager->transform->position = player.orbitCamera.camera->transform->position;
 
 	// win and lose
 	if (state.playing == won || state.playing == lost)
@@ -582,8 +618,16 @@ void PlayMode::update(float elapsed)
 	{
 		if (manager_state == HERE && player.playerStatus == Cat)
 		{
-			catch_message = "You are being caught by the manager! Oops!";
-			state.score -= 1;
+			catch_message = "You are caught by the Manager, Oops!";
+			state.catchTimer += elapsed;
+			if (state.catchTimer > 0.25f)
+			{
+				state.catchTimer = 0.0f;
+				if(state.score > 0){
+					state.score -= 1;
+				}
+			}
+
 			//state.playing = lost;
 			//return;
 		}
@@ -790,8 +834,8 @@ void PlayMode::update(float elapsed)
 			Scene::Drawable *new_customer = &scene.drawables.back();
 			new_customer->pipeline = customer_base->pipeline;
 			new_customer->transform->position = customer_spawn_point->position;
-			std::string new_customer_name = "Customer" + std::to_string(customers.size() + 1);
-			Customer c = Customer(new_customer_name, new_customer->transform);
+			//std::string new_customer_name = "Customer" + std::to_string(customers.size() + 1);
+			Customer c = Customer(new_customer_name(), new_customer->transform);
 			c.order = new_item().second;
 			c.init();
 			// give the customer a waypoint from one of the open waypoint
@@ -1050,12 +1094,25 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 		// draw timer
 		{
 			draw_text("Remain Time: " + std::to_string((int)(state.game_timer + 0.5f)),
-					  glm::vec3(-0.05f + 0.1f * H, -0.1f + 1.0f - 0.1f * H, 0.0f));
+					  glm::vec3(-0.05f + 0.1f * H, -0.1f + 1.0f - 0.1f * H, 0.0));
 		}
 		// draw catch_message
 		{
-			draw_text(catch_message, 
-					glm::vec3(-0.05f + 0.9f * H, -0.1f - 0.85f * H, 0.0f));
+			draw_text(catch_message,
+					  glm::vec3(-0.05f + 0.9f * H, -0.1f - 0.85f - 0.1f * H, 0.0f));
+		}
+		// draw either closest ingredient or the closest customer
+		{
+			if (state.proximity == Proximity::IngredientProx)
+			{
+				draw_text(closest_ingredient_name,
+						  glm::vec3(-0.05f + 0.9f * H, -0.1f - 0.70f - 0.1f * H, 0.0f));
+			}
+			else if (state.proximity == Proximity::CustomerProx)
+			{
+				draw_text(closest_customer_name,
+						  glm::vec3(-0.05f + 0.9f * H, -0.1f - 0.70f - 0.1f * H, 0.0f));
+			}
 		}
 		// game state display
 		switch (state.playing)

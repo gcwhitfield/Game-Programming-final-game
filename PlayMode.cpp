@@ -29,7 +29,8 @@ std::pair<std::string, StarbuckItem> new_item()
 		it++;
 	return *it;
 }
-std::string new_customer_name(){
+std::string new_customer_name()
+{
 	std::random_device r;
 	std::default_random_engine e1(r());
 	size_t sz = customernames.size() - 1;
@@ -53,11 +54,15 @@ std::ostream &operator<<(std::ostream &os, const StarbuckItem &item)
 std::ostream &operator<<(std::ostream &os, const PlayMode::Customer &customer)
 {
 	os << "item name : " << customer.order.item_name;
-	os << ",   status : " ;
-	if(customer.status == PlayMode::Customer::Status::Finished)  os <<"Finished";
-	if(customer.status == PlayMode::Customer::Status::New)  os <<"New";
-	if(customer.status == PlayMode::Customer::Status::Wait)  os <<"Wait";
-	if(customer.status == PlayMode::Customer::Status::Inactive)  os <<"Inactive";
+	os << ",   status : ";
+	if (customer.status == PlayMode::Customer::Status::Finished)
+		os << "Finished";
+	if (customer.status == PlayMode::Customer::Status::New)
+		os << "New";
+	if (customer.status == PlayMode::Customer::Status::Wait)
+		os << "Wait";
+	if (customer.status == PlayMode::Customer::Status::Inactive)
+		os << "Inactive";
 	return os;
 }
 bool collide(Scene::Transform *trans_a, Scene::Transform *trans_b, float radius = 6.0f)
@@ -347,14 +352,15 @@ void PlayMode::Player::OrbitCamera::updateCamera()
 
 void PlayMode::Player::OrbitCamera::walkCamera()
 {
-	glm::vec3 worldPos = camera->transform->make_local_to_world() * glm::vec4(camera->transform->position.x, camera->transform->position.y, camera->transform->position.z,1.f);
+	glm::vec3 worldPos = camera->transform->make_local_to_world() * glm::vec4(camera->transform->position.x, camera->transform->position.y, camera->transform->position.z, 1.f);
 	worldPos.z = 0.0f;
 	at = boundWalkmesh->nearest_walk_point(worldPos);
 	glm::vec3 inBounds = boundWalkmesh->to_world_point(at);
 	float curLength = length(inBounds - worldPos);
-	if (curLength > 0.0001f) {
+	if (curLength > 0.0001f)
+	{
 		float height = camera->transform->position.z;
-			camera->transform->position = focalPoint - (distance - curLength) * direction;
+		camera->transform->position = focalPoint - (distance - curLength) * direction;
 		camera->transform->position.z = height;
 	} 
 }
@@ -367,17 +373,17 @@ void PlayMode::updateProximity()
 	std::pair<bool, float> closestC, closestI;
 	closestC = std::make_pair(false, INFINITY);
 	closestI = std::make_pair(false, INFINITY);
-	
+
 	for (auto &[name, customer] : customers)
 	{
 		if (collide(customer.transform, player.transform))
 		{
 			float dist = getDistance(customer.transform, player.transform);
-			if (!closestC.first || dist < closestC.second){
+			if (!closestC.first || dist < closestC.second)
+			{
 				closestC = std::make_pair(true, dist);
 				closest_customer_name = customer.name;
 			}
-				
 		}
 	}
 	//int cnt = 0;
@@ -387,7 +393,8 @@ void PlayMode::updateProximity()
 		if (collide(ingredient_transform, player.transform))
 		{
 			float dist = getDistance(ingredient_transform, player.transform);
-			if (!closestI.first || dist < closestI.second){
+			if (!closestI.first || dist < closestI.second)
+			{
 				closest_ingredient_name = ingredient_transform->name;
 				closestI = std::make_pair(true, dist);
 			}
@@ -613,11 +620,14 @@ void PlayMode::update(float elapsed)
 		{
 			catch_message = "You are caught by the Manager, Oops!";
 			state.catchTimer += elapsed;
-			if(state.catchTimer > 0.25f){
+			if (state.catchTimer > 0.25f)
+			{
 				state.catchTimer = 0.0f;
-				state.score -= 1;
+				if(state.score > 0){
+					state.score -= 1;
+				}
 			}
-			
+
 			//state.playing = lost;
 			//return;
 		}
@@ -1088,8 +1098,21 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 		}
 		// draw catch_message
 		{
-			draw_text(catch_message, 
-					glm::vec3(-0.05f + 0.9f * H, -0.1f - 0.85f - 0.1f * H, 0.0f));
+			draw_text(catch_message,
+					  glm::vec3(-0.05f + 0.9f * H, -0.1f - 0.85f - 0.1f * H, 0.0f));
+		}
+		// draw either closest ingredient or the closest customer
+		{
+			if (state.proximity == Proximity::IngredientProx)
+			{
+				draw_text(closest_ingredient_name,
+						  glm::vec3(-0.05f + 0.9f * H, -0.1f - 0.70f - 0.1f * H, 0.0f));
+			}
+			else if (state.proximity == Proximity::CustomerProx)
+			{
+				draw_text(closest_customer_name,
+						  glm::vec3(-0.05f + 0.9f * H, -0.1f - 0.70f - 0.1f * H, 0.0f));
+			}
 		}
 		// game state display
 		switch (state.playing)

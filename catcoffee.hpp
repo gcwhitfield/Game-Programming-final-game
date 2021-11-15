@@ -45,6 +45,7 @@ const std::vector<std::string> customernames =
     "Bennett",
     "Barbara",
 };
+// Todo, add dialogue for these characters
 class StarbuckItem // An order can have one or more items? An item is a bunch of ingredients
 {
 public:
