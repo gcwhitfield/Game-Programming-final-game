@@ -175,6 +175,7 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 			assert(str != "CustomerSpawnPoint");
 			std::pair<Scene::Transform *, bool> p = std::make_pair(d.transform, true);
 			customer_waypoints.insert(p);
+			d.pipeline.count = 0;		
 		}
 		else if (str == "CustomerSpawnPoint" && str != "CustomerBase")
 		{
