@@ -356,7 +356,7 @@ void PlayMode::Player::OrbitCamera::walkCamera()
 		float height = camera->transform->position.z;
 			camera->transform->position = focalPoint - (distance - curLength) * direction;
 		camera->transform->position.z = height;
-	}
+	} 
 }
 
 void PlayMode::updateProximity()
