@@ -96,6 +96,14 @@ Load<Sound::Sample> manager_footstep_sample(LoadTagDefault, []() -> Sound::Sampl
 	return new Sound::Sample(data_path("manager_footstep.wav"));
 });
 
+Load<Sound::Sample> order_complete_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("BellDing.wav"));
+});
+
+Load<Sound::Sample> background_music_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("[Loop]WelcomeToStarbucks.wav"));
+});
+
 PlayMode::PlayMode() : scene(*starbucks_scene)
 {
 	//create a player transform:
@@ -245,6 +253,8 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	/*for (auto& light : scene.lights) {
 		std::cout << light.energy.x << " " << light.energy.y << " " << light.energy.z << std::endl;
 	}*/
+
+	Sound::loop(*background_music_sample);
 }
 
 PlayMode::~PlayMode()
@@ -311,6 +321,8 @@ bool PlayMode::serve_order()
 			// also clear the last served order
 			player.cur_order.clear_item();
 
+			Sound::play(*order_complete_sample, 0.5f);
+
 			return true;
 		}
 	}
@@ -328,7 +340,7 @@ void PlayMode::Player::OrbitCamera::updateCamera()
 
 void PlayMode::Player::OrbitCamera::walkCamera()
 {
-	at = walkmesh->nearest_walk_point(focalPoint - distance * direction);
+	at = boundWalkmesh->nearest_walk_point(focalPoint - distance * direction);
 	//std::cout << "walkpoint info " << "indices " << at.indices.x << " " << at.indices.y << " " << at.indices.z << " weights " << at.weights.x << " " << at.weights.y << " " << at.weights.z << std::endl;
 	glm::vec3 inBounds = walkmesh->to_world_point(at);
 	//std::cout << "walkmesh " << inBounds.x << " " << inBounds.y << " " << inBounds.z << std::endl;
@@ -557,6 +569,7 @@ void PlayMode::update(float elapsed)
 	}
 
 	player.orbitCamera.walkCamera();
+	manager->transform->position = player.orbitCamera.camera->transform->position;
 
 	// win and lose
 	if (state.playing == won || state.playing == lost)
