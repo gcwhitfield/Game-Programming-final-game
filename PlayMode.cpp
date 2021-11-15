@@ -841,6 +841,9 @@ void PlayMode::update(float elapsed)
 					//std::cout << "Customer [" << customer.name << "] has waited too long :(. Customer is leaving..." << std::endl;
 					state.score -= 10;
 					customer.status = Customer::Status::Finished;
+					player.bag.clear_item();
+					player.cur_order.clear_item();
+					order_status = OrderStatus::Empty;
 				}
 			}
 			break;
