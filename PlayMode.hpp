@@ -167,6 +167,7 @@ struct PlayMode : Mode {
 
 		StarbuckItem cur_order;
 		StarbuckItem bag;
+		std::string cur_customer = std::string("");
 
 		float fallTime = 0.f;
 		glm::vec2 capturePos;

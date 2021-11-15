@@ -287,6 +287,7 @@ bool PlayMode::take_order()
 		{
 			//take the order
 			player.cur_order = customer.order;
+			player.cur_customer = name;
 			order_status = OrderStatus::Executing;
 			customer.status = Customer::Status::Wait;
 			order_message = std::string("Taking order ...... : ") + customer.order.item_name + "!";
@@ -336,6 +337,7 @@ bool PlayMode::serve_order()
 					player.bag.clear_item();
 					// also clear the last served order
 					player.cur_order.clear_item();
+					player.cur_customer = std::string("");
 
 					Sound::play(*order_complete_sample, 0.5f);
 
@@ -383,7 +385,7 @@ void PlayMode::updateProximity()
 	//customer_waypoints
 	for (auto &[name, customer] : customers)
 	{
-		if (customer.order.item_name == player.cur_order.item_name && !player.bag.recipe.empty()) {
+		if (name == player.cur_customer && !player.bag.recipe.empty()) {
 			orderCustDist = getDistance(customer.transform, player.transform);
 		}
 		if (collide(customer.transform, player.transform))
@@ -396,11 +398,11 @@ void PlayMode::updateProximity()
 			}
 		}
 	}
-	if (orderCustDist > 12.5f) {
+	if (orderCustDist > 5.5f) {
 		for (auto& [waypoint, filled] : customer_waypoints) {
 			if (collide(waypoint, player.transform)) {
 				float dist = getDistance(waypoint, player.transform);
-				if ((player.playerStatus != PlayMode::Status::Cat && dist < 3.0f) || (player.playerStatus == PlayMode::Status::Cat && player.lastCollision == true)) //spill the coffee
+				if ((player.playerStatus != PlayMode::Status::Cat && dist < 2.0f) || (player.playerStatus == PlayMode::Status::Cat && player.lastCollision == true)) //spill the coffee
 				{
 					catch_message = "Spilt the coffee! You ran into the wrong customer!";
 					player.bag.clear_item();
@@ -617,7 +619,6 @@ void PlayMode::update(float elapsed)
 
 	player.orbitCamera.updateCamera();
 	player.orbitCamera.walkCamera();
-	manager->transform->position = player.orbitCamera.camera->transform->position;
 
 	// win and lose
 	if (state.playing == won || state.playing == lost)
@@ -927,6 +928,7 @@ void PlayMode::update(float elapsed)
 					customer.status = Customer::Status::Finished;
 					player.bag.clear_item();
 					player.cur_order.clear_item();
+					player.cur_customer = std::string("");
 					order_status = OrderStatus::Empty;
 				}
 			}
