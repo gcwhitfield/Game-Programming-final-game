@@ -378,21 +378,29 @@ void PlayMode::updateProximity()
 	std::pair<bool, float> closestC, closestI;
 	closestC = std::make_pair(false, INFINITY);
 	closestI = std::make_pair(false, INFINITY);
+	float orderCustDist = 0.0f;
 
+	//customer_waypoints
 	for (auto &[name, customer] : customers)
 	{
+		if (customer.order.item_name == player.cur_order.item_name && !player.bag.recipe.empty()) {
+			orderCustDist = getDistance(customer.transform, player.transform);
+		}
 		if (collide(customer.transform, player.transform))
 		{
-			std::cout << "Collided!\n";
 			float dist = getDistance(customer.transform, player.transform);
 			if (!closestC.first || dist < closestC.second)
 			{
 				closestC = std::make_pair(true, dist);
 				closest_customer_name = customer.name;
 			}
-			if ((player.playerStatus != PlayMode::Status::Cat && dist < 3.0f) || (player.playerStatus == PlayMode::Status::Cat && player.lastCollision == true)) //spill the coffee
-			{
-				if (player.playerStatus != PlayMode::Status::Cat && customer.order.item_name != player.cur_order.item_name && !player.bag.recipe.empty())
+		}
+	}
+	if (orderCustDist > 12.5f) {
+		for (auto& [waypoint, filled] : customer_waypoints) {
+			if (collide(waypoint, player.transform)) {
+				float dist = getDistance(waypoint, player.transform);
+				if ((player.playerStatus != PlayMode::Status::Cat && dist < 3.0f) || (player.playerStatus == PlayMode::Status::Cat && player.lastCollision == true)) //spill the coffee
 				{
 					catch_message = "Spilt the coffee! You ran into the wrong customer!";
 					player.bag.clear_item();
