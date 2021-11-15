@@ -655,8 +655,8 @@ void PlayMode::update(float elapsed)
 				}
 			}
 
-			//state.playing = lost;
-			//return;
+			state.playing = lost;
+			return;
 		}
 	}
 
@@ -754,7 +754,7 @@ void PlayMode::update(float elapsed)
 
 		if (remain != glm::vec3(0.0f))
 		{
-			std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
+			//std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
 		}
 
 		//update player's position to respect walking if human:
