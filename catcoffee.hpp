@@ -23,7 +23,7 @@ const std::vector<std::string> customernames =
     "Nancy Pelosi",
     "Satoshi",
     "ZhongLi",
-    "XiangLing"
+    "XiangLing",
     "GillBates",
     "TonaldDrump",
     "Stalin",

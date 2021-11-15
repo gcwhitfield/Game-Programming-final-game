@@ -316,27 +316,30 @@ bool PlayMode::serve_order()
 	for (auto &[name, customer] : customers)
 	{
 		//std::cout<<customer<<std::endl;
-		if (collide(customer.transform, player.transform) &&		  // distance close
-			customer.status == Customer::Status::Wait &&			  //customer is waiting
-			customer.order.item_name == player.cur_order.item_name && //the order match
-			player.cur_order == player.bag							  // actually has all the correct ingredient
-		)
+		if (collide(customer.transform, player.transform)) // distance close
 		{
-			//serve the order
-			player.cur_order = StarbuckItem(); // empty the order
-			customer.status = Customer::Status::Finished;
-			order_status = OrderStatus::Empty;
-			order_message = std::string("Succeeded in serving : ") + customer.order.item_name + "!";
-			// increase score
-			state.score += 50;
-			// clear player bag, because order is served
-			player.bag.clear_item();
-			// also clear the last served order
-			player.cur_order.clear_item();
+			if (customer.status == Customer::Status::Wait)
+			{																  //customer is waiting
+				if (customer.order.item_name == player.cur_order.item_name && //the order match
+					player.cur_order == player.bag							  // actually has all the correct ingredient
+				)
+				{
+					player.cur_order = StarbuckItem(); // empty the order
+					customer.status = Customer::Status::Finished;
+					order_status = OrderStatus::Empty;
+					order_message = std::string("Succeeded in serving : ") + customer.order.item_name + "!";
+					// increase score
+					state.score += 50;
+					// clear player bag, because order is served
+					player.bag.clear_item();
+					// also clear the last served order
+					player.cur_order.clear_item();
 
-			Sound::play(*order_complete_sample, 0.5f);
+					Sound::play(*order_complete_sample, 0.5f);
 
-			return true;
+					return true;
+				}
+			}
 		}
 	}
 	return false;
@@ -362,7 +365,7 @@ void PlayMode::Player::OrbitCamera::walkCamera()
 		float height = camera->transform->position.z;
 		camera->transform->position = focalPoint - (distance - curLength) * direction;
 		camera->transform->position.z = height;
-	} 
+	}
 }
 
 void PlayMode::updateProximity()
@@ -383,6 +386,17 @@ void PlayMode::updateProximity()
 			{
 				closestC = std::make_pair(true, dist);
 				closest_customer_name = customer.name;
+			}
+			if (dist < 3.0f) //spill the coffee
+			{
+				if (player.playerStatus != PlayMode::Status::Cat && customer.order.item_name != player.cur_order.item_name && !player.bag.recipe.empty())
+				{
+					catch_message = "Oops! Run to the wrong person and spill the coffee!";
+					player.bag.clear_item();
+					state.score -= 15;
+					state.score = std::max(state.score, 0);
+					//todo Sound::play messed up
+				}
 			}
 		}
 	}
@@ -623,7 +637,8 @@ void PlayMode::update(float elapsed)
 			if (state.catchTimer > 0.25f)
 			{
 				state.catchTimer = 0.0f;
-				if(state.score > 0){
+				if (state.score > 0)
+				{
 					state.score -= 1;
 				}
 			}
@@ -894,7 +909,7 @@ void PlayMode::update(float elapsed)
 				// the customer gets angry if it waits too longs, score gets deducted
 				if (customer.t_wait > customer.max_wait_time)
 				{
-					catch_message = std::string("Customer [" ) + customer.name + "] has waited too long :( and left!";
+					catch_message = std::string("Customer [") + customer.name + "] has waited too long :( and left!";
 					//std::cout << "Customer [" << customer.name << "] has waited too long :(. Customer is leaving..." << std::endl;
 					state.score -= 10;
 					state.score = std::max(state.score, 0);
