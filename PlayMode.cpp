@@ -325,18 +325,20 @@ void PlayMode::Player::OrbitCamera::updateCamera()
 	direction = glm::normalize(camera->transform->rotation * glm::vec3(0.0f, 0.0f, -1.0f));
 	camera->transform->position = focalPoint - distance * direction;
 	camera->transform->rotation = -camera->transform->rotation;
-	walkCamera();
 }
 
 void PlayMode::Player::OrbitCamera::walkCamera()
 {
-	at = boundWalkmesh->nearest_walk_point(focalPoint - distance * direction);
-	//std::cout << "walkpoint info " << "indices " << at.indices.x << " " << at.indices.y << " " << at.indices.z << " weights " << at.weights.x << " " << at.weights.y << " " << at.weights.z << std::endl;
-	glm::vec3 inBounds = walkmesh->to_world_point(at);
-	//std::cout << "walkmesh " << inBounds.x << " " << inBounds.y << " " << inBounds.z << std::endl;
-	//std::cout << "camera " << camera->transform->position.x << " " << camera->transform->position.y << " " << camera->transform->position.z << std::endl;
-	inBounds.z = camera->transform->position.z;
-	camera->transform->position = inBounds;
+	glm::vec3 worldPos = camera->transform->make_local_to_world() * glm::vec4(camera->transform->position.x, camera->transform->position.y, camera->transform->position.z,1.f);
+	worldPos.z = 0.0f;
+	at = boundWalkmesh->nearest_walk_point(worldPos);
+	glm::vec3 inBounds = boundWalkmesh->to_world_point(at);
+	float curLength = length(inBounds - worldPos);
+	if (curLength > 0.0001f) {
+		float height = camera->transform->position.z;
+			camera->transform->position = focalPoint - (distance - curLength) * direction;
+		camera->transform->position.z = height;
+	}
 }
 
 void PlayMode::updateProximity()
@@ -554,10 +556,10 @@ void PlayMode::update(float elapsed)
 		{
 			player.orbitCamera.curPitch = PI_F / 2.f + theta - 0.1f;
 			player.orbitCamera.camera->transform->rotation = glm::angleAxis(player.orbitCamera.curPitch, glm::vec3(1.0f, 0.0f, 0.0f));
-			player.orbitCamera.updateCamera();
 		}
 	}
 
+	player.orbitCamera.updateCamera();
 	player.orbitCamera.walkCamera();
 	manager->transform->position = player.orbitCamera.camera->transform->position;
 
