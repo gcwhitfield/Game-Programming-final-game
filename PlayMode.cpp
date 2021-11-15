@@ -383,17 +383,18 @@ void PlayMode::updateProximity()
 	{
 		if (collide(customer.transform, player.transform))
 		{
+			std::cout << "Collided!\n";
 			float dist = getDistance(customer.transform, player.transform);
 			if (!closestC.first || dist < closestC.second)
 			{
 				closestC = std::make_pair(true, dist);
 				closest_customer_name = customer.name;
 			}
-			if (dist < 3.0f) //spill the coffee
+			if ((player.playerStatus != PlayMode::Status::Cat && dist < 3.0f) || (player.playerStatus == PlayMode::Status::Cat && player.lastCollision == true)) //spill the coffee
 			{
 				if (player.playerStatus != PlayMode::Status::Cat && customer.order.item_name != player.cur_order.item_name && !player.bag.recipe.empty())
 				{
-					catch_message = "Oops! Run to the wrong person and spill the coffee!";
+					catch_message = "Spilt the coffee! You ran into the wrong customer!";
 					player.bag.clear_item();
 					state.score -= 15;
 					state.score = std::max(state.score, 0);
@@ -634,7 +635,7 @@ void PlayMode::update(float elapsed)
 	{
 		if (manager_state == HERE && player.playerStatus == Cat)
 		{
-			catch_message = "You are caught by the Manager, Oops!";
+			catch_message = "You are caught by the Manager!";
 			state.catchTimer += elapsed;
 			if (state.catchTimer > 0.25f)
 			{
@@ -1150,7 +1151,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 		break;
 		case won:
 		{
-			draw_text("You successfully went through today!",
+			draw_text("You successfully got through today!",
 					  glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0));
 		}
 		break;
