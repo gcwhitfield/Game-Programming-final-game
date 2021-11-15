@@ -195,8 +195,9 @@ struct PlayMode : Mode {
 		float game_timer = 0.0f;
 		const float day_period_time = 300.0f; // 300s for vertical slice demo
 		float time = 0.0f;
-		float flapTimer = 0.00f;
+		float flapTimer = 0.0f;
 		float flapCooldown = 0.1f;//In seconds
+		float catchTimer = 0.0f; //time for the deduction of cat caught by the manager 
 		PlayState playing = ongoing; 
 		Proximity proximity = NoProx;
 	} ;
@@ -228,6 +229,9 @@ struct PlayMode : Mode {
 	bool serve_order();
 	bool grab_ingredient();
 	std::string order_message;
+	std::string catch_message;
+	std::string closest_customer_name;
+	std::string closest_ingredient_name;
 };
 
 

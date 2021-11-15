@@ -29,6 +29,14 @@ std::pair<std::string, StarbuckItem> new_item()
 		it++;
 	return *it;
 }
+std::string new_customer_name(){
+	std::random_device r;
+	std::default_random_engine e1(r());
+	size_t sz = customernames.size() - 1;
+	std::uniform_int_distribution<int> uniform_dist(0, static_cast<int>(sz));
+	int choice = uniform_dist(e1);
+	return customernames[choice];
+}
 //debugging printing information for recipe
 std::ostream &operator<<(std::ostream &os, const glm::vec3 &pos)
 {
@@ -302,7 +310,7 @@ bool PlayMode::serve_order()
 	//std::cout<<"name:"<<player.cur_order.item_name<<std::endl;
 	for (auto &[name, customer] : customers)
 	{
-		std::cout<<customer<<std::endl;
+		//std::cout<<customer<<std::endl;
 		if (collide(customer.transform, player.transform) &&		  // distance close
 			customer.status == Customer::Status::Wait &&			  //customer is waiting
 			customer.order.item_name == player.cur_order.item_name && //the order match
@@ -357,13 +365,17 @@ void PlayMode::updateProximity()
 	std::pair<bool, float> closestC, closestI;
 	closestC = std::make_pair(false, INFINITY);
 	closestI = std::make_pair(false, INFINITY);
+	
 	for (auto &[name, customer] : customers)
 	{
 		if (collide(customer.transform, player.transform))
 		{
 			float dist = getDistance(customer.transform, player.transform);
-			if (!closestC.first || dist < closestC.second)
+			if (!closestC.first || dist < closestC.second){
 				closestC = std::make_pair(true, dist);
+				closest_customer_name = customer.name;
+			}
+				
 		}
 	}
 	//int cnt = 0;
@@ -373,8 +385,10 @@ void PlayMode::updateProximity()
 		if (collide(ingredient_transform, player.transform))
 		{
 			float dist = getDistance(ingredient_transform, player.transform);
-			if (!closestI.first || dist < closestI.second)
+			if (!closestI.first || dist < closestI.second){
+				closest_ingredient_name = ingredient_transform->name;
 				closestI = std::make_pair(true, dist);
+			}
 		}
 	}
 	//std::cout<<cnt<<' '<<closestC.second<<' '<<closestI.second<<std::endl;
@@ -595,6 +609,13 @@ void PlayMode::update(float elapsed)
 	{
 		if (manager_state == HERE && player.playerStatus == Cat)
 		{
+			catch_message = "You are caught by the Manager, Oops!";
+			state.catchTimer += elapsed;
+			if(state.catchTimer > 0.25f){
+				state.catchTimer = 0.0f;
+				state.score -= 1;
+			}
+			
 			//state.playing = lost;
 			//return;
 		}
@@ -801,8 +822,8 @@ void PlayMode::update(float elapsed)
 			Scene::Drawable *new_customer = &scene.drawables.back();
 			new_customer->pipeline = customer_base->pipeline;
 			new_customer->transform->position = customer_spawn_point->position;
-			std::string new_customer_name = "Customer" + std::to_string(customers.size() + 1);
-			Customer c = Customer(new_customer_name, new_customer->transform);
+			//std::string new_customer_name = "Customer" + std::to_string(customers.size() + 1);
+			Customer c = Customer(new_customer_name(), new_customer->transform);
 			c.order = new_item().second;
 			c.init();
 			// give the customer a waypoint from one of the open waypoint
@@ -1063,7 +1084,11 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 			draw_text("Remain Time: " + std::to_string((int)(state.game_timer + 0.5f)),
 					  glm::vec3(-0.05f + 0.1f * H, -0.1f + 1.0f - 0.1f * H, 0.0));
 		}
-
+		// draw catch_message
+		{
+			draw_text(catch_message, 
+					glm::vec3(-0.05f + 0.9f * H, -0.1f - 0.85f - 0.1f * H, 0.0f));
+		}
 		// game state display
 		switch (state.playing)
 		{

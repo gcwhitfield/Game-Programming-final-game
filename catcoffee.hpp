@@ -17,7 +17,34 @@ const std::set<std::string> ingredients =
     "Cups",
     "Ice"
 };
-
+const std::vector<std::string> customernames =
+{
+    "John Adams",
+    "Nancy Pelosi",
+    "Satoshi",
+    "ZhongLi",
+    "XiangLing"
+    "GillBates",
+    "TonaldDrump",
+    "Stalin",
+    "Napoleon",
+    "Sheldon",
+    "Adele",
+    "Eleanor",
+    "Pikachu",
+    "Arthas",
+    "Barclay",
+    "Wall-E",
+    "Bustlightyear",
+    "FlowerHaya",
+    "Bottlechan",
+    "Eren Yeager",
+    "Spongebob",
+    "PatrickStar",
+    "Coco",
+    "Bennett",
+    "Barbara",
+};
 class StarbuckItem // An order can have one or more items? An item is a bunch of ingredients
 {
 public:
