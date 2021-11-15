@@ -644,7 +644,7 @@ void PlayMode::update(float elapsed)
 	{
 		if (manager_state == HERE && player.playerStatus == Cat)
 		{
-			catch_message = "You are caught by the Manager!";
+			catch_message = "You were caught by the Manager!";
 			state.catchTimer += elapsed;
 			if (state.catchTimer > 0.25f)
 			{

@@ -67,10 +67,10 @@ void TutorialMode::draw(glm::uvec2 const &drawable_size) {
     // ----- set the background color -----
     glm::uvec4 background_color(37, 12, 10, 0);
     glClearColor(
-        background_color.x / 255.0,  // red
-        background_color.y / 255.0,  // green
-        background_color.z / 255.0,  // blue 
-        background_color.w / 255.0); // alpha
+        background_color.x / 255.0f,  // red
+        background_color.y / 255.0f,  // green
+        background_color.z / 255.0f,  // blue 
+        background_color.w / 255.0f); // alpha
     glClear(GL_COLOR_BUFFER_BIT);
 
     { // ----- use DrawLines to overlay some text -----
@@ -98,7 +98,7 @@ void TutorialMode::draw(glm::uvec2 const &drawable_size) {
 		};
 
         float spacing = 0.2f;
-        float left_align = -0.8;
+        float left_align = -0.8f;
         switch (state)
         {
             case SCREEN_0:
