@@ -452,7 +452,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 				-evt.motion.yrel / float(window_size.y));
 			glm::vec3 up = walkmesh->to_world_smooth_normal(player.at);
 			player.transform->rotation = glm::angleAxis(-motion.x * player.orbitCamera.camera->fovy, up) * player.transform->rotation;
-
+			 
 			
 			player.orbitCamera.truePitch += motion.y * player.orbitCamera.camera->fovy;
 			//camera looks down -z (basically at the player's feet) when pitch is at zero.
