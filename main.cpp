@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
 	call_load_functions();
 
 	//------------ create game mode + make current --------------
-	Mode::set_current(std::make_shared< PlayMode >());
+	Mode::set_current(std::make_shared< TutorialMode >());
 
 	//------------ main loop ------------
 
