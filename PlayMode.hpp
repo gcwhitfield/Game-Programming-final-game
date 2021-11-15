@@ -29,14 +29,14 @@ struct PlayMode : Mode {
 
 	std::map<std::string, Scene::Drawable> ingredients_drawables;
 
-	float manager_next_appearance_timer = 10.0f; // seconds
+	float manager_next_appearance_timer = 12.5f; // seconds
 
 	enum ManagerState {
 		AWAY, 
 		ARRIVING,
 		HERE
 	} manager_state = AWAY;
-	float manager_stay_timer = 7.5f; // seconds
+	float manager_stay_timer = 5.5f; // seconds
 	std::shared_ptr< Sound::PlayingSample > manager_footstep_sfx;
 	float manager_footstep_volume_max = 1.0f;
 	float manager_footstep_volume_min = 0.1f;
@@ -86,7 +86,7 @@ struct PlayMode : Mode {
 
 		// ----- Wait -----
 		float t_wait = 0; // the current amount of time that the customer has waited
-		float max_wait_time = 30; // the maximum time that a customer will wait for an order
+		float max_wait_time = 45; // the maximum time that a customer will wait for an order
 		
 		// ----- Finished ----
 		// the amount of time that it takes for the customer to fly away from their seat
@@ -143,6 +143,8 @@ struct PlayMode : Mode {
 			float curPitch = 75.0f * 2 * PI_F / 360.f;
 
 			void updateCamera();
+			void walkCamera();
+			WalkPoint at;
 		};
 
 		OrbitCamera orbitCamera;
@@ -174,11 +176,15 @@ struct PlayMode : Mode {
 	float gravity = -9.81f / 2.f;
 	void decidePos(glm::vec3 bounds, glm::vec3 at);
 	void getBoundedPos(glm::vec2 move, WalkMesh const* boundWalkmesh, WalkMesh const* walkmesh);
-	float objectHeight = 5.0f;
+	float objectHeight = 3.0f;
 
 	enum PlayState {
 		ongoing, won, lost, menu
 	};	
+
+	enum Proximity {
+		CustomerProx, IngredientProx, NoProx
+	};
 
 
 	struct State //Game state
@@ -187,12 +193,15 @@ struct PlayMode : Mode {
 		int goal = 0;	// the goal score need to achieve before game_timer times out
 		float stablization = 1.0f;
 		float game_timer = 0.0f;
-		const float day_period_time = 60.0f; // set 60s for a day in game, temporarily
+		const float day_period_time = 300.0f; // 300s for vertical slice demo
 		float time = 0.0f;
 		float flapTimer = 0.00f;
 		float flapCooldown = 0.1f;//In seconds
 		PlayState playing = ongoing; 
+		Proximity proximity = NoProx;
 	} ;
+
+	void updateProximity();
 
 
 	std::map<std::string, Scene::Transform*> ingredient_transforms;
