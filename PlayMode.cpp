@@ -468,20 +468,17 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 				if (order_status == OrderStatus::Empty)
 				{
 					take_order();
-					std::cout << "taking order!" << std::endl;
 				}
 
 				else
 				{
 					serve_order();
-					std::cout << "serving order!" << std::endl;
 				}
 
 				break;
 			case (Proximity::IngredientProx):
 			{
 				grab_ingredient();
-				std::cout << "grabing ingredient!" << std::endl;
 			}
 
 			break;
@@ -512,7 +509,6 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 				-evt.motion.yrel / float(window_size.y));
 			glm::vec3 up = walkmesh->to_world_smooth_normal(player.at);
 			player.transform->rotation = glm::angleAxis(-motion.x * player.orbitCamera.camera->fovy, up) * player.transform->rotation;
-
 			player.orbitCamera.truePitch += motion.y * player.orbitCamera.camera->fovy;
 			//camera looks down -z (basically at the player's feet) when pitch is at zero.
 			player.orbitCamera.truePitch = std::min(player.orbitCamera.truePitch, 0.95f * 3.1415926f);
@@ -748,7 +744,7 @@ void PlayMode::update(float elapsed)
 			{
 				// set manager_next_appearance_timer to a random time between 5 and 10 seconds
 				size_t r = rand() % 100;
-				manager_next_appearance_timer = 5 + 5 * (r / (float)100);
+				manager_next_appearance_timer = 7.5f + 5 * (r / (float)100);
 				manager_state = HERE;
 				// stop manager footstep sfx
 				manager_footstep_sfx->stop();
@@ -768,7 +764,7 @@ void PlayMode::update(float elapsed)
 			manager_stay_timer -= elapsed;
 			if (manager_stay_timer < 0)
 			{
-				manager_stay_timer = 2.0f;
+				manager_stay_timer = 5.5f;
 				manager_state = AWAY;
 			}
 		}
@@ -855,6 +851,9 @@ void PlayMode::update(float elapsed)
 					//std::cout << "Customer [" << customer.name << "] has waited too long :(. Customer is leaving..." << std::endl;
 					state.score -= 10;
 					customer.status = Customer::Status::Finished;
+					player.bag.clear_item();
+					player.cur_order.clear_item();
+					order_status = OrderStatus::Empty;
 				}
 			}
 			break;
