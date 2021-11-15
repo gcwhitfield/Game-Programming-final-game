@@ -329,7 +329,7 @@ void PlayMode::Player::OrbitCamera::walkCamera()
 
 void PlayMode::updateProximity()
 {
-	auto getDistance = [this](Scene::Transform *a, Scene::Transform *b) {
+	auto getDistance = [](Scene::Transform *a, Scene::Transform *b) {
 		return glm::length(a->position - b->position);
 	};
 	std::pair<bool, float> closestC, closestI;
