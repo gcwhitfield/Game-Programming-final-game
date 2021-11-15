@@ -458,20 +458,17 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 				if (order_status == OrderStatus::Empty)
 				{
 					take_order();
-					std::cout << "taking order!" << std::endl;
 				}
 
 				else
 				{
 					serve_order();
-					std::cout << "serving order!" << std::endl;
 				}
 
 				break;
 			case (Proximity::IngredientProx):
 			{
 				grab_ingredient();
-				std::cout << "grabing ingredient!" << std::endl;
 			}
 
 			break;
@@ -737,7 +734,7 @@ void PlayMode::update(float elapsed)
 			{
 				// set manager_next_appearance_timer to a random time between 5 and 10 seconds
 				size_t r = rand() % 100;
-				manager_next_appearance_timer = 5 + 5 * (r / (float)100);
+				manager_next_appearance_timer = 7.5f + 5 * (r / (float)100);
 				manager_state = HERE;
 				// stop manager footstep sfx
 				manager_footstep_sfx->stop();
@@ -757,7 +754,7 @@ void PlayMode::update(float elapsed)
 			manager_stay_timer -= elapsed;
 			if (manager_stay_timer < 0)
 			{
-				manager_stay_timer = 2.0f;
+				manager_stay_timer = 5.5f;
 				manager_state = AWAY;
 			}
 		}
