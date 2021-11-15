@@ -25,7 +25,8 @@ std::pair<std::string, StarbuckItem> new_item()
 	std::uniform_int_distribution<int> uniform_dist(0, static_cast<int>(sz));
 	int choice = uniform_dist(e1);
 	auto it = RotationList.begin();
-	while(choice --)it++;
+	while (choice--)
+		it++;
 	return *it;
 }
 //debugging printing information for recipe
@@ -33,16 +34,19 @@ std::ostream &operator<<(std::ostream &os, const glm::vec3 &pos)
 {
 	return os << '(' << pos.x << ' ' << pos.y << ' ' << pos.z << ')';
 }
-std::ostream &operator<<(std::ostream &os, const StarbuckItem &item){
-	for(auto &ingredient : item.recipe){
+std::ostream &operator<<(std::ostream &os, const StarbuckItem &item)
+{
+	for (auto &ingredient : item.recipe)
+	{
 		os << "|" << ingredient.first << "|" << std::endl;
 	}
-	return os; 
+	return os;
 }
 
-bool collide(Scene::Transform * trans_a, Scene::Transform * trans_b, float radius = 6.0f){
-	auto a_pos = trans_a -> position;
-	auto b_pos = trans_b -> position;
+bool collide(Scene::Transform *trans_a, Scene::Transform *trans_b, float radius = 6.0f)
+{
+	auto a_pos = trans_a->position;
+	auto b_pos = trans_b->position;
 	return distance2(a_pos, b_pos) < radius;
 }
 
@@ -69,8 +73,8 @@ Load<Scene> starbucks_scene(LoadTagDefault, []() -> Scene const * {
 	});
 });
 
-WalkMesh const* walkmesh = nullptr;
-WalkMesh const* boundWalkmesh = nullptr;
+WalkMesh const *walkmesh = nullptr;
+WalkMesh const *boundWalkmesh = nullptr;
 Load<WalkMeshes> phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
 	WalkMeshes *ret = new WalkMeshes(data_path("starbucks.w"));
 	walkmesh = &ret->lookup("WalkMesh");
@@ -103,7 +107,7 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 
 	//rotate camera facing direction (-z) to player facing direction (+y):
 	player.orbitCamera.camera->transform->rotation = glm::angleAxis(glm::radians(75.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	
+
 	player.orbitCamera.updateCamera();
 
 	//start player walking at nearest walk point:
@@ -119,32 +123,38 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 			manager = &d;
 			manager_here_pos = d.transform->position;
 		}
-		else if (str == "Human") {
+		else if (str == "Human")
+		{
 			player.human = &d;
 		}
-		else if (str == "Cat") {
+		else if (str == "Cat")
+		{
 			player.cat = &d;
 		}
 		//store ingredients information and location
-		else if(ingredients.find(str) != ingredients.end()){
+		else if (ingredients.find(str) != ingredients.end())
+		{
 			ingredient_transforms[str] = d.transform;
 		}
-		// add the "CustomerWaypoint" transforms from the starbucks.blend scene into a 
+		// add the "CustomerWaypoint" transforms from the starbucks.blend scene into a
 		// vector
-		else if (str.find("CustomerWaypoint") < str.size() && str != "Customer") {
+		else if (str.find("CustomerWaypoint") < str.size() && str != "Customer")
+		{
 			assert(str != "CustomerBase");
 			assert(str != "Customer");
 			assert(str != "CustomerSpawnPoint");
-			std::pair<Scene::Transform*, bool> p = std::make_pair(d.transform, true);
+			std::pair<Scene::Transform *, bool> p = std::make_pair(d.transform, true);
 			customer_waypoints.insert(p);
 		}
-		else if (str == "CustomerSpawnPoint" && str != "CustomerBase") {
+		else if (str == "CustomerSpawnPoint" && str != "CustomerBase")
+		{
 			assert(str == "CustomerSpawnPoint");
 			//std::cout << "CustomerSpawnPoint has been found" << std::endl;
 			customer_spawn_point = d.transform;
 		}
 		//store customers ingredients information and location
-		else if(str.length() >= 8 && str.substr(0,8) == "Customer" && str != "CustomerBase" && str != "CustomerWaypoint" && str != "CustomerSpawnPoint"){
+		else if (str.length() >= 8 && str.substr(0, 8) == "Customer" && str != "CustomerBase" && str != "CustomerWaypoint" && str != "CustomerSpawnPoint")
+		{
 			//std::cout << str << std::endl;
 			assert(str != "CustomerBase");
 			assert(str != "CustomerWaypoint");
@@ -153,15 +163,17 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 			Cu.order = new_item().second;
 			customers[str] = Cu;
 		}
-		// set the "CustomerBase" and "CustomerSpawnPoint" transforms to their corresponding 
+		// set the "CustomerBase" and "CustomerSpawnPoint" transforms to their corresponding
 		// transforms in the starbucks.blend scene
-		else if (str == "CustomerBase") {
+		else if (str == "CustomerBase")
+		{
 			assert(str == "CustomerBase");
-		//	std::cout << "CustomerBase has been found" << std::endl;
+			//	std::cout << "CustomerBase has been found" << std::endl;
 			customer_base = &d;
 		}
 		// the player starts at the location of the "Player" object in the Blender scene
-		else if (str == "Player") {
+		else if (str == "Player")
+		{
 			assert(str == "Player");
 			// std::cout << "Player transform has been found in the blender scene" << std::endl;
 			player.transform->position = d.transform->position;
@@ -170,9 +182,12 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	}
 
 	// give the customers in the scene a waypoint
-	for (auto &[name, customer]: customers) {
-		for (auto &[waypoint, is_open]: customer_waypoints) {
-			if (is_open) {
+	for (auto &[name, customer] : customers)
+	{
+		for (auto &[waypoint, is_open] : customer_waypoints)
+		{
+			if (is_open)
+			{
 				customer.waypoint = waypoint;
 				is_open = false;
 				assert(customer_waypoints[waypoint] == false);
@@ -182,20 +197,22 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	}
 
 	// PARANOIA none of the customers should have null waypoint
-	for (auto &[name, customer]: customers) {
+	for (auto &[name, customer] : customers)
+	{
 		assert(customer.waypoint != NULL);
 	}
 
-	for (auto &[w, is_open] : customer_waypoints) {
+	for (auto &[w, is_open] : customer_waypoints)
+	{
 		(void)is_open; // avoid 'variable not used' with is_open
-		//std::cout << "Cusotmer waypoint: " << w->position << std::endl;
+					   //std::cout << "Cusotmer waypoint: " << w->position << std::endl;
 	}
 
 	assert(customer_waypoints.size() > 0);
 	assert(customer_base != NULL);
 	assert(customer_spawn_point != NULL);
 	assert(manager != NULL);
-	
+
 	assert(player.cat);
 	assert(player.cat->transform);
 	//assert(player.cat->transform->parent);
@@ -216,22 +233,24 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 
 	//Orders
 	player.bag.item_name = "bag";
-	for (auto& light : scene.lights) {
-	//	std::cout << light.energy.x << " " << light.energy.y << " " << light.energy.z << std::endl;
-	}
+	/*for (auto& light : scene.lights) {
+		std::cout << light.energy.x << " " << light.energy.y << " " << light.energy.z << std::endl;
+	}*/
 }
 
 PlayMode::~PlayMode()
 {
 }
 //Order Related Function
-bool PlayMode::take_order(){
+bool PlayMode::take_order()
+{
 	//printf("freak0, %zu\n", customers.size());
-	for(auto &[name, customer] : customers){
-		if(collide(customer.transform, player.transform) && // distance close
-				customer.status == Customer::Status::New && // customer is new, has not given order yet
-				order_status == OrderStatus::Empty) //player does not have order in hand
-		{ 
+	for (auto &[name, customer] : customers)
+	{
+		if (collide(customer.transform, player.transform) && // distance close
+			customer.status == Customer::Status::New &&		 // customer is new, has not given order yet
+			order_status == OrderStatus::Empty)				 //player does not have order in hand
+		{
 			//take the order
 			player.cur_order = customer.order;
 			order_status = OrderStatus::Executing;
@@ -242,13 +261,16 @@ bool PlayMode::take_order(){
 	}
 	return false;
 }
-bool PlayMode::grab_ingredient(){
-	for(auto &[name, ingredient_transform]: ingredient_transforms){
-		if(collide(ingredient_transform, player.transform, 8) && // distance close
-			order_status == OrderStatus::Executing//player has an order in hand
-		) 
+bool PlayMode::grab_ingredient()
+{
+	for (auto &[name, ingredient_transform] : ingredient_transforms)
+	{
+		if (collide(ingredient_transform, player.transform, 8) && // distance close
+			order_status == OrderStatus::Executing				  //player has an order in hand
+		)
 		{
-			if(player.bag.add_item(name) != 0){
+			if (player.bag.add_item(name) != 0)
+			{
 				player.bag.remove_item(name);
 			}
 		}
@@ -256,14 +278,16 @@ bool PlayMode::grab_ingredient(){
 	return false;
 }
 
-bool PlayMode::serve_order(){
-	for(auto &[name, customer] : customers){
-		
-		if(collide(customer.transform, player.transform) && // distance close
-			customer.status == Customer::Status::Wait && //customer is waiting
-			customer.order.item_name == player.cur_order.item_name &&//the order match
-			player.cur_order == player.bag // actually has all the correct ingredient
-		) 
+bool PlayMode::serve_order()
+{
+	for (auto &[name, customer] : customers)
+	{
+
+		if (collide(customer.transform, player.transform) &&		  // distance close
+			customer.status == Customer::Status::Wait &&			  //customer is waiting
+			customer.order.item_name == player.cur_order.item_name && //the order match
+			player.cur_order == player.bag							  // actually has all the correct ingredient
+		)
 		{
 			//serve the order
 			player.cur_order = StarbuckItem(); // empty the order
@@ -276,14 +300,15 @@ bool PlayMode::serve_order(){
 			player.bag.clear_item();
 			// also clear the last served order
 			player.cur_order.clear_item();
-			
+
 			return true;
 		}
 	}
 	return false;
 }
 
-void PlayMode::Player::OrbitCamera::updateCamera() {
+void PlayMode::Player::OrbitCamera::updateCamera()
+{
 	focalPoint = glm::vec3(0.0f);
 	direction = glm::normalize(camera->transform->rotation * glm::vec3(0.0f, 0.0f, -1.0f));
 	camera->transform->position = focalPoint - distance * direction;
@@ -291,25 +316,27 @@ void PlayMode::Player::OrbitCamera::updateCamera() {
 	walkCamera();
 }
 
-
-void PlayMode::Player::OrbitCamera::walkCamera() {
+void PlayMode::Player::OrbitCamera::walkCamera()
+{
 	at = walkmesh->nearest_walk_point(focalPoint - distance * direction);
-	std::cout << "walkpoint info " << "indices " << at.indices.x << " " << at.indices.y << " " << at.indices.z << " weights " << at.weights.x << " " << at.weights.y << " " << at.weights.z << std::endl;
+	//std::cout << "walkpoint info " << "indices " << at.indices.x << " " << at.indices.y << " " << at.indices.z << " weights " << at.weights.x << " " << at.weights.y << " " << at.weights.z << std::endl;
 	glm::vec3 inBounds = walkmesh->to_world_point(at);
-	std::cout << "walkmesh " << inBounds.x << " " << inBounds.y << " " << inBounds.z << std::endl;
-	std::cout << "camera " << camera->transform->position.x << " " << camera->transform->position.y << " " << camera->transform->position.z << std::endl;
+	//std::cout << "walkmesh " << inBounds.x << " " << inBounds.y << " " << inBounds.z << std::endl;
+	//std::cout << "camera " << camera->transform->position.x << " " << camera->transform->position.y << " " << camera->transform->position.z << std::endl;
 	inBounds.z = camera->transform->position.z;
 	camera->transform->position = inBounds;
 }
 
-void PlayMode::updateProximity() {
-	auto getDistance = [this](Scene::Transform* a, Scene::Transform* b) {
-		return glm::length(a->position- b->position);
+void PlayMode::updateProximity()
+{
+	auto getDistance = [this](Scene::Transform *a, Scene::Transform *b) {
+		return glm::length(a->position - b->position);
 	};
 	std::pair<bool, float> closestC, closestI;
 	closestC = std::make_pair(false, INFINITY);
 	closestI = std::make_pair(false, INFINITY);
-	for (auto& [name, customer] : customers) {
+	for (auto &[name, customer] : customers)
+	{
 		if (collide(customer.transform, player.transform))
 		{
 			float dist = getDistance(customer.transform, player.transform);
@@ -317,21 +344,24 @@ void PlayMode::updateProximity() {
 				closestC = std::make_pair(true, dist);
 		}
 	}
-	for (auto& [name, ingredient_transform] : ingredient_transforms) {
-		if (collide(ingredient_transform, player.transform, 10.f))
+	//int cnt = 0;
+	for (auto &[name, ingredient_transform] : ingredient_transforms)
+	{
+		// cnt++;
+		if (collide(ingredient_transform, player.transform))
 		{
 			float dist = getDistance(ingredient_transform, player.transform);
 			if (!closestI.first || dist < closestI.second)
 				closestI = std::make_pair(true, dist);
 		}
 	}
+	//std::cout<<cnt<<' '<<closestC.second<<' '<<closestI.second<<std::endl;
 	if (!(closestC.first || closestI.first))
 		state.proximity = Proximity::NoProx;
 	else if (!closestC.first || closestI.second < closestC.second)
 		state.proximity = Proximity::IngredientProx;
 	else
 		state.proximity = Proximity::CustomerProx;
-
 }
 
 bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
@@ -368,8 +398,10 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			down.pressed = true;
 			return true;
 		}
-		else if (evt.key.keysym.sym == SDLK_SPACE) {
-			if (state.flapTimer > state.flapCooldown && !space.pressed) {
+		else if (evt.key.keysym.sym == SDLK_SPACE)
+		{
+			if (state.flapTimer > state.flapCooldown && !space.pressed)
+			{
 				space.downs += 1;
 				space.pressed = true;
 				state.flapTimer = 0.0f;
@@ -403,7 +435,9 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		{
 			down.pressed = false;
 			return true;
-		} else if (evt.key.keysym.sym == SDLK_SPACE) {
+		}
+		else if (evt.key.keysym.sym == SDLK_SPACE)
+		{
 			space.pressed = false;
 			return true;
 		}
@@ -415,30 +449,46 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			SDL_SetRelativeMouseMode(SDL_TRUE);
 			return true;
 		}
-		if (evt.button.button == SDL_BUTTON_LEFT) {
+		if (evt.button.button == SDL_BUTTON_LEFT)
+		{
 			switch (state.proximity)
 			{
 
-			case(Proximity::CustomerProx):
+			case (Proximity::CustomerProx):
 				if (order_status == OrderStatus::Empty)
+				{
 					take_order();
+					std::cout << "taking order!" << std::endl;
+				}
+
 				else
+				{
 					serve_order();
+					std::cout << "serving order!" << std::endl;
+				}
+
 				break;
-			case(Proximity::IngredientProx):
+			case (Proximity::IngredientProx):
+			{
 				grab_ingredient();
-				break;
+				std::cout << "grabing ingredient!" << std::endl;
+			}
+
+			break;
 			default:
 				break;
 			}
 			return true;
 		}
-		else if (evt.button.button == SDL_BUTTON_RIGHT) {
-			if (player.playerStatus == Cat) {
+		else if (evt.button.button == SDL_BUTTON_RIGHT)
+		{
+			if (player.playerStatus == Cat)
+			{
 				player.playerStatus = toHuman;
 				player.capturePos = glm::vec2(player.transform->position.x, player.transform->position.y);
 			}
-			else if (player.playerStatus == Human) player.playerStatus = toCat;
+			else if (player.playerStatus == Human)
+				player.playerStatus = toCat;
 			return true;
 		}
 	}
@@ -446,23 +496,23 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	{
 		if (SDL_GetRelativeMouseMode() == SDL_TRUE)
 		{
-			SDL_WarpMouseGlobal(window_size.x/2, window_size.y/2); //Allows moust to not get caught on window edge
+			SDL_WarpMouseGlobal(window_size.x / 2, window_size.y / 2); //Allows moust to not get caught on window edge
 			glm::vec2 motion = glm::vec2(
 				evt.motion.xrel / float(window_size.y),
 				-evt.motion.yrel / float(window_size.y));
 			glm::vec3 up = walkmesh->to_world_smooth_normal(player.at);
 			player.transform->rotation = glm::angleAxis(-motion.x * player.orbitCamera.camera->fovy, up) * player.transform->rotation;
-			 
-			
 			player.orbitCamera.truePitch += motion.y * player.orbitCamera.camera->fovy;
 			//camera looks down -z (basically at the player's feet) when pitch is at zero.
 			player.orbitCamera.truePitch = std::min(player.orbitCamera.truePitch, 0.95f * 3.1415926f);
 			player.orbitCamera.truePitch = std::max(player.orbitCamera.truePitch, 0.05f * 3.1415926f);
 			player.orbitCamera.curPitch = player.orbitCamera.truePitch;
-			if (player.height <= player.orbitCamera.distance + ERROR_F) { //Camera clipping check
+			if (player.height <= player.orbitCamera.distance + ERROR_F)
+			{ //Camera clipping check
 				//Get minimum angle
 				float theta = asin(player.height / player.orbitCamera.distance);
-				if (player.orbitCamera.curPitch >= PI_F / 2.f + theta - ERROR_F) { //If at or above minimum angle, cap so can't see below walkmesh
+				if (player.orbitCamera.curPitch >= PI_F / 2.f + theta - ERROR_F)
+				{ //If at or above minimum angle, cap so can't see below walkmesh
 					player.orbitCamera.curPitch = PI_F / 2.f + theta;
 				}
 			}
@@ -477,7 +527,8 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	return false;
 }
 
-void PlayMode::update(float elapsed) {
+void PlayMode::update(float elapsed)
+{
 
 	assert(player.cat);
 	assert(player.cat->transform);
@@ -485,11 +536,13 @@ void PlayMode::update(float elapsed) {
 	assert(player.human->transform);
 
 	//Camera update
-	
-	if (player.height <= player.orbitCamera.distance + ERROR_F) { //Camera clipping check
-				//Get minimum angle
+
+	if (player.height <= player.orbitCamera.distance + ERROR_F)
+	{ //Camera clipping check
+		//Get minimum angle
 		float theta = asin(player.height / player.orbitCamera.distance);
-		if (player.orbitCamera.truePitch >= PI_F / 2.f + theta - ERROR_F - 0.1f) {
+		if (player.orbitCamera.truePitch >= PI_F / 2.f + theta - ERROR_F - 0.1f)
+		{
 			player.orbitCamera.curPitch = PI_F / 2.f + theta - 0.1f;
 			player.orbitCamera.camera->transform->rotation = glm::angleAxis(player.orbitCamera.curPitch, glm::vec3(1.0f, 0.0f, 0.0f));
 			player.orbitCamera.updateCamera();
@@ -533,17 +586,24 @@ void PlayMode::update(float elapsed) {
 	glm::vec2 move = glm::vec2(0.0f);
 	//combine inputs into a move:
 	constexpr float PlayerSpeed = 3.0f;
-	if (left.pressed && !right.pressed) move.x = -1.0f;
-	if (!left.pressed && right.pressed) move.x = 1.0f;
-	if (down.pressed && !up.pressed) move.y = -1.0f;
-	if (!down.pressed && up.pressed) move.y = 1.0f;
-	
+	if (left.pressed && !right.pressed)
+		move.x = -1.0f;
+	if (!left.pressed && right.pressed)
+		move.x = 1.0f;
+	if (down.pressed && !up.pressed)
+		move.y = -1.0f;
+	if (!down.pressed && up.pressed)
+		move.y = 1.0f;
+
 	//make it so that moving diagonally doesn't go faster:
-	if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
+	if (move != glm::vec2(0.0f))
+		move = glm::normalize(move) * PlayerSpeed * elapsed;
 
-	if (player.playerStatus != toCat && player.playerStatus != toHuman) {
+	if (player.playerStatus != toCat && player.playerStatus != toHuman)
+	{
 
-		if (player.playerStatus == Cat) { //If cat, get move from updateCat if in flight
+		if (player.playerStatus == Cat)
+		{ //If cat, get move from updateCat if in flight
 			Keys sendKeys;
 			sendKeys.space = (space.downs > 0);
 			sendKeys.up = (up.pressed);
@@ -553,7 +613,6 @@ void PlayMode::update(float elapsed) {
 			updateCat(sendKeys, elapsed, gravity);
 			if (!player.grounded)
 				move = player.posDelt;
-
 		}
 
 		//get move in world coordinate system:
@@ -563,7 +622,8 @@ void PlayMode::update(float elapsed) {
 		// some awkward case, code will not infinite loop:
 		for (uint32_t iter = 0; iter < 10; ++iter)
 		{
-			if (remain == glm::vec3(0.0f)) {
+			if (remain == glm::vec3(0.0f))
+			{
 				break;
 			}
 			WalkPoint end;
@@ -587,11 +647,12 @@ void PlayMode::update(float elapsed) {
 				//rotate step to follow surface:
 				remain = rotation * remain;
 			}
-			else {
+			else
+			{
 				//ran into a wall, bounce / slide along it:
-				glm::vec3 const& a = walkmesh->vertices[player.at.indices.x];
-				glm::vec3 const& b = walkmesh->vertices[player.at.indices.y];
-				glm::vec3 const& c = walkmesh->vertices[player.at.indices.z];
+				glm::vec3 const &a = walkmesh->vertices[player.at.indices.x];
+				glm::vec3 const &b = walkmesh->vertices[player.at.indices.y];
+				glm::vec3 const &c = walkmesh->vertices[player.at.indices.z];
 				glm::vec3 along = glm::normalize(b - a);
 				glm::vec3 normal = glm::normalize(glm::cross(b - a, c - a));
 				glm::vec3 in = glm::cross(normal, along);
@@ -603,20 +664,21 @@ void PlayMode::update(float elapsed) {
 					//bounce off of the wall:
 					remain += (-1.25f * d) * in;
 				}
-				else {
+				else
+				{
 					//if it's just pointing along the edge, bend slightly away from wall:
 					remain += 0.01f * d * in;
 				}
 			}
 		}
 
-		if (remain != glm::vec3(0.0f)) {
+		if (remain != glm::vec3(0.0f))
+		{
 			std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
 		}
 
-
 		//update player's position to respect walking if human:
-		if (player.playerStatus != Cat) 
+		if (player.playerStatus != Cat)
 			player.transform->position = walkmesh->to_world_point(player.at);
 		else //Extra steps to account for cat collision
 			getBoundedPos(move, boundWalkmesh, walkmesh);
@@ -640,8 +702,9 @@ void PlayMode::update(float elapsed) {
 		camera->transform->position += move.x * right + move.y * forward;
 		*/
 	}
-	else {
-		transition(elapsed, 2*gravity, boundWalkmesh, walkmesh);
+	else
+	{
+		transition(elapsed, 2 * gravity, boundWalkmesh, walkmesh);
 	}
 
 	//reset button press counters:
@@ -704,13 +767,14 @@ void PlayMode::update(float elapsed) {
 
 	{ // spawn new customers periodically
 		customer_spawn_timer -= elapsed;
-		if (customer_spawn_timer < 0) {
+		if (customer_spawn_timer < 0)
+		{
 			//std::cout << "A new customer has been spawned!" << std::endl;
 			size_t r = rand() % 100;
-			// the amount of time until the next customer spawns is governed by the 
-			// random variable 'rand_time'. 'rand_time' is uniformly distributed 
+			// the amount of time until the next customer spawns is governed by the
+			// random variable 'rand_time'. 'rand_time' is uniformly distributed
 			// between 7 and 17 seconds
-			float rand_time = 7 + 10.0f * (r / (float)100); 
+			float rand_time = 7 + 10.0f * (r / (float)100);
 			customer_spawn_timer = rand_time;
 			scene.transforms.emplace_back();
 			scene.drawables.emplace_back(&scene.transforms.back());
@@ -723,17 +787,21 @@ void PlayMode::update(float elapsed) {
 			c.init();
 			// give the customer a waypoint from one of the open waypoint
 			bool has_set_cwaypoint = false;
-			for (auto &[waypoint, is_open]: customer_waypoints) {
-				if (is_open) {
+			for (auto &[waypoint, is_open] : customer_waypoints)
+			{
+				if (is_open)
+				{
 					c.waypoint = waypoint;
 					is_open = false;
 					has_set_cwaypoint = true;
 					break;
 				}
 			}
-			if (!has_set_cwaypoint) {
-				std::cerr << "All of the waypoints are full, could not find waypoint for customer " 
-				"As a workaround, this customer's waypoint will be set to the origin" << std::endl;
+			if (!has_set_cwaypoint)
+			{
+				std::cerr << "All of the waypoints are full, could not find waypoint for customer "
+							 "As a workaround, this customer's waypoint will be set to the origin"
+						  << std::endl;
 				c.waypoint = new Scene::Transform();
 				c.waypoint->position = glm::vec3(0, 0, 0);
 				c.waypoint->rotation = glm::vec3(0, 0, 0);
@@ -746,48 +814,59 @@ void PlayMode::update(float elapsed) {
 	}
 
 	{ // handle customer behaviour depending on state
-		for(auto &[name, customer] : customers){
-			switch (customer.status) {
-				case Customer::Status::New: {
-					// customers fly into their seat in the beginning of 'New' state
-					if (customer.t_new < customer.new_animation_time) {
-						// std::cout << "New" << std::endl;
-						customer.t_new += elapsed;
-						float t = (customer.new_animation_time - customer.t_new) / customer.new_animation_time; 
-						assert(customer.transform != NULL);
-						assert(customer_spawn_point != NULL);
-						assert(customer.waypoint != NULL);
-						customer.transform->position = customer_spawn_point->position * t + (customer.waypoint->position * (1.0f - t));
-					}
-				} break;
-				// customers wait for their order in 'Wait' state
-				case Customer::Status::Wait: {
-					customer.t_wait += elapsed;
-					customer.transform->position = customer.waypoint->position;
-					// the customer gets angry if it waits too longs, score gets deducted
-					if (customer.t_wait > customer.max_wait_time) {
-						//std::cout << "Customer [" << customer.name << "] has waited too long :(. Customer is leaving..." << std::endl;
-						state.score -= 10; 
-						customer.status = Customer::Status::Finished;
-					}
-
-				} break;
-				// customers fly away in 'Finished' state
-				case Customer::Status::Finished: {
-					customer.t_finished += elapsed;
-					float t = (customer.finished_animation_time - customer.t_finished) / customer.finished_animation_time;
-					glm::vec3 desired_position = customer_spawn_point->position;
-					desired_position.y += 50.0f;
-					customer.transform->position = customer_spawn_point->position * (1.0f - t) + (desired_position * t);
-					if (customer.t_finished > customer.finished_animation_time) {
-						customer.transform->position.x = 1000000; // move the customer super far away
-						customer_waypoints[customer.waypoint] = true;
-						customer.status = Customer::Status::Inactive;
-					}
-				} break;
-				case Customer::Status::Inactive: {
-					// do nothing
+		for (auto &[name, customer] : customers)
+		{
+			switch (customer.status)
+			{
+			case Customer::Status::New:
+			{
+				// customers fly into their seat in the beginning of 'New' state
+				if (customer.t_new < customer.new_animation_time)
+				{
+					// std::cout << "New" << std::endl;
+					customer.t_new += elapsed;
+					float t = (customer.new_animation_time - customer.t_new) / customer.new_animation_time;
+					assert(customer.transform != NULL);
+					assert(customer_spawn_point != NULL);
+					assert(customer.waypoint != NULL);
+					customer.transform->position = customer_spawn_point->position * t + (customer.waypoint->position * (1.0f - t));
 				}
+			}
+			break;
+			// customers wait for their order in 'Wait' state
+			case Customer::Status::Wait:
+			{
+				customer.t_wait += elapsed;
+				customer.transform->position = customer.waypoint->position;
+				// the customer gets angry if it waits too longs, score gets deducted
+				if (customer.t_wait > customer.max_wait_time)
+				{
+					//std::cout << "Customer [" << customer.name << "] has waited too long :(. Customer is leaving..." << std::endl;
+					state.score -= 10;
+					customer.status = Customer::Status::Finished;
+				}
+			}
+			break;
+			// customers fly away in 'Finished' state
+			case Customer::Status::Finished:
+			{
+				customer.t_finished += elapsed;
+				float t = (customer.finished_animation_time - customer.t_finished) / customer.finished_animation_time;
+				glm::vec3 desired_position = customer_spawn_point->position;
+				desired_position.y += 50.0f;
+				customer.transform->position = customer_spawn_point->position * (1.0f - t) + (desired_position * t);
+				if (customer.t_finished > customer.finished_animation_time)
+				{
+					customer.transform->position.x = 1000000; // move the customer super far away
+					customer_waypoints[customer.waypoint] = true;
+					customer.status = Customer::Status::Inactive;
+				}
+			}
+			break;
+			case Customer::Status::Inactive:
+			{
+				// do nothing
+			}
 			}
 		}
 	}
@@ -804,7 +883,6 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 	//update camera aspect ratio for drawable:
 	player.orbitCamera.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 
-
 	glUseProgram(lit_color_texture_program->program);
 
 	//Load light arrays
@@ -812,42 +890,51 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 
 	uint32_t lightCount = std::min<uint32_t>((uint32_t)scene.lights.size(), lit_color_texture_program->maxLights);
 
-	std::vector< int32_t > light_type; light_type.reserve(lightCount);
-	std::vector< glm::vec3 > light_location; light_location.reserve(lightCount);
-	std::vector< glm::vec3 > light_direction; light_direction.reserve(lightCount);
-	std::vector< glm::vec3 > light_energy; light_energy.reserve(lightCount);
-	std::vector< float > light_cutoff; light_cutoff.reserve(lightCount);
+	std::vector<int32_t> light_type;
+	light_type.reserve(lightCount);
+	std::vector<glm::vec3> light_location;
+	light_location.reserve(lightCount);
+	std::vector<glm::vec3> light_direction;
+	light_direction.reserve(lightCount);
+	std::vector<glm::vec3> light_energy;
+	light_energy.reserve(lightCount);
+	std::vector<float> light_cutoff;
+	light_cutoff.reserve(lightCount);
 
-	for (auto const& light : scene.lights) {
+	for (auto const &light : scene.lights)
+	{
 		glm::mat4 light_to_world = light.transform->make_local_to_world();
 		//set up lighting information for this light:
 		light_location.emplace_back(glm::vec3(light_to_world[3]));
 		light_direction.emplace_back(glm::vec3(-light_to_world[2]));
 		light_energy.emplace_back(light.energy);
 
-		if (light.type == Scene::Light::Point) {
+		if (light.type == Scene::Light::Point)
+		{
 			light_type.emplace_back(0);
 			light_cutoff.emplace_back(1.0f);
 		}
-		else if (light.type == Scene::Light::Hemisphere) {
+		else if (light.type == Scene::Light::Hemisphere)
+		{
 			light_type.emplace_back(1);
 			light_cutoff.emplace_back(1.0f);
 		}
-		else if (light.type == Scene::Light::Spot) {
+		else if (light.type == Scene::Light::Spot)
+		{
 			light_type.emplace_back(2);
 			light_cutoff.emplace_back(std::cos(0.5f * light.spot_fov));
 		}
-		else if (light.type == Scene::Light::Directional) {
+		else if (light.type == Scene::Light::Directional)
+		{
 			light_type.emplace_back(3);
 			light_cutoff.emplace_back(1.0f);
 		}
 
 		//skip remaining lights if maximum light count reached:
-		if (light_type.size() == lightCount) break;
+		if (light_type.size() == lightCount)
+			break;
 	}
 
-
-	 
 	glUniform1ui(lit_color_texture_program->LIGHT_COUNT_uint, lightCount);
 
 	GL_ERRORS();
@@ -875,7 +962,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 	scene.draw(*player.orbitCamera.camera);
 	GL_ERRORS();
 
-	 /*//In case you are wondering if your walkmesh is lining up with your scene, try:
+	/*//In case you are wondering if your walkmesh is lining up with your scene, try:
 	{
 		glDisable(GL_DEPTH_TEST);
 		DrawLines lines(player.orbitCamera.camera->make_projection() * glm::mat4(player.orbitCamera.camera->transform->make_world_to_local()));
@@ -885,22 +972,21 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 			lines.draw(boundWalkmesh->vertices[tri.z], boundWalkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
 		}
 	}*/
-	
 
 	{ //use DrawLines to overlay some text:
 		glDisable(GL_DEPTH_TEST);
 		float aspect = float(drawable_size.x) / float(drawable_size.y);
-	    float ofs = 2.0f / drawable_size.y;
+		float ofs = 2.0f / drawable_size.y;
 		DrawLines lines(glm::mat4(
 			1.0f / aspect, 0.0f, 0.0f, 0.0f,
 			0.0f, 1.0f, 0.0f, 0.0f,
 			0.0f, 0.0f, 1.0f, 0.0f,
 			0.0f, 0.0f, 0.0f, 1.0f));
-		
+
 		constexpr float H = 0.09f;
 
 		//making draw_text more modular, string, location, size
-		auto draw_text = [&] (std::string str, glm::vec3 pos, float sz = 0.09f){
+		auto draw_text = [&](std::string str, glm::vec3 pos, float sz = 0.09f) {
 			lines.draw_text(str,
 							glm::vec3(pos.x, pos.y, pos.z),
 							glm::vec3(sz, 0.0f, 0.0f), glm::vec3(0.0f, sz, 0.0f),
@@ -910,46 +996,49 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 							glm::vec3(sz, 0.0f, 0.0f), glm::vec3(0.0f, sz, 0.0f),
 							glm::u8vec4(0xff, 0xff, 0xff, 0x00));
 		};
-		auto draw_item = [&] (StarbuckItem item, glm::vec3 pos, float sz = 0.10f){
-			if(item.item_name == "bag"){
+		auto draw_item = [&](StarbuckItem item, glm::vec3 pos, float sz = 0.10f) {
+			if (item.item_name == "bag")
+			{
 				draw_text(std::string("Bag : "),
-							glm::vec3(-aspect + pos.x,pos.y,pos.z),
-							sz);
+						  glm::vec3(-aspect + pos.x, pos.y, pos.z),
+						  sz);
 			}
-			else{
-				draw_text(std::string("Order : "),							
-							glm::vec3(-aspect + pos.x,pos.y,pos.z),
-							sz);
+			else
+			{
+				draw_text(std::string("Order : "),
+						  glm::vec3(-aspect + pos.x, pos.y, pos.z),
+						  sz);
 			}
 			float cnt = 0.0f;
-			for(auto &ingredients : item.recipe){
-				cnt+=1.0f;
+			for (auto &ingredients : item.recipe)
+			{
+				cnt += 1.0f;
 				draw_text(ingredients.first,
-							glm::vec3(-aspect + pos.x, pos.y - sz * (cnt + 1.5f), pos.z),
-							sz*0.75f);
+						  glm::vec3(-aspect + pos.x, pos.y - sz * (cnt + 1.5f), pos.z),
+						  sz * 0.75f);
 			}
 		};
 		// draw item
 		{
-			draw_item(player.cur_order, glm::vec3(0.1f,0.85f,0.0f));
-			draw_item(player.bag, glm::vec3(0.75f,0.85f,0.0f));
+			draw_item(player.cur_order, glm::vec3(0.1f, 0.85f, 0.0f));
+			draw_item(player.bag, glm::vec3(0.75f, 0.85f, 0.0f));
 		}
 		// draw score
 		{
-			draw_text("Score: " + std::to_string(state.score), 
-						glm::vec3(-aspect + 3.0f + 0.1f * H, -0.2f + 1.0f - 0.1f * H, 0.0f));
+			draw_text("Score: " + std::to_string(state.score),
+					  glm::vec3(-aspect + 3.0f + 0.1f * H, -0.2f + 1.0f - 0.1f * H, 0.0f));
 		}
 
 		// draw goal
 		{
-			draw_text("Goal: " + std::to_string(state.goal), 
-						glm::vec3(-aspect + 3.0f + 0.1f * H, -0.1f + 1.0f - 0.1f * H, 0.0));
+			draw_text("Goal: " + std::to_string(state.goal),
+					  glm::vec3(-aspect + 3.0f + 0.1f * H, -0.1f + 1.0f - 0.1f * H, 0.0));
 		}
 
 		// draw timer
 		{
 			draw_text("Remain Time: " + std::to_string((int)(state.game_timer + 0.5f)),
-							glm::vec3(-0.05f + 0.1f * H, -0.1f + 1.0f - 0.1f * H, 0.0));
+					  glm::vec3(-0.05f + 0.1f * H, -0.1f + 1.0f - 0.1f * H, 0.0));
 		}
 
 		// game state display
@@ -957,9 +1046,8 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 		{
 		case ongoing:
 		{
-			draw_text(order_message, 
-			glm::vec3(-aspect + 0.1f * H, -0.85f + 0.1f * H, 0.0f)
-			);
+			draw_text(order_message,
+					  glm::vec3(-aspect + 0.1f * H, -0.85f + 0.1f * H, 0.0f));
 			/*draw_text("Mouse motion looks; WASD moves; escape ungrabs mouse",
 							glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0));*/
 		}
@@ -967,18 +1055,19 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 		case won:
 		{
 			draw_text("You successfully went through today!",
-							glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0));
+					  glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0));
 		}
 		break;
 		case lost:
 		{
 			draw_text("You are fired! Press R to restart",
-							glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0));
+					  glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0));
 		}
 		break;
-		case menu: {
-
-		} break;
+		case menu:
+		{
+		}
+		break;
 		}
 
 		// manager state display
@@ -992,14 +1081,14 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 		case ARRIVING:
 		{
 			draw_text("The manager is arriving soon!",
-							glm::vec3(-aspect + 0.1f * H, 0.25 + -1.0 + 0.1f * H, 0.0));
+					  glm::vec3(-aspect + 0.1f * H, 0.25 + -1.0 + 0.1f * H, 0.0));
 		}
 		break;
 
 		case HERE:
 		{
 			draw_text("THE MANAGER IS HERE!",
-							glm::vec3(-aspect + 0.1f * H, 0.25 + -1.0 + 0.1f * H, 0.0));
+					  glm::vec3(-aspect + 0.1f * H, 0.25 + -1.0 + 0.1f * H, 0.0));
 		}
 		break;
 		}
