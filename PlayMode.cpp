@@ -402,7 +402,7 @@ void PlayMode::updateProximity()
 		for (auto& [waypoint, filled] : customer_waypoints) {
 			if (collide(waypoint, player.transform)) {
 				float dist = getDistance(waypoint, player.transform);
-				if ((player.playerStatus != PlayMode::Status::Cat && dist < 2.0f) || (player.playerStatus == PlayMode::Status::Cat && player.lastCollision == true)) //spill the coffee
+				if ((player.playerStatus != PlayMode::Status::Cat && dist < 3.5f) || (player.playerStatus == PlayMode::Status::Cat && player.lastCollision == true)) //spill the coffee
 				{
 					catch_message = "Spilt the coffee! You ran into the wrong customer!";
 					player.bag.clear_item();
