@@ -175,13 +175,14 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 			assert(str != "CustomerSpawnPoint");
 			std::pair<Scene::Transform *, bool> p = std::make_pair(d.transform, true);
 			customer_waypoints.insert(p);
-			d.pipeline.count = 0;		
+			d.pipeline.count = 0; // do not draw customer waypoints
 		}
 		else if (str == "CustomerSpawnPoint" && str != "CustomerBase")
 		{
 			assert(str == "CustomerSpawnPoint");
 			//std::cout << "CustomerSpawnPoint has been found" << std::endl;
 			customer_spawn_point = d.transform;
+			d.pipeline.count = 0; // do not draw customer spawn points
 		}
 		//store customers ingredients information and location
 		else if (str.length() >= 8 && str.substr(0, 8) == "Customer" && str != "CustomerBase" && str != "CustomerWaypoint" && str != "CustomerSpawnPoint")
@@ -954,6 +955,10 @@ void PlayMode::update(float elapsed)
 
 void PlayMode::draw(glm::uvec2 const &drawable_size)
 {
+	// TODO: This next line should make the background be brown, but the background 
+	// still remains gray
+	glClearColor(37, 25, 12, 0); // brown background color
+
 	//update camera aspect ratio for drawable:
 	player.orbitCamera.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 
