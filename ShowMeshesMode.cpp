@@ -5,6 +5,10 @@
 
 #include <iostream>
 
+const float pi = acos(-1.0f);
+float radian(float degree){
+	return degree / 180.0f * pi; 
+}
 ShowMeshesMode::ShowMeshesMode(MeshBuffer const &buffer_) : buffer(buffer_) {
 	vao = buffer.make_vao_for_program(show_meshes_program->program);
 
@@ -13,7 +17,7 @@ ShowMeshesMode::ShowMeshesMode(MeshBuffer const &buffer_) : buffer(buffer_) {
 		scene.transforms.emplace_back();
 		scene.cameras.emplace_back(&scene.transforms.back());
 		scene_camera = &scene.cameras.back();
-		scene_camera->fovy = 60.0f / 180.0f * 3.1415926f;
+		scene_camera->fovy = radian(60.0f);
 		scene_camera->near = 0.01f;
 		//scene_camera->transform and scene_camera->aspect will be set in draw()
 	}

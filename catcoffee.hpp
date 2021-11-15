@@ -14,7 +14,6 @@ const std::set<std::string> ingredients =
     "EspressoShot",
     "CoffeeBeans",
     "Sugar",
-    "Vanilla",
     "Cups",
     "Ice"
 };

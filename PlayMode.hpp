@@ -193,7 +193,7 @@ struct PlayMode : Mode {
 		int goal = 0;	// the goal score need to achieve before game_timer times out
 		float stablization = 1.0f;
 		float game_timer = 0.0f;
-		const float day_period_time = 60.0f; // set 60s for a day in game, temporarily
+		const float day_period_time = 300.0f; // 300s for vertical slice demo
 		float time = 0.0f;
 		float flapTimer = 0.00f;
 		float flapCooldown = 0.1f;//In seconds
