@@ -1167,7 +1167,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 		break;
 		case lost:
 		{
-			draw_text("You are fired! Press R to restart",
+			draw_text("You are fired! Press R to restart (Unimplemented)",
 					  glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0));
 		}
 		break;
