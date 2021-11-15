@@ -87,6 +87,14 @@ Load<Sound::Sample> manager_footstep_sample(LoadTagDefault, []() -> Sound::Sampl
 	return new Sound::Sample(data_path("manager_footstep.wav"));
 });
 
+Load<Sound::Sample> order_complete_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("BellDing.wav"));
+});
+
+Load<Sound::Sample> background_music_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("[Loop]WelcomeToStarbucks.wav"));
+});
+
 PlayMode::PlayMode() : scene(*starbucks_scene)
 {
 	//create a player transform:
@@ -300,6 +308,8 @@ bool PlayMode::serve_order()
 			player.bag.clear_item();
 			// also clear the last served order
 			player.cur_order.clear_item();
+
+			Sound::play(*order_complete_sample, 0.5f);
 
 			return true;
 		}
