@@ -189,7 +189,7 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 			assert(str != "CustomerBase");
 			assert(str != "CustomerWaypoint");
 			assert(str != "CustomerSpawnPoint");
-			auto Cu = Customer(str, d.transform);
+			auto Cu = Customer(new_customer_name(), d.transform);
 			Cu.order = new_item().second;
 			customers[str] = Cu;
 		}
@@ -894,8 +894,10 @@ void PlayMode::update(float elapsed)
 				// the customer gets angry if it waits too longs, score gets deducted
 				if (customer.t_wait > customer.max_wait_time)
 				{
+					catch_message = std::string("Customer [" ) + customer.name + "] has waited too long :( and left!";
 					//std::cout << "Customer [" << customer.name << "] has waited too long :(. Customer is leaving..." << std::endl;
 					state.score -= 10;
+					state.score = std::max(state.score, 0);
 					customer.status = Customer::Status::Finished;
 					player.bag.clear_item();
 					player.cur_order.clear_item();
