@@ -86,7 +86,7 @@ struct PlayMode : Mode {
 
 		// ----- Wait -----
 		float t_wait = 0; // the current amount of time that the customer has waited
-		float max_wait_time = 60; // the maximum time that a customer will wait for an order
+		float max_wait_time = 45; // the maximum time that a customer will wait for an order
 		
 		// ----- Finished ----
 		// the amount of time that it takes for the customer to fly away from their seat
