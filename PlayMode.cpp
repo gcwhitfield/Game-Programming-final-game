@@ -801,7 +801,7 @@ void PlayMode::update(float elapsed)
 		{
 			manager_next_appearance_timer -= elapsed;
 			manager->transform->position = glm::vec3(0, 0, -10000); // move the manager super far away when it's AWAY
-			if (manager_next_appearance_timer < 3)
+			if (manager_next_appearance_timer < 5.0f)
 			{
 				manager_state = ARRIVING;
 				// Play manager footstep sound queue
