@@ -4,6 +4,9 @@
 //The 'PlayMode' mode plays the game:
 #include "PlayMode.hpp"
 
+//The 'TutorialMode' has a quick tutorial on how to play the game:
+#include "TutorialMode.hpp"
+
 //For asset loading:
 #include "Load.hpp"
 
