@@ -42,7 +42,16 @@ std::ostream &operator<<(std::ostream &os, const StarbuckItem &item)
 	}
 	return os;
 }
-
+std::ostream &operator<<(std::ostream &os, const PlayMode::Customer &customer)
+{
+	os << "item name : " << customer.order.item_name;
+	os << ",   status : " ;
+	if(customer.status == PlayMode::Customer::Status::Finished)  os <<"Finished";
+	if(customer.status == PlayMode::Customer::Status::New)  os <<"New";
+	if(customer.status == PlayMode::Customer::Status::Wait)  os <<"Wait";
+	if(customer.status == PlayMode::Customer::Status::Inactive)  os <<"Inactive";
+	return os;
+}
 bool collide(Scene::Transform *trans_a, Scene::Transform *trans_b, float radius = 6.0f)
 {
 	auto a_pos = trans_a->position;
@@ -280,9 +289,10 @@ bool PlayMode::grab_ingredient()
 
 bool PlayMode::serve_order()
 {
+	//std::cout<<"name:"<<player.cur_order.item_name<<std::endl;
 	for (auto &[name, customer] : customers)
 	{
-
+		std::cout<<customer<<std::endl;
 		if (collide(customer.transform, player.transform) &&		  // distance close
 			customer.status == Customer::Status::Wait &&			  //customer is waiting
 			customer.order.item_name == player.cur_order.item_name && //the order match
