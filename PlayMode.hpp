@@ -38,7 +38,7 @@ struct PlayMode : Mode {
 	} manager_state = AWAY;
 	float manager_stay_timer = 5.5f; // seconds
 	std::shared_ptr< Sound::PlayingSample > manager_footstep_sfx;
-	float manager_footstep_volume_max = 1.0f;
+	float manager_footstep_volume_max = 3.0f;
 	float manager_footstep_volume_min = 0.1f;
 
 	Scene::Drawable* manager = NULL; // the drawable of the manager in scene.drawables

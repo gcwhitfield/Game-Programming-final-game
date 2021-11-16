@@ -402,7 +402,7 @@ void PlayMode::updateProximity()
 		for (auto& [waypoint, filled] : customer_waypoints) {
 			if (collide(waypoint, player.transform)) {
 				float dist = getDistance(waypoint, player.transform);
-				if ((player.playerStatus != PlayMode::Status::Cat && dist < 2.0f) || (player.playerStatus == PlayMode::Status::Cat && player.lastCollision == true)) //spill the coffee
+				if ((player.playerStatus != PlayMode::Status::Cat && dist < 3.5f) || (player.playerStatus == PlayMode::Status::Cat && player.lastCollision == true)) //spill the coffee
 				{
 					catch_message = "Spilt the coffee! You ran into the wrong customer!";
 					player.bag.clear_item();
@@ -644,7 +644,7 @@ void PlayMode::update(float elapsed)
 	{
 		if (manager_state == HERE && player.playerStatus == Cat)
 		{
-			catch_message = "You are caught by the Manager!";
+			catch_message = "You were caught by the Manager!";
 			state.catchTimer += elapsed;
 			if (state.catchTimer > 0.25f)
 			{
@@ -801,7 +801,7 @@ void PlayMode::update(float elapsed)
 		{
 			manager_next_appearance_timer -= elapsed;
 			manager->transform->position = glm::vec3(0, 0, -10000); // move the manager super far away when it's AWAY
-			if (manager_next_appearance_timer < 3)
+			if (manager_next_appearance_timer < 5.0f)
 			{
 				manager_state = ARRIVING;
 				// Play manager footstep sound queue
@@ -1167,7 +1167,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 		break;
 		case lost:
 		{
-			draw_text("You are fired! Press R to restart",
+			draw_text("You are fired! Press R to restart (Unimplemented)",
 					  glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0));
 		}
 		break;
