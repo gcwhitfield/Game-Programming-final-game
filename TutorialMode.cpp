@@ -29,7 +29,7 @@ bool TutorialMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_s
     else if (evt.key.keysym.sym == SDLK_SPACE) {
         // if we are on the last screen and the player presses spacebar, transition 
         // to the gameplay scene
-        if (state == SCREEN_4) {
+        if (state == SCREEN_5) {
             // transition to PlayMode
             Mode::set_current(std::make_shared<PlayMode>());
             return true;
@@ -48,6 +48,9 @@ bool TutorialMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_s
                 break;
             case SCREEN_3:
                 state = SCREEN_4;
+                break;
+            case SCREEN_4:
+                state = SCREEN_5;
                 break;
             default:
                 // do nothing
@@ -111,7 +114,7 @@ void TutorialMode::draw(glm::uvec2 const &drawable_size) {
             {
                 draw_text("Welcome to your first day on the job as a Starbucks barista!", glm::vec3(left_align, spacing * 2, 0), 0.1f);
                 draw_text("I'm so glad that the manager ended up hiring you.", glm::vec3(left_align, spacing * 1, 0), 0.1f);
-                draw_text("The manager does typically hire cats... so honestly I was ", glm::vec3(left_align, spacing * -0, 0), 0.1f);
+                draw_text("The manager doesn't typically hire cats... so honestly I was ", glm::vec3(left_align, spacing * -0, 0), 0.1f);
                 draw_text("pleasantly surprised to hear that you got the job. ", glm::vec3(left_align, spacing * -1, 0), 0.1f);
                 draw_text("I'm sure you'll make a great barista!", glm::vec3(left_align, spacing * -2, 0), 0.1f);
                 draw_text("Press E to continue", glm::vec3(left_align, spacing * -4, 0), 0.1f);
@@ -120,7 +123,7 @@ void TutorialMode::draw(glm::uvec2 const &drawable_size) {
             case SCREEN_2:
             {
                 draw_text("This Starbucks is different from other ones that you've been", glm::vec3(left_align, spacing * 2, 0), 0.1f);
-                draw_text("to , so let me give you the rundown. The customers here ", glm::vec3(left_align, spacing * 1, 0), 0.1f);
+                draw_text("to, so let me give you the rundown. The customers here ", glm::vec3(left_align, spacing * 1, 0), 0.1f);
                 draw_text("sit down at the chairs and you, the barista, must", glm::vec3(left_align, spacing * -0, 0), 0.1f);
                 draw_text("go up to them to take their order. After taking their order ", glm::vec3(left_align, spacing * -1, 0), 0.1f);
                 draw_text("You can go back to the counter, collect the ingredients needed...", glm::vec3(left_align, spacing * -2, 0), 0.1f);
@@ -138,10 +141,20 @@ void TutorialMode::draw(glm::uvec2 const &drawable_size) {
             } break;
             case SCREEN_4:
             {
+                draw_text("... and by the way - do NOT let the manager see you in your", glm::vec3(left_align, spacing * 2, 0), 0.1f);
+                draw_text("cat form. The manager hates cats!", glm::vec3(left_align, spacing * 1, 0), 0.1f);
+                draw_text("... and don't bump into customers while delivering orders.", glm::vec3(left_align, spacing * -1, 0), 0.1f);
+                draw_text("You'll spill the drink and you'll have to remake it again!", glm::vec3(left_align, spacing * -2, 0), 0.1f);
+     
+                draw_text("Press E to continue", glm::vec3(left_align, spacing * -4, 0), 0.1f);
+            } break;
+            case SCREEN_5:
+            {
                 draw_text("MOUSE MOVEMENT - move camera", glm::vec3(left_align, spacing * 2, 0), 0.1f);
                 draw_text("WASD - move player", glm::vec3(left_align, spacing * 1, 0), 0.1f);
                 draw_text("RIGHT CLICK - transition between cat and human", glm::vec3(left_align, spacing * -0, 0), 0.1f);
                 draw_text("LEFT CLICK - collect ingredient/serve order", glm::vec3(left_align, spacing * -1, 0), 0.1f);
+                draw_text("SPACEBAR - mash spacebar to fly around in cat mode", glm::vec3(left_align, spacing * -2, 0), 0.1f);
 
                 draw_text("Press Spacebar to begin Day 1", glm::vec3(left_align, spacing * -4, 0), 0.1f);
             } break;

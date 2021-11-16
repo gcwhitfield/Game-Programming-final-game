@@ -29,6 +29,7 @@ struct TutorialMode : Mode {
         SCREEN_1, // explanation of the game premise
         SCREEN_2, // explanation of game controls, 
         SCREEN_3, // explanation of game controls, 
-        SCREEN_4, // 'press spacebar to begin your first day on the jobb'
+        SCREEN_4, // 'oh, and by the way, the manager doesnt like cats'
+        SCREEN_5, // 'press spacebar to begin your first day on the job'
     } state;
 };
