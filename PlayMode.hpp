@@ -233,6 +233,16 @@ struct PlayMode : Mode {
 	std::string catch_message;
 	std::string closest_customer_name;
 	std::string closest_ingredient_name;
+
+	// visual effects
+	float color_explosion_timer = 5.01; // a timer that is used to keep track of the 
+	// color explosion effect. By default, this should be set to something larger than 
+	// color_explosion_anim_time so that the effect does not play at the start of the game
+	float color_explosion_anim_time = 5.0f; // the time (in seconds) that it takes for the color explosion 
+	// effect to happen
+	float color_explosion_timer_normalized = 0.0f;
+	glm::vec3 color_explosion_location;
+	void play_color_explosion(glm::vec3 location);
 };
 
 

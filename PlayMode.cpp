@@ -275,6 +275,7 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 PlayMode::~PlayMode()
 {
 }
+
 //Order Related Function
 bool PlayMode::take_order()
 {
@@ -340,7 +341,7 @@ bool PlayMode::serve_order()
 					player.cur_customer = std::string("");
 
 					Sound::play(*order_complete_sample, 0.5f);
-
+					play_color_explosion(customer.transform->position);
 					return true;
 				}
 			}
@@ -434,6 +435,12 @@ void PlayMode::updateProximity()
 		state.proximity = Proximity::IngredientProx;
 	else
 		state.proximity = Proximity::CustomerProx;
+}
+
+void PlayMode::play_color_explosion(glm::vec3 location)
+{
+	color_explosion_timer = 0.0f;
+	color_explosion_location = location;
 }
 
 bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
@@ -962,6 +969,11 @@ void PlayMode::update(float elapsed)
 	//update visability of cat and human
 	player.updateDrawable();
 	updateProximity(); //Update nearest action for next control event
+
+	//update color explosion effect
+	if (color_explosion_timer < color_explosion_anim_time) {
+		color_explosion_timer += elapsed;
+	}
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size)
@@ -1037,6 +1049,11 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 	glUniform3fv(lit_color_texture_program->LIGHT_DIRECTION_vec3_array, lightCount, glm::value_ptr(light_direction[0]));
 	glUniform3fv(lit_color_texture_program->LIGHT_ENERGY_vec3_array, lightCount, glm::value_ptr(light_energy[0]));
 	glUniform1fv(lit_color_texture_program->LIGHT_CUTOFF_float_array, lightCount, light_cutoff.data());
+
+	// set uniforms for color explosion effect 
+	glUniform3fv(lit_color_texture_program->COLOR_EXPLOSION_ORIGIN_vec3, 1, glm::value_ptr(player.transform->position));
+	color_explosion_timer_normalized = color_explosion_timer / color_explosion_anim_time;
+	glUniform1f(lit_color_texture_program->COLOR_EXPLOSION_T_float, color_explosion_timer_normalized);
 
 	GL_ERRORS();
 

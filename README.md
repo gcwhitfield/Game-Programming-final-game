@@ -14,7 +14,12 @@ How To Play:
 
 Sources: (TODO: list a source URL for any assets you did not create yourself. Make sure you have a license for the asset.)
 bike ding sound clip, used for the "order complete" SFX - https://freesound.org/people/JohnsonBrandEditing/sounds/173932/
-slide whistle sound clip, used for "order spilled" SFX - https://freesound.org/people/jcookvoice/sounds/586529/
+slide whistle sound clip, used for "order spilled and cat flying" SFX - https://freesound.org/people/jcookvoice/sounds/586529/
+
+Customer food delivery sounds
+"Mmmm!" - https://freesound.org/people/doggo_mcdoggo/sounds/368592/
+"Slurp, aaahhh" - https://freesound.org/people/abstraktgeneriert/sounds/194466/
+"Sip, aaahhh" - https://freesound.org/people/OwlStorm/sounds/320139/
 
 This game was built with [NEST](NEST.md).
 
