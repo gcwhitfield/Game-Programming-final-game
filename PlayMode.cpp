@@ -16,6 +16,73 @@
 #define ERROR_F 0.000001f
 #define HEIGHT_CLIP 0.255f
 
+// -----------------------------------
+// ---------- Asset Loading ----------
+// -----------------------------------
+GLuint starbucks_meshes_for_lit_color_texture_program = 0;
+Load<MeshBuffer> starbucks_meshes(LoadTagDefault, []() -> MeshBuffer const * {
+	MeshBuffer const *ret = new MeshBuffer(data_path("starbucks.pnct"));
+	starbucks_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
+	return ret;
+});
+
+Load<Scene> starbucks_scene(LoadTagDefault, []() -> Scene const * {
+	return new Scene(data_path("starbucks.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name) {
+		Mesh const &mesh = starbucks_meshes->lookup(mesh_name);
+
+		scene.drawables.emplace_back(transform);
+		Scene::Drawable &drawable = scene.drawables.back();
+
+		drawable.pipeline = lit_color_texture_program_pipeline;
+
+		drawable.pipeline.vao = starbucks_meshes_for_lit_color_texture_program;
+		drawable.pipeline.type = mesh.type;
+		drawable.pipeline.start = mesh.start;
+		drawable.pipeline.count = mesh.count;
+	});
+});
+
+WalkMesh const *walkmesh = nullptr;
+WalkMesh const *boundWalkmesh = nullptr;
+Load<WalkMeshes> phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
+	WalkMeshes *ret = new WalkMeshes(data_path("starbucks.w"));
+	walkmesh = &ret->lookup("WalkMesh");
+	boundWalkmesh = &ret->lookup("BoundsWalkMesh");
+	return ret;
+});
+
+// cite: https://www.fesliyanstudios.com/royalty-free-sound-effects-download/footsteps-31
+Load<Sound::Sample> manager_footstep_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("manager_footstep.wav"));
+});
+
+Load<Sound::Sample> order_complete_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("BellDing.wav"));
+});
+
+Load<Sound::Sample> background_music_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("[Loop]WelcomeToStarbucks.wav"));
+});
+
+Load<Sound::Sample> mmm1_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("mmm1.wav"));
+});
+
+Load<Sound::Sample> mmm2_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("mmm2.wav"));
+});
+
+Load<Sound::Sample> slurp_ahhh_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("slurp_ahhh.wav"));
+});
+
+Load<Sound::Sample> sip_ahhh_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("sip_ahhh.wav"));
+});
+
+// -----------------------------------
+// ---- Small Helper Functions ----
+// -----------------------------------
 //generate a new_item from the item list randomly
 std::pair<std::string, StarbuckItem> new_item()
 {
@@ -72,51 +139,10 @@ bool collide(Scene::Transform *trans_a, Scene::Transform *trans_b, float radius 
 	return distance2(a_pos, b_pos) < radius;
 }
 
-GLuint starbucks_meshes_for_lit_color_texture_program = 0;
-Load<MeshBuffer> starbucks_meshes(LoadTagDefault, []() -> MeshBuffer const * {
-	MeshBuffer const *ret = new MeshBuffer(data_path("starbucks.pnct"));
-	starbucks_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
-	return ret;
-});
 
-Load<Scene> starbucks_scene(LoadTagDefault, []() -> Scene const * {
-	return new Scene(data_path("starbucks.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name) {
-		Mesh const &mesh = starbucks_meshes->lookup(mesh_name);
-
-		scene.drawables.emplace_back(transform);
-		Scene::Drawable &drawable = scene.drawables.back();
-
-		drawable.pipeline = lit_color_texture_program_pipeline;
-
-		drawable.pipeline.vao = starbucks_meshes_for_lit_color_texture_program;
-		drawable.pipeline.type = mesh.type;
-		drawable.pipeline.start = mesh.start;
-		drawable.pipeline.count = mesh.count;
-	});
-});
-
-WalkMesh const *walkmesh = nullptr;
-WalkMesh const *boundWalkmesh = nullptr;
-Load<WalkMeshes> phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
-	WalkMeshes *ret = new WalkMeshes(data_path("starbucks.w"));
-	walkmesh = &ret->lookup("WalkMesh");
-	boundWalkmesh = &ret->lookup("BoundsWalkMesh");
-	return ret;
-});
-
-// cite: https://www.fesliyanstudios.com/royalty-free-sound-effects-download/footsteps-31
-Load<Sound::Sample> manager_footstep_sample(LoadTagDefault, []() -> Sound::Sample const * {
-	return new Sound::Sample(data_path("manager_footstep.wav"));
-});
-
-Load<Sound::Sample> order_complete_sample(LoadTagDefault, []() -> Sound::Sample const * {
-	return new Sound::Sample(data_path("BellDing.wav"));
-});
-
-Load<Sound::Sample> background_music_sample(LoadTagDefault, []() -> Sound::Sample const * {
-	return new Sound::Sample(data_path("[Loop]WelcomeToStarbucks.wav"));
-});
-
+// -----------------------------------
+// ----- Main Gameplay Functions -----
+// -----------------------------------
 PlayMode::PlayMode() : scene(*starbucks_scene)
 {
 	//create a player transform:
