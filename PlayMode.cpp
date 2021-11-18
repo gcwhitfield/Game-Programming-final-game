@@ -368,6 +368,15 @@ bool PlayMode::serve_order()
 
 					Sound::play(*order_complete_sample, 0.5f);
 					play_color_explosion(customer.transform->position);
+
+					// play a random sound from the "customer order served" sounds
+					std::vector<Load<Sound::Sample>> customer_order_samples = {
+						mmm1_sample, mmm2_sample, slurp_ahhh_sample, sip_ahhh_sample
+					};
+					size_t r = rand() % customer_order_samples.size(); // index of random sample
+					assert(r < customer_order_samples.size());
+					Sound::play(*(customer_order_samples[r]));
+
 					return true;
 				}
 			}
