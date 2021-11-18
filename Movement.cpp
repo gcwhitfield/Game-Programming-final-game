@@ -5,7 +5,7 @@
 #include <glm/gtx/quaternion.hpp>
 #define ERROR_F 0.000001f
 #define MAX_SPEED_H 2.25f
-#define MAX_HEIGHT 15.f
+#define MAX_HEIGHT 8.5f
 
 //To do: Resolve issues with bounded walkmesh, test control speed for flight
 
