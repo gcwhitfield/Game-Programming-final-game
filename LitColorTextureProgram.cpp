@@ -123,7 +123,7 @@ LitColorTextureProgram::LitColorTextureProgram() {
 		"	}\n"
 		"	float intensity = length(total);\n"
 		"	if(intensity > 0.9)\n"
-		"		total = vec3(0.8f)*lightColor;\n"
+		"		total = vec3(0.75f)*lightColor;\n"
 		"	else if(intensity > 0.75)\n"
 		"		total = vec3(0.7f)*lightColor;\n"
 		"	else if(intensity > 0.6)\n"
