@@ -1029,9 +1029,6 @@ void PlayMode::update(float elapsed)
 
 void PlayMode::draw(glm::uvec2 const &drawable_size)
 {
-	// TODO: This next line should make the background be brown, but the background 
-	// still remains gray
-	glClearColor(37, 25, 12, 0); // brown background color
 
 	//update camera aspect ratio for drawable:
 	player.orbitCamera.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
@@ -1110,7 +1107,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 
 	glUseProgram(0);
 
-	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+	glClearColor(37/255.0, 25/255.0, 12/255.0, 0/255.0); // brown background color
 	glClearDepth(1.0f); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
