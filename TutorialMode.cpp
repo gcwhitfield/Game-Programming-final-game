@@ -31,7 +31,7 @@ bool TutorialMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_s
         // to the gameplay scene
         if (state == SCREEN_5) {
             // transition to PlayMode
-            Mode::set_current(std::make_shared<PlayMode>());
+            Mode::set_current(std::make_shared<PlayMode>(1));
             return true;
         }
     } 

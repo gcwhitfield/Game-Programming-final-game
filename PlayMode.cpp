@@ -65,7 +65,7 @@ std::ostream &operator<<(std::ostream &os, const PlayMode::Customer &customer)
 		os << "Inactive";
 	return os;
 }
-bool collide(Scene::Transform *trans_a, Scene::Transform *trans_b, float radius = 6.0f)
+bool collide(Scene::Transform *trans_a, Scene::Transform *trans_b, float radius = 10.0f)
 {
 	auto a_pos = trans_a->position;
 	auto b_pos = trans_b->position;
@@ -117,12 +117,12 @@ Load<Sound::Sample> background_music_sample(LoadTagDefault, []() -> Sound::Sampl
 	return new Sound::Sample(data_path("[Loop]WelcomeToStarbucks.wav"));
 });
 
-PlayMode::PlayMode() : scene(*starbucks_scene)
+PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 {
 	//create a player transform:
 	scene.transforms.emplace_back();
 	player.transform = &scene.transforms.back();
-	player.transform->position = glm::vec3(-1.0f, 1.0f, 0.1f);
+	player.transform->position = glm::vec3(-6.0f, 0.0f, 0.1f);
 
 	//create a player camera attached to a child of the player transform:
 	scene.transforms.emplace_back();
@@ -191,7 +191,7 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 			assert(str != "CustomerBase");
 			assert(str != "CustomerWaypoint");
 			assert(str != "CustomerSpawnPoint");
-			auto Cu = Customer(new_customer_name(), d.transform);
+			auto Cu = Customer(new_customer_name(), d.transform, this->day_index);
 			Cu.order = new_item().second;
 			customers[str] = Cu;
 		}
@@ -258,10 +258,15 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	player.cat->transform->position = glm::vec3(0.0f, 0.0f, 0.44f);
 	player.human->transform->position = glm::vec3(0.0f, 0.0f, 1.34f);
 
+	/* Different level has different goal and day time*/
+	this->day_index = level;
+	state.day_period_time = std::min(300.0f, state.day_period_time + (float)(level) * 40.0f);
 	// initialize timer
 	state.game_timer = state.day_period_time;
-	// TODO: mechanism of setting revenue goal
-	state.goal = 100;
+	// mechanism of setting revenue goal
+	state.goal = std::min(level * 2 * 50, 1000);
+	manager_appearance_frequency = std::max(30.0f,(float)(130.0f - (float)level * 2));
+	manager_next_appearance_timer = manager_appearance_frequency;
 
 	//Orders
 	player.bag.item_name = "bag";
@@ -290,7 +295,7 @@ bool PlayMode::take_order()
 			player.cur_customer = name;
 			order_status = OrderStatus::Executing;
 			customer.status = Customer::Status::Wait;
-			order_message = std::string("Taking order ...... : ") + customer.order.item_name + "!";
+			order_message = std::string("Taking order ...... : ") + customer.name + ", " + customer.order.item_name + "!";
 			return true;
 		}
 	}
@@ -300,7 +305,7 @@ bool PlayMode::grab_ingredient()
 {
 	for (auto &[name, ingredient_transform] : ingredient_transforms)
 	{
-		if (collide(ingredient_transform, player.transform, 8) && // distance close
+		if (collide(ingredient_transform, player.transform,5.0f) && // distance close
 			order_status == OrderStatus::Executing				  //player has an order in hand
 		)
 		{
@@ -319,7 +324,7 @@ bool PlayMode::serve_order()
 	for (auto &[name, customer] : customers)
 	{
 		//std::cout<<customer<<std::endl;
-		if (collide(customer.transform, player.transform)) // distance close
+		if (collide(customer.transform, player.transform, 10.0f)) // distance close
 		{
 			if (customer.status == Customer::Status::Wait)
 			{																  //customer is waiting
@@ -332,7 +337,10 @@ bool PlayMode::serve_order()
 					order_status = OrderStatus::Empty;
 					order_message = std::string("Succeeded in serving : ") + customer.order.item_name + "!";
 					// increase score
-					state.score += 50;
+					auto dist = sqrt(distance2(glm::vec3(-6.0f, 0.0f, customer.transform->position.z),customer.transform->position));
+					std::cout << dist << std::endl;
+					state.score += (int)(50.0f * dist / (player.PlayerSpeed * 4.0f));
+					if(player.playerStatus == Cat) state.score = (int)((float)state.score * 1.1f);
 					// clear player bag, because order is served
 					player.bag.clear_item();
 					// also clear the last served order
@@ -388,7 +396,7 @@ void PlayMode::updateProximity()
 		if (name == player.cur_customer && !player.bag.recipe.empty()) {
 			orderCustDist = getDistance(customer.transform, player.transform);
 		}
-		if (collide(customer.transform, player.transform))
+		if (collide(customer.transform, player.transform, 20.0f))
 		{
 			float dist = getDistance(customer.transform, player.transform);
 			if (!closestC.first || dist < closestC.second)
@@ -398,11 +406,12 @@ void PlayMode::updateProximity()
 			}
 		}
 	}
-	if (orderCustDist > 5.5f) {
+	if (orderCustDist > 13.5f) {
 		for (auto& [waypoint, filled] : customer_waypoints) {
-			if (collide(waypoint, player.transform)) {
+			if (collide(waypoint, player.transform,7.5f)) {
 				float dist = getDistance(waypoint, player.transform);
-				if ((player.playerStatus != PlayMode::Status::Cat && dist < 3.5f) || (player.playerStatus == PlayMode::Status::Cat && player.lastCollision == true)) //spill the coffee
+				if ((player.playerStatus != PlayMode::Status::Cat && dist < 5.5f) || 
+				    (player.playerStatus == PlayMode::Status::Cat && player.lastCollision == true)) //spill the coffee
 				{
 					catch_message = "Spilt the coffee! You ran into the wrong customer!";
 					player.bag.clear_item();
@@ -417,7 +426,7 @@ void PlayMode::updateProximity()
 	for (auto &[name, ingredient_transform] : ingredient_transforms)
 	{
 		// cnt++;
-		if (collide(ingredient_transform, player.transform))
+		if (collide(ingredient_transform, player.transform,5.0f))
 		{
 			float dist = getDistance(ingredient_transform, player.transform);
 			if (!closestI.first || dist < closestI.second)
@@ -482,8 +491,16 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		}
 		else if (evt.key.keysym.sym == SDLK_r)
 		{
-			// TODO: restart the game
-			return true;
+			if(state.playing == lost){
+				Sound::stop_all_samples();
+				Mode::set_current(std::make_shared<PlayMode>(1));
+			}
+			else if (state.playing == won){
+				Sound::stop_all_samples();
+				Mode::set_current(std::make_shared<PlayMode>(day_index + 1));
+			}
+				
+            return true;
 		}
 	}
 	else if (evt.type == SDL_KEYUP)
@@ -665,7 +682,7 @@ void PlayMode::update(float elapsed)
 	//player walking:
 	glm::vec2 move = glm::vec2(0.0f);
 	//combine inputs into a move:
-	constexpr float PlayerSpeed = 3.0f;
+	
 	if (left.pressed && !right.pressed)
 		move.x = -1.0f;
 	if (!left.pressed && right.pressed)
@@ -677,7 +694,7 @@ void PlayMode::update(float elapsed)
 
 	//make it so that moving diagonally doesn't go faster:
 	if (move != glm::vec2(0.0f))
-		move = glm::normalize(move) * PlayerSpeed * elapsed;
+		move = glm::normalize(move) * player.PlayerSpeed * elapsed;
 
 	if (player.playerStatus != toCat && player.playerStatus != toHuman)
 	{
@@ -815,9 +832,7 @@ void PlayMode::update(float elapsed)
 			manager_next_appearance_timer -= elapsed;
 			if (manager_next_appearance_timer < 0)
 			{
-				// set manager_next_appearance_timer to a random time between 5 and 10 seconds
-				size_t r = rand() % 100;
-				manager_next_appearance_timer = 7.5f + 5 * (r / (float)100);
+				
 				manager_state = HERE;
 				// stop manager footstep sfx
 				manager_footstep_sfx->stop();
@@ -837,7 +852,10 @@ void PlayMode::update(float elapsed)
 			manager_stay_timer -= elapsed;
 			if (manager_stay_timer < 0)
 			{
-				manager_stay_timer = 5.5f;
+				manager_stay_timer = 3.5f;
+				// set manager_next_appearance_timer to a random time between 7.5 and 15 seconds
+				size_t r = rand() % 100;
+				manager_next_appearance_timer = -5.0f + 10.0f * (r / (float)100) + manager_appearance_frequency;
 				manager_state = AWAY;
 			}
 		}
@@ -862,9 +880,10 @@ void PlayMode::update(float elapsed)
 			new_customer->pipeline = customer_base->pipeline;
 			new_customer->transform->position = customer_spawn_point->position;
 			//std::string new_customer_name = "Customer" + std::to_string(customers.size() + 1);
-			Customer c = Customer(new_customer_name(), new_customer->transform);
+			Customer c = Customer(new_customer_name(), new_customer->transform, this->day_index);
 			c.order = new_item().second;
 			c.init();
+			std::cout << "max wait time:" << c.max_wait_time << std::endl;
 			// give the customer a waypoint from one of the open waypoint
 			bool has_set_cwaypoint = false;
 			for (auto &[waypoint, is_open] : customer_waypoints)
@@ -923,7 +942,7 @@ void PlayMode::update(float elapsed)
 				{
 					catch_message = std::string("Customer [") + customer.name + "] has waited too long :( and left!";
 					//std::cout << "Customer [" << customer.name << "] has waited too long :(. Customer is leaving..." << std::endl;
-					state.score -= 10;
+					state.score -= std::min(50.0f, (float)this->day_index * 10.0f);
 					state.score = std::max(state.score, 0);
 					customer.status = Customer::Status::Finished;
 					player.bag.clear_item();
@@ -1161,13 +1180,13 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 		break;
 		case won:
 		{
-			draw_text("You successfully got through today!",
+			draw_text("You successfully got through day " + std::to_string(day_index) +"! Press R to continue.",
 					  glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0));
 		}
 		break;
 		case lost:
 		{
-			draw_text("You are fired! Press R to restart (Unimplemented)",
+			draw_text("You are fired! Press R to restart.",
 					  glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0));
 		}
 		break;
