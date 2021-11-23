@@ -7,6 +7,9 @@
 //The 'TutorialMode' has a quick tutorial on how to play the game:
 #include "TutorialMode.hpp"
 
+//Introduction Mode, created by Professor McCann
+#include "GP21IntroMode.hpp"
+
 //For asset loading:
 #include "Load.hpp"
 
@@ -115,7 +118,8 @@ int main(int argc, char **argv) {
 	call_load_functions();
 
 	//------------ create game mode + make current --------------
-	Mode::set_current(std::make_shared< TutorialMode >());
+	Mode::set_current(std::make_shared< GP21IntroMode >( std::make_shared< TutorialMode >() ));
+
 
 	//------------ main loop ------------
 

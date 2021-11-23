@@ -67,6 +67,8 @@ void TutorialMode::update(float elapsed) {
 
 void TutorialMode::draw(glm::uvec2 const &drawable_size) {
 
+    glDisable(GL_BLEND);
+    
     // ----- set the background color -----
     glm::uvec4 background_color(37, 12, 10, 0);
     glClearColor(
