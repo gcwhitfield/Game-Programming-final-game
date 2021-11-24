@@ -362,7 +362,7 @@ bool PlayMode::serve_order()
 					order_message = std::string("Succeeded in serving : ") + customer.order.item_name + "!";
 					// increase score
 					auto dist = sqrt(distance2(glm::vec3(-6.0f, 0.0f, customer.transform->position.z),customer.transform->position));
-					std::cout << dist << std::endl;
+					// std::cout << dist << std::endl;
 					state.score += (int)(50.0f * dist / (player.PlayerSpeed * 4.0f));
 					if(player.playerStatus == Cat) state.score = (int)((float)state.score * 1.1f);
 					// clear player bag, because order is served
@@ -588,11 +588,16 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 					take_order();
 				}
 
-				else
+				else if (order_status == OrderStatus::Executing)
 				{
 					serve_order();
 				}
 
+				else 
+				{
+					std::cerr << "INVALID ORDER STATUS" << std::endl;
+					throw;
+				}
 				break;
 			case (Proximity::IngredientProx):
 			{
@@ -922,7 +927,7 @@ void PlayMode::update(float elapsed)
 			Customer c = Customer(new_customer_name(), new_customer->transform, this->day_index);
 			c.order = new_item().second;
 			c.init();
-			std::cout << "max wait time:" << c.max_wait_time << std::endl;
+			// std::cout << "max wait time:" << c.max_wait_time << std::endl;
 			// give the customer a waypoint from one of the open waypoint
 			bool has_set_cwaypoint = false;
 			for (auto &[waypoint, is_open] : customer_waypoints)
@@ -1001,7 +1006,7 @@ void PlayMode::update(float elapsed)
 				customer.transform->position = customer_spawn_point->position * (1.0f - t) + (desired_position * t);
 				if (customer.t_finished > customer.finished_animation_time)
 				{
-					customer.transform->position.x = 1000000; // move the customer super far away
+					customer.transform->position.x = 10000; // move the customer super far away
 					customer_waypoints[customer.waypoint] = true;
 					customer.status = Customer::Status::Inactive;
 				}
