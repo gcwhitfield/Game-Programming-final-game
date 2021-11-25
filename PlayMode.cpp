@@ -1,6 +1,7 @@
 #include "PlayMode.hpp"
 
 #include "LitColorTextureProgram.hpp"
+#include "DepthTextureProgram.hpp"
 
 #include "DrawLines.hpp"
 #include "Mesh.hpp"
@@ -16,13 +17,25 @@
 #define ERROR_F 0.000001f
 #define HEIGHT_CLIP 0.255f
 
+//Temp until I decide if this is the place for it
+//Shader Preperation
+
+void PlayMode::updateDrawables(GLuint pipeline, GLuint program) {
+	for (auto& drawable : starbucks_scene->drawables) {
+		drawable.pipeline = pipeline;
+		drawable.pipeline.vao = program;
+	}
+}
+
 // -----------------------------------
 // ---------- Asset Loading ----------
 // -----------------------------------
 GLuint starbucks_meshes_for_lit_color_texture_program = 0;
+GLuint starbucks_meshes_for_depth_texture_program = 0;
 Load<MeshBuffer> starbucks_meshes(LoadTagDefault, []() -> MeshBuffer const * {
 	MeshBuffer const *ret = new MeshBuffer(data_path("starbucks.pnct"));
 	starbucks_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
+	starbucks_meshes_for_depth_texture_program = ret->make_vao_for_program(depth_texture_program->program);
 	return ret;
 });
 
@@ -659,6 +672,11 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 
 void PlayMode::update(float elapsed)
 {
+	//Set all framebuffer sizes for the current frame
+	int w, h;
+	SDL_GetWindowSize(window, &w, &h);
+	newSize = glm::uvec2(w, h);
+	fb.resize(newSize);
 
 	assert(player.cat);
 	assert(player.cat->transform);
@@ -1037,6 +1055,28 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 
 	//update camera aspect ratio for drawable:
 	player.orbitCamera.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
+
+	//First get depth texture
+
+	updateDrawables(depth_texture_program_pipeline, depth_texture_program); //Set drawables to use depth program
+
+	glUseProgram(depth_texture_program->program);
+
+	glUniform1ui(depth_texture_program->OUT_BUFFER, fb.depth_tex); //Draw to depth texture
+
+	glClearColor(255.0 / 255.0, 255.0 / 255.0, 255.0 / 255.0, 0 / 255.0); //We want a black outline, so a white background layer will be used
+	glClearDepth(1.0f); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
+
+	glUseProgram(0);
+
+	scene.draw(*player.orbitCamera.camera);
+
+
+	updateDrawables(lit_color_texture_program_pipeline, lit_color_texture_program); //Set drawables to use lit color texture program
 
 	glUseProgram(lit_color_texture_program->program);
 

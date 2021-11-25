@@ -288,17 +288,7 @@ struct FB
 	}
 } fb;
 
-void updateDrawables(GLuint pipeline, GLuint program);
-/* Repeat:
-*
-
-		drawable.pipeline = lit_color_texture_program_pipeline;
-
-		drawable.pipeline.vao = starbucks_meshes_for_lit_color_texture_program;
-		drawable.pipeline.type = mesh.type;
-		drawable.pipeline.start = mesh.start;
-		drawable.pipeline.count = mesh.count;
-*/
+void updateDrawables(GLuint pipeline, GLuint program); //Set up all drawables to point to different pipeline and program
 
 //Frame buffer data type to be used in the following programs:
 //Depth Texture
