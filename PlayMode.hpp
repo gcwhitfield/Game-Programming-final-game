@@ -13,7 +13,9 @@
 
 #define PI_F 3.1415926f
 
+#include <SDL.h>
 #include <unordered_set>
+SDL_Window* window;
 
 struct PlayMode : Mode {
 	PlayMode(int level);
@@ -249,3 +251,56 @@ struct PlayMode : Mode {
 };
 
 
+
+
+//Data type structure modified from https://github.com/15-466/15-466-f19-base6/blob/master/DemoLightingDeferredMode.cpp
+struct FB
+{
+
+
+
+	//depth buffer is shared between objects + lights pass:
+	GLuint depth_tex = 0;
+	GLuint outline_tex = 0;
+
+	glm::uvec2 size = glm::uvec2(0);
+
+	void resize(glm::uvec2 const& drawable_size) {
+		if (drawable_size == size) return;
+		size = drawable_size;
+
+		//helper to allocate a texture:
+		auto alloc_tex = [&](GLuint& tex, GLenum internal_format) {
+			if (tex == 0) glGenTextures(1, &tex);
+			glBindTexture(GL_TEXTURE_2D, tex);
+			glTexImage2D(GL_TEXTURE_2D, 0, internal_format, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glBindTexture(GL_TEXTURE_2D, 0);
+		};
+
+		alloc_tex(depth_tex, GL_DEPTH_COMPONENT32F);
+		alloc_tex(outline_tex, GL_R8);
+
+
+	}
+} fb;
+
+void updateDrawables(GLuint pipeline, GLuint program);
+/* Repeat:
+*
+
+		drawable.pipeline = lit_color_texture_program_pipeline;
+
+		drawable.pipeline.vao = starbucks_meshes_for_lit_color_texture_program;
+		drawable.pipeline.type = mesh.type;
+		drawable.pipeline.start = mesh.start;
+		drawable.pipeline.count = mesh.count;
+*/
+
+//Frame buffer data type to be used in the following programs:
+//Depth Texture
+//Outline
+//

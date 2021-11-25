@@ -32,6 +32,9 @@
 #include <memory>
 #include <algorithm>
 
+//Include play mode to access global window
+#include "PlayMode.hpp"
+
 #ifdef _WIN32
 extern "C" { uint32_t GetACP(); }
 #endif
@@ -71,7 +74,7 @@ int main(int argc, char **argv) {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
 	//create window:
-	SDL_Window *window = SDL_CreateWindow(
+	window = SDL_CreateWindow(
 		"CodeBrew: A Starbuck Simulator", //TODO: remember to set a title for your game!
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		1280, 720, //TODO: modify window size if you'd like
