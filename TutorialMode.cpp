@@ -31,7 +31,7 @@ bool TutorialMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_s
         // to the gameplay scene
         if (state == SCREEN_5) {
             // transition to PlayMode
-            Mode::set_current(std::make_shared<PlayMode>());
+            Mode::set_current(std::make_shared<PlayMode>(1));
             return true;
         }
     } 
@@ -67,6 +67,8 @@ void TutorialMode::update(float elapsed) {
 
 void TutorialMode::draw(glm::uvec2 const &drawable_size) {
 
+    glDisable(GL_BLEND);
+    
     // ----- set the background color -----
     glm::uvec4 background_color(37, 12, 10, 0);
     glClearColor(

@@ -75,6 +75,8 @@ LitColorTextureProgram::LitColorTextureProgram() {
 		"uniform uint LIGHT_COUNT;\n"
 		"uniform float LIGHT_COUNT_F;\n"
 		"uniform int LIGHT_TYPE[" + std::to_string(maxLights) + "];\n"
+		"uniform vec3 COLOR_EXPLOSION_ORIGIN;\n"
+		"uniform float COLOR_EXPLOSION_T;\n"
 		"uniform vec3 LIGHT_LOCATION[" + std::to_string(maxLights) + "];\n"
 		"uniform vec3 LIGHT_DIRECTION[" + std::to_string(maxLights) + "];\n"
 		"uniform vec3 LIGHT_ENERGY[" + std::to_string(maxLights) + "];\n"
@@ -135,6 +137,19 @@ LitColorTextureProgram::LitColorTextureProgram() {
 		"	else\n"
 		"		total = vec3(0.05f)*lightColor;\n"	
 		"	fragColor = vec4(total*albedo.rgb, albedo.a);\n"
+			// apply colorful explosion
+			"if (COLOR_EXPLOSION_T < 1 && COLOR_EXPLOSION_T > 0) {\n"
+		"		float explosion_thickness = 0.5;\n"
+		"		float max_explosion_distance = 50;\n"
+		"		float dist_to_explosion_origin = length(position - COLOR_EXPLOSION_ORIGIN);\n"
+				// COLOR_EXPLOSION_T is a normalized float that is being sent in from 
+				// PlayMode.cpp. The float 'dist' below is a length, which corresponds to 
+				// the range of fragments that will be lit up in the color effect. 
+				// In other words, if a fragment is within [dist, dist + explosion_thickness] of the 
+				// COLOR_EXPLOSION_ORIGIN, then it will be lit up.
+		"		float dist = max_explosion_distance * COLOR_EXPLOSION_T;\n" 
+		"		if (dist_to_explosion_origin > dist && dist_to_explosion_origin < dist + explosion_thickness) fragColor *= dist_to_explosion_origin;\n"
+		"	}\n"
 		"}\n"
 	);
 	//As you can see above, adjacent strings in C/C++ are concatenated.
@@ -160,8 +175,10 @@ LitColorTextureProgram::LitColorTextureProgram() {
 	LIGHT_ENERGY_vec3_array = glGetUniformLocation(program, "LIGHT_ENERGY");
 	LIGHT_CUTOFF_float_array = glGetUniformLocation(program, "LIGHT_CUTOFF");
 
-
 	GLuint TEX_sampler2D = glGetUniformLocation(program, "TEX");
+
+	COLOR_EXPLOSION_ORIGIN_vec3 = glGetUniformLocation(program, "COLOR_EXPLOSION_ORIGIN");
+	COLOR_EXPLOSION_T_float = glGetUniformLocation(program, "COLOR_EXPLOSION_T");
 
 	//set TEX to always refer to texture binding zero:
 	glUseProgram(program); //bind program -- glUniform* calls refer to this program now

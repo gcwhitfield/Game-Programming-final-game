@@ -16,6 +16,73 @@
 #define ERROR_F 0.000001f
 #define HEIGHT_CLIP 0.255f
 
+// -----------------------------------
+// ---------- Asset Loading ----------
+// -----------------------------------
+GLuint starbucks_meshes_for_lit_color_texture_program = 0;
+Load<MeshBuffer> starbucks_meshes(LoadTagDefault, []() -> MeshBuffer const * {
+	MeshBuffer const *ret = new MeshBuffer(data_path("starbucks.pnct"));
+	starbucks_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
+	return ret;
+});
+
+Load<Scene> starbucks_scene(LoadTagDefault, []() -> Scene const * {
+	return new Scene(data_path("starbucks.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name) {
+		Mesh const &mesh = starbucks_meshes->lookup(mesh_name);
+
+		scene.drawables.emplace_back(transform);
+		Scene::Drawable &drawable = scene.drawables.back();
+
+		drawable.pipeline = lit_color_texture_program_pipeline;
+
+		drawable.pipeline.vao = starbucks_meshes_for_lit_color_texture_program;
+		drawable.pipeline.type = mesh.type;
+		drawable.pipeline.start = mesh.start;
+		drawable.pipeline.count = mesh.count;
+	});
+});
+
+WalkMesh const *walkmesh = nullptr;
+WalkMesh const *boundWalkmesh = nullptr;
+Load<WalkMeshes> phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
+	WalkMeshes *ret = new WalkMeshes(data_path("starbucks.w"));
+	walkmesh = &ret->lookup("WalkMesh");
+	boundWalkmesh = &ret->lookup("BoundsWalkMesh");
+	return ret;
+});
+
+// cite: https://www.fesliyanstudios.com/royalty-free-sound-effects-download/footsteps-31
+Load<Sound::Sample> manager_footstep_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("manager_footstep.wav"));
+});
+
+Load<Sound::Sample> order_complete_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("BellDing.wav"));
+});
+
+Load<Sound::Sample> background_music_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("[Loop]WelcomeToStarbucks.wav"));
+});
+
+Load<Sound::Sample> mmm1_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("mmm1.wav"));
+});
+
+Load<Sound::Sample> mmm2_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("mmm2.wav"));
+});
+
+Load<Sound::Sample> slurp_ahhh_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("slurp_ahhh.wav"));
+});
+
+Load<Sound::Sample> sip_ahhh_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("sip_ahhh.wav"));
+});
+
+// -----------------------------------
+// ---- Small Helper Functions ----
+// -----------------------------------
 //generate a new_item from the item list randomly
 std::pair<std::string, StarbuckItem> new_item()
 {
@@ -65,64 +132,20 @@ std::ostream &operator<<(std::ostream &os, const PlayMode::Customer &customer)
 		os << "Inactive";
 	return os;
 }
-bool collide(Scene::Transform *trans_a, Scene::Transform *trans_b, float radius = 6.0f)
+bool collide(Scene::Transform *trans_a, Scene::Transform *trans_b, float radius = 10.0f)
 {
 	auto a_pos = trans_a->position;
 	auto b_pos = trans_b->position;
 	return distance2(a_pos, b_pos) < radius;
 }
 
-GLuint starbucks_meshes_for_lit_color_texture_program = 0;
-Load<MeshBuffer> starbucks_meshes(LoadTagDefault, []() -> MeshBuffer const * {
-	MeshBuffer const *ret = new MeshBuffer(data_path("starbucks.pnct"));
-	starbucks_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
-	return ret;
-});
 
-Load<Scene> starbucks_scene(LoadTagDefault, []() -> Scene const * {
-	return new Scene(data_path("starbucks.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name) {
-		Mesh const &mesh = starbucks_meshes->lookup(mesh_name);
-
-		scene.drawables.emplace_back(transform);
-		Scene::Drawable &drawable = scene.drawables.back();
-
-		drawable.pipeline = lit_color_texture_program_pipeline;
-
-		drawable.pipeline.vao = starbucks_meshes_for_lit_color_texture_program;
-		drawable.pipeline.type = mesh.type;
-		drawable.pipeline.start = mesh.start;
-		drawable.pipeline.count = mesh.count;
-	});
-});
-
-WalkMesh const *walkmesh = nullptr;
-WalkMesh const *boundWalkmesh = nullptr;
-Load<WalkMeshes> phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
-	WalkMeshes *ret = new WalkMeshes(data_path("starbucks.w"));
-	walkmesh = &ret->lookup("WalkMesh");
-	boundWalkmesh = &ret->lookup("BoundsWalkMesh");
-	return ret;
-});
-
-// cite: https://www.fesliyanstudios.com/royalty-free-sound-effects-download/footsteps-31
-Load<Sound::Sample> manager_footstep_sample(LoadTagDefault, []() -> Sound::Sample const * {
-	return new Sound::Sample(data_path("manager_footstep.wav"));
-});
-
-Load<Sound::Sample> order_complete_sample(LoadTagDefault, []() -> Sound::Sample const * {
-	return new Sound::Sample(data_path("BellDing.wav"));
-});
-
-Load<Sound::Sample> background_music_sample(LoadTagDefault, []() -> Sound::Sample const * {
-	return new Sound::Sample(data_path("[Loop]WelcomeToStarbucks.wav"));
-});
-
-PlayMode::PlayMode() : scene(*starbucks_scene)
+PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 {
 	//create a player transform:
 	scene.transforms.emplace_back();
 	player.transform = &scene.transforms.back();
-	player.transform->position = glm::vec3(-1.0f, 1.0f, 0.1f);
+	player.transform->position = glm::vec3(-6.0f, 0.0f, 0.1f);
 
 	//create a player camera attached to a child of the player transform:
 	scene.transforms.emplace_back();
@@ -191,7 +214,7 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 			assert(str != "CustomerBase");
 			assert(str != "CustomerWaypoint");
 			assert(str != "CustomerSpawnPoint");
-			auto Cu = Customer(new_customer_name(), d.transform);
+			auto Cu = Customer(new_customer_name(), d.transform, this->day_index);
 			Cu.order = new_item().second;
 			customers[str] = Cu;
 		}
@@ -258,10 +281,15 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 	player.cat->transform->position = glm::vec3(0.0f, 0.0f, 0.44f);
 	player.human->transform->position = glm::vec3(0.0f, 0.0f, 1.34f);
 
+	/* Different level has different goal and day time*/
+	this->day_index = level;
+	state.day_period_time = std::min(300.0f, state.day_period_time + (float)(level) * 40.0f);
 	// initialize timer
 	state.game_timer = state.day_period_time;
-	// TODO: mechanism of setting revenue goal
-	state.goal = 100;
+	// mechanism of setting revenue goal
+	state.goal = std::min(level * 2 * 50, 1000);
+	manager_appearance_frequency = std::max(30.0f,(float)(130.0f - (float)level * 2));
+	manager_next_appearance_timer = manager_appearance_frequency;
 
 	//Orders
 	player.bag.item_name = "bag";
@@ -275,6 +303,7 @@ PlayMode::PlayMode() : scene(*starbucks_scene)
 PlayMode::~PlayMode()
 {
 }
+
 //Order Related Function
 bool PlayMode::take_order()
 {
@@ -290,7 +319,7 @@ bool PlayMode::take_order()
 			player.cur_customer = name;
 			order_status = OrderStatus::Executing;
 			customer.status = Customer::Status::Wait;
-			order_message = std::string("Taking order ...... : ") + customer.order.item_name + "!";
+			order_message = std::string("Taking order ...... : ") + customer.name + ", " + customer.order.item_name + "!";
 			return true;
 		}
 	}
@@ -300,7 +329,7 @@ bool PlayMode::grab_ingredient()
 {
 	for (auto &[name, ingredient_transform] : ingredient_transforms)
 	{
-		if (collide(ingredient_transform, player.transform, 8) && // distance close
+		if (collide(ingredient_transform, player.transform,5.0f) && // distance close
 			order_status == OrderStatus::Executing				  //player has an order in hand
 		)
 		{
@@ -319,7 +348,7 @@ bool PlayMode::serve_order()
 	for (auto &[name, customer] : customers)
 	{
 		//std::cout<<customer<<std::endl;
-		if (collide(customer.transform, player.transform)) // distance close
+		if (collide(customer.transform, player.transform, 10.0f)) // distance close
 		{
 			if (customer.status == Customer::Status::Wait)
 			{																  //customer is waiting
@@ -332,7 +361,10 @@ bool PlayMode::serve_order()
 					order_status = OrderStatus::Empty;
 					order_message = std::string("Succeeded in serving : ") + customer.order.item_name + "!";
 					// increase score
-					state.score += 50;
+					auto dist = sqrt(distance2(glm::vec3(-6.0f, 0.0f, customer.transform->position.z),customer.transform->position));
+					// std::cout << dist << std::endl;
+					state.score += (int)(50.0f * dist / (player.PlayerSpeed * 4.0f));
+					if(player.playerStatus == Cat) state.score = (int)((float)state.score * 1.1f);
 					// clear player bag, because order is served
 					player.bag.clear_item();
 					// also clear the last served order
@@ -340,6 +372,15 @@ bool PlayMode::serve_order()
 					player.cur_customer = std::string("");
 
 					Sound::play(*order_complete_sample, 0.5f);
+					play_color_explosion(customer.transform->position);
+
+					// play a random sound from the "customer order served" sounds
+					std::vector<Load<Sound::Sample>> customer_order_samples = {
+						mmm1_sample, mmm2_sample, slurp_ahhh_sample, sip_ahhh_sample
+					};
+					size_t r = rand() % customer_order_samples.size(); // index of random sample
+					assert(r < customer_order_samples.size());
+					Sound::play(*(customer_order_samples[r]));
 
 					return true;
 				}
@@ -388,7 +429,7 @@ void PlayMode::updateProximity()
 		if (name == player.cur_customer && !player.bag.recipe.empty()) {
 			orderCustDist = getDistance(customer.transform, player.transform);
 		}
-		if (collide(customer.transform, player.transform))
+		if (collide(customer.transform, player.transform, 20.0f))
 		{
 			float dist = getDistance(customer.transform, player.transform);
 			if (!closestC.first || dist < closestC.second)
@@ -398,11 +439,12 @@ void PlayMode::updateProximity()
 			}
 		}
 	}
-	if (orderCustDist > 5.5f) {
+	if (orderCustDist > 13.5f) {
 		for (auto& [waypoint, filled] : customer_waypoints) {
-			if (collide(waypoint, player.transform)) {
+			if (collide(waypoint, player.transform,7.5f)) {
 				float dist = getDistance(waypoint, player.transform);
-				if ((player.playerStatus != PlayMode::Status::Cat && dist < 3.5f) || (player.playerStatus == PlayMode::Status::Cat && player.lastCollision == true)) //spill the coffee
+				if ((player.playerStatus != PlayMode::Status::Cat && dist < 5.5f) || 
+				    (player.playerStatus == PlayMode::Status::Cat && player.lastCollision == true)) //spill the coffee
 				{
 					catch_message = "Spilt the coffee! You ran into the wrong customer!";
 					player.bag.clear_item();
@@ -417,7 +459,7 @@ void PlayMode::updateProximity()
 	for (auto &[name, ingredient_transform] : ingredient_transforms)
 	{
 		// cnt++;
-		if (collide(ingredient_transform, player.transform))
+		if (collide(ingredient_transform, player.transform,5.0f))
 		{
 			float dist = getDistance(ingredient_transform, player.transform);
 			if (!closestI.first || dist < closestI.second)
@@ -434,6 +476,12 @@ void PlayMode::updateProximity()
 		state.proximity = Proximity::IngredientProx;
 	else
 		state.proximity = Proximity::CustomerProx;
+}
+
+void PlayMode::play_color_explosion(glm::vec3 location)
+{
+	color_explosion_timer = 0.0f;
+	color_explosion_location = location;
 }
 
 bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
@@ -482,8 +530,16 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		}
 		else if (evt.key.keysym.sym == SDLK_r)
 		{
-			// TODO: restart the game
-			return true;
+			if(state.playing == lost){
+				Sound::stop_all_samples();
+				Mode::set_current(std::make_shared<PlayMode>(1));
+			}
+			else if (state.playing == won){
+				Sound::stop_all_samples();
+				Mode::set_current(std::make_shared<PlayMode>(day_index + 1));
+			}
+				
+            return true;
 		}
 	}
 	else if (evt.type == SDL_KEYUP)
@@ -532,11 +588,16 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 					take_order();
 				}
 
-				else
+				else if (order_status == OrderStatus::Executing)
 				{
 					serve_order();
 				}
 
+				else 
+				{
+					std::cerr << "INVALID ORDER STATUS" << std::endl;
+					throw;
+				}
 				break;
 			case (Proximity::IngredientProx):
 			{
@@ -665,7 +726,7 @@ void PlayMode::update(float elapsed)
 	//player walking:
 	glm::vec2 move = glm::vec2(0.0f);
 	//combine inputs into a move:
-	constexpr float PlayerSpeed = 3.0f;
+	
 	if (left.pressed && !right.pressed)
 		move.x = -1.0f;
 	if (!left.pressed && right.pressed)
@@ -677,7 +738,7 @@ void PlayMode::update(float elapsed)
 
 	//make it so that moving diagonally doesn't go faster:
 	if (move != glm::vec2(0.0f))
-		move = glm::normalize(move) * PlayerSpeed * elapsed;
+		move = glm::normalize(move) * player.PlayerSpeed * elapsed;
 
 	if (player.playerStatus != toCat && player.playerStatus != toHuman)
 	{
@@ -815,9 +876,7 @@ void PlayMode::update(float elapsed)
 			manager_next_appearance_timer -= elapsed;
 			if (manager_next_appearance_timer < 0)
 			{
-				// set manager_next_appearance_timer to a random time between 5 and 10 seconds
-				size_t r = rand() % 100;
-				manager_next_appearance_timer = 7.5f + 5 * (r / (float)100);
+				
 				manager_state = HERE;
 				// stop manager footstep sfx
 				manager_footstep_sfx->stop();
@@ -837,7 +896,10 @@ void PlayMode::update(float elapsed)
 			manager_stay_timer -= elapsed;
 			if (manager_stay_timer < 0)
 			{
-				manager_stay_timer = 5.5f;
+				manager_stay_timer = 3.5f;
+				// set manager_next_appearance_timer to a random time between 7.5 and 15 seconds
+				size_t r = rand() % 100;
+				manager_next_appearance_timer = -5.0f + 10.0f * (r / (float)100) + manager_appearance_frequency;
 				manager_state = AWAY;
 			}
 		}
@@ -862,9 +924,10 @@ void PlayMode::update(float elapsed)
 			new_customer->pipeline = customer_base->pipeline;
 			new_customer->transform->position = customer_spawn_point->position;
 			//std::string new_customer_name = "Customer" + std::to_string(customers.size() + 1);
-			Customer c = Customer(new_customer_name(), new_customer->transform);
+			Customer c = Customer(new_customer_name(), new_customer->transform, this->day_index);
 			c.order = new_item().second;
 			c.init();
+			// std::cout << "max wait time:" << c.max_wait_time << std::endl;
 			// give the customer a waypoint from one of the open waypoint
 			bool has_set_cwaypoint = false;
 			for (auto &[waypoint, is_open] : customer_waypoints)
@@ -923,7 +986,7 @@ void PlayMode::update(float elapsed)
 				{
 					catch_message = std::string("Customer [") + customer.name + "] has waited too long :( and left!";
 					//std::cout << "Customer [" << customer.name << "] has waited too long :(. Customer is leaving..." << std::endl;
-					state.score -= 10;
+					state.score -= std::min(50.0f, (float)this->day_index * 10.0f);
 					state.score = std::max(state.score, 0);
 					customer.status = Customer::Status::Finished;
 					player.bag.clear_item();
@@ -943,7 +1006,7 @@ void PlayMode::update(float elapsed)
 				customer.transform->position = customer_spawn_point->position * (1.0f - t) + (desired_position * t);
 				if (customer.t_finished > customer.finished_animation_time)
 				{
-					customer.transform->position.x = 1000000; // move the customer super far away
+					customer.transform->position.x = 10000; // move the customer super far away
 					customer_waypoints[customer.waypoint] = true;
 					customer.status = Customer::Status::Inactive;
 				}
@@ -962,13 +1025,15 @@ void PlayMode::update(float elapsed)
 	//update visability of cat and human
 	player.updateDrawable();
 	updateProximity(); //Update nearest action for next control event
+
+	//update color explosion effect
+	if (color_explosion_timer < color_explosion_anim_time) {
+		color_explosion_timer += elapsed;
+	}
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size)
 {
-	// TODO: This next line should make the background be brown, but the background 
-	// still remains gray
-	glClearColor(37, 25, 12, 0); // brown background color
 
 	//update camera aspect ratio for drawable:
 	player.orbitCamera.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
@@ -1038,11 +1103,16 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 	glUniform3fv(lit_color_texture_program->LIGHT_ENERGY_vec3_array, lightCount, glm::value_ptr(light_energy[0]));
 	glUniform1fv(lit_color_texture_program->LIGHT_CUTOFF_float_array, lightCount, light_cutoff.data());
 
+	// set uniforms for color explosion effect 
+	glUniform3fv(lit_color_texture_program->COLOR_EXPLOSION_ORIGIN_vec3, 1, glm::value_ptr(player.transform->position));
+	color_explosion_timer_normalized = color_explosion_timer / color_explosion_anim_time;
+	glUniform1f(lit_color_texture_program->COLOR_EXPLOSION_T_float, color_explosion_timer_normalized);
+
 	GL_ERRORS();
 
 	glUseProgram(0);
 
-	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+	glClearColor(37/255.0, 25/255.0, 12/255.0, 0/255.0); // brown background color
 	glClearDepth(1.0f); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1161,13 +1231,13 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 		break;
 		case won:
 		{
-			draw_text("You successfully got through today!",
+			draw_text("You successfully got through day " + std::to_string(day_index) +"! Press R to continue.",
 					  glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0));
 		}
 		break;
 		case lost:
 		{
-			draw_text("You are fired! Press R to restart (Unimplemented)",
+			draw_text("You are fired! Press R to restart.",
 					  glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0));
 		}
 		break;

@@ -32,6 +32,10 @@ struct LitColorTextureProgram {
 	GLuint LIGHT_COUNT_float = -1U;
 
 	GLuint maxLights = 40U;
+
+	//color explosion effect
+	GLuint COLOR_EXPLOSION_ORIGIN_vec3 = -1U; // the origin from which the color explosion begins
+	GLuint COLOR_EXPLOSION_T_float = -1U; // a float, from 0 to 1, which interpolates the effect
 	
 	//Textures:
 	//TEXTURE0 - texture that is accessed by TexCoord

@@ -16,7 +16,7 @@
 #include <unordered_set>
 
 struct PlayMode : Mode {
-	PlayMode();
+	PlayMode(int level);
 	virtual ~PlayMode();
 	
 
@@ -26,17 +26,18 @@ struct PlayMode : Mode {
 	virtual void draw(glm::uvec2 const &drawable_size) override;
 
 	//----- game state -----
-
+	int day_index;
 	std::map<std::string, Scene::Drawable> ingredients_drawables;
 
 	float manager_next_appearance_timer = 12.5f; // seconds
+	float manager_appearance_frequency;
 
 	enum ManagerState {
 		AWAY, 
 		ARRIVING,
 		HERE
 	} manager_state = AWAY;
-	float manager_stay_timer = 5.5f; // seconds
+	float manager_stay_timer = 3.5f; // seconds
 	std::shared_ptr< Sound::PlayingSample > manager_footstep_sfx;
 	float manager_footstep_volume_max = 3.0f;
 	float manager_footstep_volume_min = 0.1f;
@@ -60,7 +61,6 @@ struct PlayMode : Mode {
 	float customer_spawn_timer = 5.0f; // a new customer is spawned once this timer reaches 0.
 	
 	struct Customer{
-
 
 		// initialize various variables related to animation
 		void init() {
@@ -104,7 +104,9 @@ struct PlayMode : Mode {
 		Status status;
 		StarbuckItem order;
 		Customer(){}
-		Customer(std::string nam,Scene::Transform* trans) : name(nam),transform(trans), status(Status::New){}
+		Customer(std::string nam,Scene::Transform* trans, int level) : name(nam),transform(trans), status(Status::New){
+			max_wait_time = std::max(120.0f - (float)level * 10.0f, 40.0f);
+		}
 	};
 	
 	std::map<std::string, Customer> customers;
@@ -149,6 +151,7 @@ struct PlayMode : Mode {
 
 		OrbitCamera orbitCamera;
 
+		float PlayerSpeed = 3.0f;
 
 		glm::vec3 catVelocity = glm::vec3(0.0f); //Current momentum, for cat, mass assumed (but could change in transition)11
 		//Note, velocity is added with each pump, and lost in y over time
@@ -194,7 +197,7 @@ struct PlayMode : Mode {
 		int goal = 0;	// the goal score need to achieve before game_timer times out
 		float stablization = 1.0f;
 		float game_timer = 0.0f;
-		const float day_period_time = 300.0f; // 300s for vertical slice demo
+		float day_period_time = 80.0f; // 300s for vertical slice demo
 		float time = 0.0f;
 		float flapTimer = 0.0f;
 		float flapCooldown = 0.1f;//In seconds
@@ -233,6 +236,16 @@ struct PlayMode : Mode {
 	std::string catch_message;
 	std::string closest_customer_name;
 	std::string closest_ingredient_name;
+
+	// visual effects
+	float color_explosion_timer = 5.01; // a timer that is used to keep track of the 
+	// color explosion effect. By default, this should be set to something larger than 
+	// color_explosion_anim_time so that the effect does not play at the start of the game
+	float color_explosion_anim_time = 5.0f; // the time (in seconds) that it takes for the color explosion 
+	// effect to happen
+	float color_explosion_timer_normalized = 0.0f;
+	glm::vec3 color_explosion_location;
+	void play_color_explosion(glm::vec3 location);
 };
 
 
