@@ -6,7 +6,7 @@
 Scene::Drawable::Pipeline depth_texture_program_pipeline;
 
 Load< DepthTextureProgram > depth_texture_program(LoadTagEarly, []() -> DepthTextureProgram const * {
-	DepthTextureProgram* ret = new LitColorTextureProgram();
+	DepthTextureProgram* ret = new DepthTextureProgram();
 
 	//----- build the pipeline template -----
 	depth_texture_program_pipeline.program = ret->program;
@@ -22,7 +22,7 @@ Load< DepthTextureProgram > depth_texture_program(LoadTagEarly, []() -> DepthTex
 });
 
 
-DepthTextureProgram::DepthTextureProgram(uint32_t width = 1920, uint32_t height = 1080) {
+DepthTextureProgram::DepthTextureProgram() {
 
 
 	

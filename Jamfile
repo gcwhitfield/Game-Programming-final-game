@@ -144,6 +144,7 @@ GAME_NAMES =
 	Movement
 	main
 	LitColorTextureProgram
+	DepthTextureProgram
 	#ColorTextureProgram #not used right now, but you might want it
 	Sound
 	load_wav
