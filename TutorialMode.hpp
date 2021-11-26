@@ -16,7 +16,7 @@
 
 struct TutorialMode : Mode {
 	TutorialMode();
-	virtual ~TutorialMode();
+	virtual ~TutorialMode(); 
 	
 
 	//functions called by main loop:

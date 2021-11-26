@@ -14,7 +14,7 @@
 #include <random>
 #include <iostream>
 
-TutorialMode::TutorialMode() {
+TutorialMode::TutorialMode() { 
     state = State::SCREEN_0;
 }
 

@@ -17,16 +17,6 @@
 #define ERROR_F 0.000001f
 #define HEIGHT_CLIP 0.255f
 
-//Temp until I decide if this is the place for it
-//Shader Preperation
-
-void PlayMode::updateDrawables(GLuint pipeline, GLuint program) {
-	for (auto& drawable : starbucks_scene->drawables) {
-		drawable.pipeline = pipeline;
-		drawable.pipeline.vao = program;
-	}
-}
-
 // -----------------------------------
 // ---------- Asset Loading ----------
 // -----------------------------------
@@ -675,7 +665,7 @@ void PlayMode::update(float elapsed)
 	//Set all framebuffer sizes for the current frame
 	int w, h;
 	SDL_GetWindowSize(window, &w, &h);
-	newSize = glm::uvec2(w, h);
+	glm::uvec2 newSize = glm::uvec2(w, h);
 	fb.resize(newSize);
 
 	assert(player.cat);
@@ -1004,8 +994,8 @@ void PlayMode::update(float elapsed)
 				{
 					catch_message = std::string("Customer [") + customer.name + "] has waited too long :( and left!";
 					//std::cout << "Customer [" << customer.name << "] has waited too long :(. Customer is leaving..." << std::endl;
-					state.score -= std::min(50.0f, (float)this->day_index * 10.0f);
-					state.score = std::max(state.score, 0);
+					state.score -= (int)std::min(50.0f, (float)this->day_index * 10.0f);
+					state.score = (int)std::max(state.score, 0);
 					customer.status = Customer::Status::Finished;
 					player.bag.clear_item();
 					player.cur_order.clear_item();
@@ -1050,15 +1040,26 @@ void PlayMode::update(float elapsed)
 	}
 }
 
+
+
+//Temp until I decide if this is the place for it
+//Shader Preperation
+
+void PlayMode::updateDrawables(Scene::Drawable::Pipeline pipeline, GLuint program) {
+	for (auto& drawable : scene.drawables) {
+		drawable.pipeline = pipeline;
+		drawable.pipeline.vao = program;
+	}
+}
+
 void PlayMode::draw(glm::uvec2 const &drawable_size)
 {
-
 	//update camera aspect ratio for drawable:
 	player.orbitCamera.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 
 	//First get depth texture
 
-	updateDrawables(depth_texture_program_pipeline, depth_texture_program); //Set drawables to use depth program
+	updateDrawables(depth_texture_program_pipeline, starbucks_meshes_for_depth_texture_program); //Set drawables to use depth program
 
 	glUseProgram(depth_texture_program->program);
 
@@ -1076,7 +1077,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 	scene.draw(*player.orbitCamera.camera);
 
 
-	updateDrawables(lit_color_texture_program_pipeline, lit_color_texture_program); //Set drawables to use lit color texture program
+	updateDrawables(lit_color_texture_program_pipeline, starbucks_meshes_for_lit_color_texture_program); //Set drawables to use lit color texture program
 
 	glUseProgram(lit_color_texture_program->program);
 
@@ -1152,7 +1153,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 
 	glUseProgram(0);
 
-	glClearColor(37/255.0, 25/255.0, 12/255.0, 0/255.0); // brown background color
+	glClearColor(37/255.0f, 25/255.0f, 12/255.0f, 0/255.0f); // brown background color
 	glClearDepth(1.0f); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

@@ -240,7 +240,7 @@ struct PlayMode : Mode {
 	std::string closest_ingredient_name;
 
 	// visual effects
-	float color_explosion_timer = 5.01; // a timer that is used to keep track of the 
+	float color_explosion_timer = 5.01f; // a timer that is used to keep track of the 
 	// color explosion effect. By default, this should be set to something larger than 
 	// color_explosion_anim_time so that the effect does not play at the start of the game
 	float color_explosion_anim_time = 5.0f; // the time (in seconds) that it takes for the color explosion 
@@ -248,49 +248,50 @@ struct PlayMode : Mode {
 	float color_explosion_timer_normalized = 0.0f;
 	glm::vec3 color_explosion_location;
 	void play_color_explosion(glm::vec3 location);
+
+
+	//Data type structure modified from https://github.com/15-466/15-466-f19-base6/blob/master/DemoLightingDeferredMode.cpp
+	struct FB
+	{
+
+
+
+		//depth buffer is shared between objects + lights pass:
+		GLuint depth_tex = 0;
+		GLuint outline_tex = 0;
+
+		glm::uvec2 size = glm::uvec2(0);
+
+		void resize(glm::uvec2 const& drawable_size) {
+			if (drawable_size == size) return;
+			size = drawable_size;
+
+			//helper to allocate a texture:
+			auto alloc_tex = [&](GLuint& tex, GLenum internal_format) {
+				if (tex == 0) glGenTextures(1, &tex);
+				glBindTexture(GL_TEXTURE_2D, tex);
+				glTexImage2D(GL_TEXTURE_2D, 0, internal_format, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+				glBindTexture(GL_TEXTURE_2D, 0);
+			};
+
+			alloc_tex(depth_tex, GL_DEPTH_COMPONENT32F);
+			alloc_tex(outline_tex, GL_R8);
+
+
+		}
+	} fb;
+
+	void updateDrawables(Scene::Drawable::Pipeline pipeline, GLuint program); //Set up all drawables to point to different pipeline and program
+
+	//Frame buffer data type to be used in the following programs:
+	//Depth Texture
+	//Outline
+	//
 };
 
 
 
-
-//Data type structure modified from https://github.com/15-466/15-466-f19-base6/blob/master/DemoLightingDeferredMode.cpp
-struct FB
-{
-
-
-
-	//depth buffer is shared between objects + lights pass:
-	GLuint depth_tex = 0;
-	GLuint outline_tex = 0;
-
-	glm::uvec2 size = glm::uvec2(0);
-
-	void resize(glm::uvec2 const& drawable_size) {
-		if (drawable_size == size) return;
-		size = drawable_size;
-
-		//helper to allocate a texture:
-		auto alloc_tex = [&](GLuint& tex, GLenum internal_format) {
-			if (tex == 0) glGenTextures(1, &tex);
-			glBindTexture(GL_TEXTURE_2D, tex);
-			glTexImage2D(GL_TEXTURE_2D, 0, internal_format, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			glBindTexture(GL_TEXTURE_2D, 0);
-		};
-
-		alloc_tex(depth_tex, GL_DEPTH_COMPONENT32F);
-		alloc_tex(outline_tex, GL_R8);
-
-
-	}
-} fb;
-
-void updateDrawables(GLuint pipeline, GLuint program); //Set up all drawables to point to different pipeline and program
-
-//Frame buffer data type to be used in the following programs:
-//Depth Texture
-//Outline
-//
