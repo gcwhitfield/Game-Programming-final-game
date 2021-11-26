@@ -46,7 +46,7 @@ struct PlayMode : Mode {
 	glm::vec3 manager_here_pos; // the location to place the manager when it is HERE
 
 	// ----- customers -----
-	Scene::Drawable *customer_base; // the base object from which new customers will get cloned 
+	std::vector<Scene::Drawable *>customer_base; // the base object from which new customers will get cloned 
 
 	// In starbucks.blend, there are various 'CustomerWaypoint' objects placed throughout the scene
 	// when the value is set to 'true' it means that the waypoint is UNOCCUPIED and a customer caan

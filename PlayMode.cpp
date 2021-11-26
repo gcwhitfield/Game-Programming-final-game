@@ -217,7 +217,7 @@ PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 			d.pipeline.count = 0; // do not draw customer spawn points
 		}
 		//store customers ingredients information and location
-		else if (str.length() >= 8 && str.substr(0, 8) == "Customer" && str != "CustomerBase" && str != "CustomerWaypoint" && str != "CustomerSpawnPoint")
+		else if (str.length() >= 8 && str.substr(0, 8) == "Customer" && str.find("CustomerBase") >= str.size() && str.find("CustomerWaypoint") > str.size() && str != "CustomerSpawnPoint")
 		{
 			//std::cout << str << std::endl;
 			assert(str != "CustomerBase");
@@ -229,11 +229,10 @@ PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 		}
 		// set the "CustomerBase" and "CustomerSpawnPoint" transforms to their corresponding
 		// transforms in the starbucks.blend scene
-		else if (str == "CustomerBase")
+		else if (str.find("CustomerBase") < str.size())
 		{
-			assert(str == "CustomerBase");
-			//	std::cout << "CustomerBase has been found" << std::endl;
-			customer_base = &d;
+			std::cout << "CustomerBase '" << str << "' has been found!" << std::endl;
+			customer_base.push_back(&d);
 		}
 		// the player starts at the location of the "Player" object in the Blender scene
 		else if (str == "Player")
@@ -273,7 +272,7 @@ PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 	}
 
 	assert(customer_waypoints.size() > 0);
-	assert(customer_base != NULL);
+	assert(customer_base.size() > 0);
 	assert(customer_spawn_point != NULL);
 	assert(manager != NULL);
 
@@ -949,7 +948,12 @@ void PlayMode::update(float elapsed)
 			scene.transforms.emplace_back();
 			scene.drawables.emplace_back(&scene.transforms.back());
 			Scene::Drawable *new_customer = &scene.drawables.back();
-			new_customer->pipeline = customer_base->pipeline;
+
+			// choose a random customer base from the list of customer bases
+			r = rand() % customer_base.size();
+			new_customer->pipeline = customer_base[r]->pipeline;
+
+			// set the location of the customer, init data
 			new_customer->transform->position = customer_spawn_point->position;
 			//std::string new_customer_name = "Customer" + std::to_string(customers.size() + 1);
 			Customer c = Customer(new_customer_name(), new_customer->transform, this->day_index);
