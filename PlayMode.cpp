@@ -10,9 +10,11 @@
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include <random>
 #include <iostream>
+#include <algorithm>
 #define ERROR_F 0.000001f
 #define HEIGHT_CLIP 0.255f
 
@@ -96,13 +98,20 @@ std::pair<std::string, StarbuckItem> new_item()
 		it++;
 	return *it;
 }
-std::string new_customer_name()
+std::string PlayMode::new_customer_name()
 {
 	std::random_device r;
 	std::default_random_engine e1(r());
 	size_t sz = customernames.size() - 1;
 	std::uniform_int_distribution<int> uniform_dist(0, static_cast<int>(sz));
 	int choice = uniform_dist(e1);
+
+	// only generate new customer names
+	while (customers.find(customernames[choice]) != customers.end())
+	{
+		choice = uniform_dist(e1);
+	}
+
 	return customernames[choice];
 }
 //debugging printing information for recipe
@@ -283,7 +292,7 @@ PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 
 	/* Different level has different goal and day time*/
 	this->day_index = level;
-	state.day_period_time = std::min(300.0f, state.day_period_time + (float)(level) * 40.0f);
+	state.day_period_time = std::min(300.0f, state.day_period_time + (float)(level) * 40.0f) * 100;
 	// initialize timer
 	state.game_timer = state.day_period_time;
 	// mechanism of setting revenue goal
@@ -308,20 +317,29 @@ PlayMode::~PlayMode()
 bool PlayMode::take_order()
 {
 	//printf("freak0, %zu\n", customers.size());
+	std::map<std::string, float> close_customers;
 	for (auto &[name, customer] : customers)
 	{
 		if (collide(customer.transform, player.transform) && // distance close
 			customer.status == Customer::Status::New &&		 // customer is new, has not given order yet
 			order_status == OrderStatus::Empty)				 //player does not have order in hand
-		{
-			//take the order
-			player.cur_order = customer.order;
-			player.cur_customer = name;
-			order_status = OrderStatus::Executing;
-			customer.status = Customer::Status::Wait;
-			order_message = std::string("Taking order ...... : ") + customer.name + ", " + customer.order.item_name + "!";
-			return true;
-		}
+			close_customers.insert(std::make_pair(name, distance2(customer.transform->position, player.transform->position)));
+	}
+
+	Customer closest_customer = customers[
+		std::min_element(close_customers.begin(), close_customers.end(), 
+			[] (const std::pair<std::string, float> c1, const std::pair<std::string, float> c2) {
+				return c1.second < c2.second; 
+			})->first
+		]; 
+
+	{ //take the order
+		player.cur_order = closest_customer.order;
+		player.cur_customer = closest_customer.name;
+		order_status = OrderStatus::Executing;
+		customers[closest_customer.name].status = Customer::Status::Wait;
+		order_message = std::string("Taking order ...... : ") + closest_customer.name + ", " + closest_customer.order.item_name + "!";
+		return true;
 	}
 	return false;
 }
@@ -568,6 +586,16 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		{
 			space.pressed = false;
 			return true;
+		}
+		else if (evt.key.keysym.sym == SDLK_1) // print debug stuff
+		{
+			// print customer data
+			std::cout << "Customers" << std::endl;
+			std::cout << "Num customers: " << customers.size();
+			for (auto &[name, customer] : customers)
+			{
+				std::cout << name << " " << glm::to_string(customer.transform->position) << std::endl << std::endl;
+			}
 		}
 	}
 	else if (evt.type == SDL_MOUSEBUTTONDOWN)

@@ -60,6 +60,8 @@ struct PlayMode : Mode {
 	// front door of the starbucks
 	float customer_spawn_timer = 5.0f; // a new customer is spawned once this timer reaches 0.
 	
+	std::string new_customer_name();
+	
 	struct Customer{
 
 		// initialize various variables related to animation
@@ -206,12 +208,11 @@ struct PlayMode : Mode {
 		Proximity proximity = NoProx;
 	} ;
 
+	State state;
+
 	void updateProximity();
 
-
 	std::map<std::string, Scene::Transform*> ingredient_transforms;
-
-	State state;
 
 	//Move
 	struct Keys
