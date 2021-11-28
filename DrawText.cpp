@@ -101,37 +101,28 @@ DrawText::DrawText(std::string font_file_name) {
             GLuint newTex = 0;
             glGenTextures(1, &newTex);
             glBindTexture(GL_TEXTURE_2D, newTex);
-            glm::uvec2 size = glm::uvec2(face->glyph->bitmap.rows, face->glyph->bitmap.width);
-            std::vector<glm::u8vec4> data(size.x*size.y, glm::u8vec4(0xff, 0xff, 0xff, 0xff));
-            for (size_t y = 0; y < size.y; y++) {
-                for (size_t x = 0; x < size.x; x++) {
-                    size_t index = y * size.y + x;
-                    uint8_t val = face->glyph->bitmap.buffer[x * std::abs(face->glyph->bitmap.pitch) + y]; // copied from professor mccan's example code for printing bitmap buffer
-                    data[index].x = val;
-                    data[index].y = val;
-                    data[index].z = val;
-                    data[index].w = val;
-                }
-            }
+            // glm::uvec2 size = glm::uvec2(face->glyph->bitmap.rows, face->glyph->bitmap.width);
+            // // glm::uvec2 size = glm::uvec2(1, 1);
+            // std::vector<glm::u8> data(size.x*size.y, glm::u8(0xff));
+            // assert(data.size() == size.x * size.y);
+            // for (size_t y = 0; y < size.y; y++) {
+            //     for (size_t x = 0; x < size.x; x++) {
+            //         size_t index = y * size.y + x;
+            //         uint8_t val = face->glyph->bitmap.buffer[x * std::abs(face->glyph->bitmap.pitch) + y]; // copied from professor mccan's example code for printing bitmap buffer
+            //         data[index] = val;
+            //     }
+            // }
             glTexImage2D(
                 GL_TEXTURE_2D, 
                 0, 
-                GL_RGBA, 
-                size.y, 
-                size.x, 
+                GL_RED, 
+                face->glyph->bitmap.width, 
+                face->glyph->bitmap.rows, 
                 0, 
-                GL_RGBA, 
+                GL_RED, 
                 GL_UNSIGNED_BYTE, 
-                data.data()
+                face->glyph->bitmap.buffer
             );
-            Character newChar = {
-                newTex, 
-                glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows), // line copied from https://github.com/ChunanGang/TextBasedGame/blob/main/TextRenderer.cpp
-                glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top), // line copied from https://github.com/ChunanGang/TextBasedGame/blob/main/TextRenderer.cpp
-            };
-            characters.insert(std::make_pair(c, newChar));
-            //since texture uses a mipmap and we haven't uploaded one, instruct
-            // OpenGl to make one for us:
             glGenerateMipmap(GL_TEXTURE_2D);
             // set filtering and wrapping paramters:
             // (its a bit silly to mipmap a 1x1 texture, but I'm going it because you 
@@ -141,8 +132,16 @@ DrawText::DrawText(std::string font_file_name) {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
 			glBindTexture(GL_TEXTURE_2D, 0);
+
+            Character newChar = {
+                newTex, 
+                glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows), // line copied from https://github.com/ChunanGang/TextBasedGame/blob/main/TextRenderer.cpp
+                glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top), // line copied from https://github.com/ChunanGang/TextBasedGame/blob/main/TextRenderer.cpp
+            };
+            characters.insert(std::make_pair(c, newChar));
+            //since texture uses a mipmap and we haven't uploaded one, instruct
+            // OpenGl to make one for us:
 
             GL_ERRORS();
         }
