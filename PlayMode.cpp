@@ -149,7 +149,7 @@ bool collide(Scene::Transform *trans_a, Scene::Transform *trans_b, float radius 
 }
 
 
-PlayMode::PlayMode(int level) : scene(*starbucks_scene)
+PlayMode::PlayMode(int level) : scene(*starbucks_scene), draw_text(data_path("fonts/quicksilver_3/Quicksilver.ttf"))
 {
 	//create a player transform:
 	scene.transforms.emplace_back();

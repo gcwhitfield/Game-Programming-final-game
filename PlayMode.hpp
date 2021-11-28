@@ -5,6 +5,7 @@
 #include "WalkMesh.hpp"
 #include "Sound.hpp"
 #include "catcoffee.hpp"
+#include "DrawText.hpp"
 #include <glm/glm.hpp>
 
 #include <vector>
@@ -25,7 +26,7 @@ struct PlayMode : Mode {
 	virtual void update(float elapsed) override;
 	virtual void draw(glm::uvec2 const &drawable_size) override;
 
-	//----- game state -----
+	// ---------- game state ----------
 	int day_index;
 	std::map<std::string, Scene::Drawable> ingredients_drawables;
 
@@ -45,7 +46,7 @@ struct PlayMode : Mode {
 	Scene::Drawable* manager = NULL; // the drawable of the manager in scene.drawables
 	glm::vec3 manager_here_pos; // the location to place the manager when it is HERE
 
-	// ----- customers -----
+	// ---------- customers ----------
 	std::vector<Scene::Drawable *>customer_base; // the base object from which new customers will get cloned 
 
 	// In starbucks.blend, there are various 'CustomerWaypoint' objects placed throughout the scene
@@ -126,6 +127,8 @@ struct PlayMode : Mode {
 	enum Status {
 		Human, Cat, toCat, toHuman
 	};
+
+	// ---------- player ----------
 	struct Player {
 		Player() {}; // TODO: Implement this
 		~Player() {}; // TODO: Implement this
@@ -192,7 +195,6 @@ struct PlayMode : Mode {
 		CustomerProx, IngredientProx, NoProx
 	};
 
-
 	struct State //Game state
 	{
 		int score = 0;	// player's total score until now
@@ -238,7 +240,7 @@ struct PlayMode : Mode {
 	std::string closest_customer_name;
 	std::string closest_ingredient_name;
 
-	// visual effects
+	// ---------- visual effects ----------
 	float color_explosion_timer = 5.01; // a timer that is used to keep track of the 
 	// color explosion effect. By default, this should be set to something larger than 
 	// color_explosion_anim_time so that the effect does not play at the start of the game
@@ -247,6 +249,8 @@ struct PlayMode : Mode {
 	float color_explosion_timer_normalized = 0.0f;
 	glm::vec3 color_explosion_location;
 	void play_color_explosion(glm::vec3 location);
+
+	// ---------- font rendering ----------
+	DrawText draw_text;
+	std::string font_file = "fonts/quicksilver_3/Quicksilver.ttf";
 };
-
-

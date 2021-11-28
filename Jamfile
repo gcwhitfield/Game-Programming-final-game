@@ -138,11 +138,13 @@ if $(OS) = NT { #Windows
 #Store the names of various .cpp files to build into variables:
 GAME_NAMES =
 	GP21IntroMode
+	DrawText
 	TutorialMode
 	WalkMesh
 	PlayMode
 	Movement
 	main
+	RenderTextProgram
 	LitColorTextureProgram
 	#ColorTextureProgram #not used right now, but you might want it
 	Sound
