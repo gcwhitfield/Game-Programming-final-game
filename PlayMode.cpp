@@ -1189,6 +1189,28 @@ void PlayMode::draw(glm::uvec2 const& drawable_size)
 	GL_ERRORS();
 
 
+
+	//Thickening outline
+	//https://learnopengl.com/code_viewer_gh.php?code=src/1.getting_started/2.2.hello_triangle_indexed/hello_triangle_indexed.cpp
+
+	glBindFramebuffer(GL_FRAMEBUFFER, fb.outline_thick_fb);
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glUseProgram(draw_outline_program->program);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, fb.outline_tex);
+
+	glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+
+
+	glUseProgram(0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
 	updateDrawables(lit_color_texture_program_pipeline, starbucks_meshes_for_lit_color_texture_program); //Set drawables to use lit color texture program
 	glUseProgram(lit_color_texture_program->program);
 
@@ -1267,7 +1289,7 @@ void PlayMode::draw(glm::uvec2 const& drawable_size)
 
 
 	GL_ERRORS();
-	lit_color_texture_program_pipeline.textures[0].texture = fb.outline_tex;
+	lit_color_texture_program_pipeline.textures[0].texture = fb.outline_thick_tex;
 	lit_color_texture_program_pipeline.textures[0].target = GL_TEXTURE_2D;
 
 	GL_ERRORS();
@@ -1283,12 +1305,6 @@ void PlayMode::draw(glm::uvec2 const& drawable_size)
 
 	scene.draw(*player.orbitCamera.camera);
 	GL_ERRORS();
-
-	//Drawing outline overtop the current scene
-	//https://learnopengl.com/code_viewer_gh.php?code=src/1.getting_started/2.2.hello_triangle_indexed/hello_triangle_indexed.cpp
-	//Unused but referencing since was used earlier
-
-	glUseProgram(0);
 
 
 	/*//In case you are wondering if your walkmesh is lining up with your scene, try:

@@ -256,9 +256,11 @@ struct PlayMode : Mode {
 		//Framebuffers for above texturees
 		GLuint depth_fb = 0;
 		GLuint outline_fb = 0;
+		GLuint outline_thick_fb = 0;
 
 		//depth buffer is shared between objects + lights pass:
 		GLuint depth_tex = 0;
+		GLuint outline_thick_tex = 0;
 		GLuint outline_tex = 0;
 
 		glm::uvec2 size = glm::uvec2(0);
@@ -293,6 +295,8 @@ struct PlayMode : Mode {
 			GL_ERRORS();
 			alloc_tex(outline_tex, GL_R8, GL_RED);
 			GL_ERRORS();
+			alloc_tex(outline_thick_tex, GL_R8, GL_RED);
+			GL_ERRORS();
 
 
 			if (depth_fb == 0) {
@@ -319,6 +323,20 @@ struct PlayMode : Mode {
 				glBindFramebuffer(GL_FRAMEBUFFER, outline_fb);
 				GL_ERRORS();
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, outline_tex, 0);
+				GLenum bufs[1] = { GL_COLOR_ATTACHMENT0 };
+				glDrawBuffers(1, bufs);
+				check_fb();
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			}
+
+			if (outline_thick_fb == 0) {
+				GL_ERRORS();
+				glGenFramebuffers(1, &outline_thick_fb);
+				GL_ERRORS();
+				//set up framebuffer: (don't need to do when resizing)
+				glBindFramebuffer(GL_FRAMEBUFFER, outline_thick_fb);
+				GL_ERRORS();
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, outline_thick_tex, 0);
 				GLenum bufs[1] = { GL_COLOR_ATTACHMENT0 };
 				glDrawBuffers(1, bufs);
 				check_fb();

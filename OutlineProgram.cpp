@@ -70,7 +70,7 @@ OutlineProgram::OutlineProgram() {
 		"	maxDelta = max(abs(depthVal - depthValU), maxDelta)\n;"
 		"	maxDelta = max(abs(depthVal - depthValD), maxDelta)\n;"
 		"	fragColor = 1.0;\n"
-		"	if(maxDelta > 0.00005) fragColor = 0.0;\n"
+		"	if(maxDelta > 0.00002) fragColor = 0.0;\n"
 		"}\n"
 	);
 	//As you can see above, adjacent strings in C/C++ are concatenated.
