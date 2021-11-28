@@ -6,6 +6,8 @@
 #include "Sound.hpp"
 #include "catcoffee.hpp"
 #include <glm/glm.hpp>
+#include "Check_FB.hpp"
+#include "gl_errors.hpp"
 
 #include <vector>
 #include <deque>
@@ -13,9 +15,8 @@
 
 #define PI_F 3.1415926f
 
-#include <SDL.h>
 #include <unordered_set>
-SDL_Window* window;
+extern SDL_Window* window;
 
 struct PlayMode : Mode {
 	PlayMode(int level);
@@ -257,8 +258,18 @@ struct PlayMode : Mode {
 struct FB
 {
 
+<<<<<<< Updated upstream
+=======
+		//Framebuffers for above texturees
+		GLuint depth_fb = 0;
+		GLuint outline_fb = 0;
+		GLuint fb = 0;
+
+		glm::uvec2 size = glm::uvec2(0);
+>>>>>>> Stashed changes
 
 
+<<<<<<< Updated upstream
 	//depth buffer is shared between objects + lights pass:
 	GLuint depth_tex = 0;
 	GLuint outline_tex = 0;
@@ -268,6 +279,75 @@ struct FB
 	void resize(glm::uvec2 const& drawable_size) {
 		if (drawable_size == size) return;
 		size = drawable_size;
+=======
+
+			//helper to allocate a texture:
+			auto alloc_tex = [&](GLuint& tex, GLenum internal_format, GLenum format) {
+				if (tex == 0) glGenTextures(1, &tex);
+				GL_ERRORS();
+				glBindTexture(GL_TEXTURE_2D, tex);
+				GL_ERRORS();
+				glTexImage2D(GL_TEXTURE_2D, 0, internal_format, size.x, size.y, 0, format, GL_UNSIGNED_BYTE, NULL);
+				GL_ERRORS();
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+				GL_ERRORS();
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+				GL_ERRORS();
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+				GL_ERRORS();
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+				GL_ERRORS();
+				glBindTexture(GL_TEXTURE_2D, 0);
+				GL_ERRORS();
+			};
+
+			GL_ERRORS();
+
+			alloc_tex(depth_tex, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT);
+			GL_ERRORS();
+			alloc_tex(outline_tex, GL_R8, GL_RED);
+			GL_ERRORS();
+
+
+			if (depth_fb == 0) {
+				GL_ERRORS();
+				glGenFramebuffers(1, &depth_fb);
+				GL_ERRORS();
+				//set up framebuffer: (don't need to do when resizing)
+				glBindFramebuffer(GL_FRAMEBUFFER, depth_fb);
+				GL_ERRORS();
+				glDrawBuffer(GL_NONE);
+				GL_ERRORS();
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_tex, 0);
+				GL_ERRORS();
+				check_fb();
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				glDrawBuffer(GL_BACK);
+			}
+
+			if (outline_fb == 0) {
+				GL_ERRORS();
+				glGenFramebuffers(1, &outline_fb);
+				GL_ERRORS();
+				//set up framebuffer: (don't need to do when resizing)
+				glBindFramebuffer(GL_FRAMEBUFFER, outline_fb);
+				GL_ERRORS(); 
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, outline_tex, 0);
+				GLenum bufs[1] = { GL_COLOR_ATTACHMENT0 };
+				glDrawBuffers(1, bufs);
+				check_fb();
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			}
+
+
+			/*
+			//if depth_rb does not have a name, name it:
+			if (depth_rb == 0) glGenRenderbuffers(1, &depth_rb);
+			//set up depth_rb as a 24-bit fixed-point depth buffer:
+			glBindRenderbuffer(GL_RENDERBUFFER, depth_rb);
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size.x, size.y);
+			glBindRenderbuffer(GL_RENDERBUFFER, 0);*/
+>>>>>>> Stashed changes
 
 		//helper to allocate a texture:
 		auto alloc_tex = [&](GLuint& tex, GLenum internal_format) {
@@ -284,6 +364,17 @@ struct FB
 		alloc_tex(depth_tex, GL_DEPTH_COMPONENT32F);
 		alloc_tex(outline_tex, GL_R8);
 
+<<<<<<< Updated upstream
+=======
+	//Frame buffer data type to be used in the following programs:
+	//Depth Texture
+	//Outline
+	//
+
+	//Triangle drawing
+	GLuint VBO, VAO, EBO;
+};
+>>>>>>> Stashed changes
 
 	}
 } fb;

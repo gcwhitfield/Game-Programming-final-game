@@ -6,7 +6,7 @@
 Scene::Drawable::Pipeline outline_program_pipeline;
 
 Load< OutlineProgram > outline_program(LoadTagEarly, []() -> OutlineProgram const * {
-	outlineProgram* ret = new LitColorTextureProgram();
+	OutlineProgram* ret = new OutlineProgram();
 
 	//----- build the pipeline template -----
 	outline_program_pipeline.program = ret->program;
@@ -48,16 +48,8 @@ OutlineProgram::OutlineProgram() {
 		"in vec3 Normal;\n"
 		"in vec4 Color;\n"
 		"in vec2 TexCoord;\n"
-		"out vec3 position;\n"
-		"out vec3 normal;\n"
-		"out vec4 color;\n"
-		"out vec2 texCoord;\n"
 		"void main() {\n"
 		"	gl_Position = OBJECT_TO_CLIP * Position;\n"
-		"	position = OBJECT_TO_LIGHT * Position;\n"
-		"	normal = NORMAL_TO_LIGHT * Normal;\n"
-		"	color = Color;\n"
-		"	texCoord = TexCoord;\n"
 		"}\n"
 		,
 		"#version 330\n"
@@ -66,9 +58,19 @@ OutlineProgram::OutlineProgram() {
 		"in vec3 normal;\n"
 		"in vec4 color;\n"
 		"in vec2 texCoord;\n"
-		"out vec4 fragColor;\n"
+		"out float fragColor;\n"
 		"void main() {\n"
-		"	fragColor = vec4(color);\n"
+		"	float depthVal = texelFetch(TEX, ivec2(gl_FragCoord.xy),0).r;\n"
+		"	float depthValL = texelFetch(TEX, ivec2(gl_FragCoord.x+1,gl_FragCoord.y),0).r;\n"
+		"	float depthValR = texelFetch(TEX, ivec2(gl_FragCoord.x-1,gl_FragCoord.y),0).r;\n"
+		"	float depthValD = texelFetch(TEX, ivec2(gl_FragCoord.x,gl_FragCoord.y+1),0).r;\n"
+		"	float depthValU = texelFetch(TEX, ivec2(gl_FragCoord.x,gl_FragCoord.y-1),0).r;\n"
+		"	float maxDelta = abs(depthVal - depthValL)\n;"
+		"	maxDelta = max(abs(depthVal - depthValR), maxDelta)\n;"
+		"	maxDelta = max(abs(depthVal - depthValU), maxDelta)\n;"
+		"	maxDelta = max(abs(depthVal - depthValD), maxDelta)\n;"
+		"	fragColor = 1.0;\n"
+		"	if(maxDelta > 0.00005) fragColor = 0.0;\n"
 		"}\n"
 	);
 	//As you can see above, adjacent strings in C/C++ are concatenated.

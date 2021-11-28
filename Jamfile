@@ -144,6 +144,12 @@ GAME_NAMES =
 	Movement
 	main
 	LitColorTextureProgram
+<<<<<<< Updated upstream
+=======
+	DepthTextureProgram
+	OutlineProgram
+	DrawOutlineProgram
+>>>>>>> Stashed changes
 	#ColorTextureProgram #not used right now, but you might want it
 	Sound
 	load_wav

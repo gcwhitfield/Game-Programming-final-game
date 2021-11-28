@@ -88,7 +88,8 @@ LitColorTextureProgram::LitColorTextureProgram() {
 		"out vec4 fragColor;\n"
 		"void main() {\n"
 		"	vec3 n = normalize(normal);\n"
-		"	vec4 albedo = texture(TEX, texCoord) * color;\n"
+		//"	vec4 albedo = texture(TEX, texCoord) * color;\n" If we want to add textures, we can add another tex for them
+		"	vec4 albedo = color;\n"
 		"   vec3 total = vec3(0.0f);\n"
 		"	vec3 lightColor = vec3(0.0f);\n"	
 		"	for(uint light = 0u; light < LIGHT_COUNT; ++light){ \n"
@@ -150,6 +151,7 @@ LitColorTextureProgram::LitColorTextureProgram() {
 		"		float dist = max_explosion_distance * COLOR_EXPLOSION_T;\n" 
 		"		if (dist_to_explosion_origin > dist && dist_to_explosion_origin < dist + explosion_thickness) fragColor *= dist_to_explosion_origin;\n"
 		"	}\n"
+		"	fragColor = fragColor *  vec4(vec3(texelFetch(TEX, ivec2(gl_FragCoord.xy),0).r),1.0);\n"
 		"}\n"
 	);
 	//As you can see above, adjacent strings in C/C++ are concatenated.

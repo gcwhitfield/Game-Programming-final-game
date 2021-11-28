@@ -4,6 +4,7 @@
 #include "Load.hpp"
 #include "Scene.hpp"
 #include "PlayMode.hpp"
+#include "gl_errors.hpp"
 
 GLuint globalWidth = 1920;
 GLuint globalHeight = 1080;
@@ -24,8 +25,6 @@ struct DepthTextureProgram {
 	GLuint OBJECT_TO_CLIP_mat4 = -1U;
 	GLuint OBJECT_TO_LIGHT_mat4x3 = -1U;
 	GLuint NORMAL_TO_LIGHT_mat3 = -1U;
-
-	GLuint OUT_BUFFER = -1U; //The texture to write the depth buffer to
 	
 };
 
