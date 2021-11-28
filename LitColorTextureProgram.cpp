@@ -151,7 +151,7 @@ LitColorTextureProgram::LitColorTextureProgram() {
 		"		float dist = max_explosion_distance * COLOR_EXPLOSION_T;\n" 
 		"		if (dist_to_explosion_origin > dist && dist_to_explosion_origin < dist + explosion_thickness) fragColor *= dist_to_explosion_origin;\n"
 		"	}\n"
-		"	fragColor = fragColor *  vec4(vec3(texelFetch(TEX, ivec2(gl_FragCoord.xy),0).r),1.0);\n"
+		"	fragColor =  fragColor * vec4(vec3(texelFetch(TEX, ivec2(gl_FragCoord.xy),0).r),1.0);\n"
 		"}\n"
 	);
 	//As you can see above, adjacent strings in C/C++ are concatenated.

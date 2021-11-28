@@ -6,9 +6,6 @@
 #include "PlayMode.hpp"
 #include "gl_errors.hpp"
 
-GLuint globalWidth = 1920;
-GLuint globalHeight = 1080;
-
 //Shader program that draws transformed, lit, textured vertices tinted with vertex colors:
 struct DepthTextureProgram {
 	DepthTextureProgram();

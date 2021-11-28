@@ -19,15 +19,6 @@
 #define ERROR_F 0.000001f
 #define HEIGHT_CLIP 0.255f
 
-//Temp until I decide if this is the place for it
-//Shader Preperation
-
-void PlayMode::updateDrawables(GLuint pipeline, GLuint program) {
-	for (auto& drawable : starbucks_scene->drawables) {
-		drawable.pipeline = pipeline;
-		drawable.pipeline.vao = program;
-	}
-}
 
 // -----------------------------------
 // ---------- Asset Loading ----------
@@ -721,7 +712,7 @@ void PlayMode::update(float elapsed)
 	//Set all framebuffer sizes for the current frame
 	int w, h;
 	SDL_GetWindowSize(window, &w, &h);
-	newSize = glm::uvec2(w, h);
+	glm::uvec2 newSize = glm::uvec2(w, h);
 	fb.resize(newSize);
 
 	assert(player.cat);
@@ -1050,7 +1041,7 @@ void PlayMode::update(float elapsed)
 				{
 					catch_message = std::string("Customer [") + customer.name + "] has waited too long :( and left!";
 					//std::cout << "Customer [" << customer.name << "] has waited too long :(. Customer is leaving..." << std::endl;
-					state.score -= std::min(50.0f, (float)this->day_index * 10.0f);
+					state.score -= (int)std::min(50.0f, (float)this->day_index * 10.0f);
 					state.score = std::max(state.score, 0);
 					customer.status = Customer::Status::Finished;
 					player.bag.clear_item();
@@ -1096,11 +1087,6 @@ void PlayMode::update(float elapsed)
 	}
 }
 
-<<<<<<< Updated upstream
-void PlayMode::draw(glm::uvec2 const &drawable_size)
-=======
-
-
 //Temp until I decide if this is the place for it
 //Shader Preperation
 
@@ -1119,23 +1105,17 @@ void PlayMode::updateDrawables(Scene::Drawable::Pipeline pipeline, GLuint progra
 }
 
 void PlayMode::draw(glm::uvec2 const& drawable_size)
->>>>>>> Stashed changes
 {
 
 	//update camera aspect ratio for drawable:
 	player.orbitCamera.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 
 	//First get depth texture
-
-<<<<<<< Updated upstream
-	updateDrawables(depth_texture_program_pipeline, depth_texture_program); //Set drawables to use depth program
-=======
 	GL_ERRORS();
 	glDepthMask(true);
 	updateDrawables(depth_texture_program_pipeline, starbucks_meshes_for_depth_texture_program); //Set drawables to use depth program
 	glBindFramebuffer(GL_FRAMEBUFFER, fb.depth_fb);
 	GL_ERRORS();
->>>>>>> Stashed changes
 
 
 	GL_ERRORS();
@@ -1177,12 +1157,7 @@ void PlayMode::draw(glm::uvec2 const& drawable_size)
 	GL_ERRORS();
 
 
-<<<<<<< Updated upstream
-	updateDrawables(lit_color_texture_program_pipeline, lit_color_texture_program); //Set drawables to use lit color texture program
-
-=======
 	updateDrawables(lit_color_texture_program_pipeline, starbucks_meshes_for_lit_color_texture_program); //Set drawables to use lit color texture program
->>>>>>> Stashed changes
 	glUseProgram(lit_color_texture_program->program);
 
 	//Load light arrays
@@ -1243,19 +1218,23 @@ void PlayMode::draw(glm::uvec2 const& drawable_size)
 	glUniform1f(lit_color_texture_program->LIGHT_COUNT_float, (float)lightCount);
 
 	GL_ERRORS();
+	GL_ERRORS();
 
+	GL_ERRORS();
 	glUniform1iv(lit_color_texture_program->LIGHT_TYPE_int_array, lightCount, light_type.data());
 	glUniform3fv(lit_color_texture_program->LIGHT_LOCATION_vec3_array, lightCount, glm::value_ptr(light_location[0]));
 	glUniform3fv(lit_color_texture_program->LIGHT_DIRECTION_vec3_array, lightCount, glm::value_ptr(light_direction[0]));
 	glUniform3fv(lit_color_texture_program->LIGHT_ENERGY_vec3_array, lightCount, glm::value_ptr(light_energy[0]));
 	glUniform1fv(lit_color_texture_program->LIGHT_CUTOFF_float_array, lightCount, light_cutoff.data());
 
+	GL_ERRORS();
 	// set uniforms for color explosion effect 
 	glUniform3fv(lit_color_texture_program->COLOR_EXPLOSION_ORIGIN_vec3, 1, glm::value_ptr(player.transform->position));
 	color_explosion_timer_normalized = color_explosion_timer / color_explosion_anim_time;
 	glUniform1f(lit_color_texture_program->COLOR_EXPLOSION_T_float, color_explosion_timer_normalized);
 
 
+	GL_ERRORS();
 	lit_color_texture_program_pipeline.textures[0].texture = fb.outline_tex;
 	lit_color_texture_program_pipeline.textures[0].target = GL_TEXTURE_2D;
 
@@ -1263,11 +1242,7 @@ void PlayMode::draw(glm::uvec2 const& drawable_size)
 
 	glUseProgram(0);
 
-<<<<<<< Updated upstream
-	glClearColor(37/255.0, 25/255.0, 12/255.0, 0/255.0); // brown background color
-=======
 	glClearColor(37.f / 255.0f, 25.f / 255.0f, 12.f / 255.0f, 255.f / 255.0f); // brown background color
->>>>>>> Stashed changes
 	glClearDepth(1.0f); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

@@ -6,7 +6,7 @@
 Scene::Drawable::Pipeline depth_texture_program_pipeline;
 
 Load< DepthTextureProgram > depth_texture_program(LoadTagEarly, []() -> DepthTextureProgram const * {
-	DepthTextureProgram* ret = new LitColorTextureProgram();
+	DepthTextureProgram* ret = new DepthTextureProgram();
 
 	//----- build the pipeline template -----
 	depth_texture_program_pipeline.program = ret->program;
@@ -14,16 +14,13 @@ Load< DepthTextureProgram > depth_texture_program(LoadTagEarly, []() -> DepthTex
 	depth_texture_program_pipeline.OBJECT_TO_CLIP_mat4 = ret->OBJECT_TO_CLIP_mat4;
 	depth_texture_program_pipeline.OBJECT_TO_LIGHT_mat4x3 = ret->OBJECT_TO_LIGHT_mat4x3;
 	depth_texture_program_pipeline.NORMAL_TO_LIGHT_mat3 = ret->NORMAL_TO_LIGHT_mat3;
-	
-	std::cout << "depth mats " << depth_texture_program_pipeline.OBJECT_TO_CLIP_mat4 << " " << depth_texture_program_pipeline.OBJECT_TO_LIGHT_mat4x3 << " "
-		<< depth_texture_program_pipeline.NORMAL_TO_LIGHT_mat3 << std::endl;
 
 
 	return ret;
 });
 
 
-DepthTextureProgram::DepthTextureProgram(uint32_t width = 1920, uint32_t height = 1080) {
+DepthTextureProgram::DepthTextureProgram() {
 
 
 	GL_ERRORS();

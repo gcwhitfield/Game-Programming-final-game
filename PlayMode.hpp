@@ -241,7 +241,7 @@ struct PlayMode : Mode {
 	std::string closest_ingredient_name;
 
 	// visual effects
-	float color_explosion_timer = 5.01; // a timer that is used to keep track of the 
+	float color_explosion_timer = 5.01f; // a timer that is used to keep track of the 
 	// color explosion effect. By default, this should be set to something larger than 
 	// color_explosion_anim_time so that the effect does not play at the start of the game
 	float color_explosion_anim_time = 5.0f; // the time (in seconds) that it takes for the color explosion 
@@ -249,37 +249,22 @@ struct PlayMode : Mode {
 	float color_explosion_timer_normalized = 0.0f;
 	glm::vec3 color_explosion_location;
 	void play_color_explosion(glm::vec3 location);
-};
-
-
-
-
-//Data type structure modified from https://github.com/15-466/15-466-f19-base6/blob/master/DemoLightingDeferredMode.cpp
-struct FB
-{
-
-<<<<<<< Updated upstream
-=======
+	//Data type structure modified from https://github.com/15-466/15-466-f19-base6/blob/master/DemoLightingDeferredMode.cpp
+	struct FB
+	{
 		//Framebuffers for above texturees
 		GLuint depth_fb = 0;
 		GLuint outline_fb = 0;
-		GLuint fb = 0;
+
+		//depth buffer is shared between objects + lights pass:
+		GLuint depth_tex = 0;
+		GLuint outline_tex = 0;
 
 		glm::uvec2 size = glm::uvec2(0);
->>>>>>> Stashed changes
 
-
-<<<<<<< Updated upstream
-	//depth buffer is shared between objects + lights pass:
-	GLuint depth_tex = 0;
-	GLuint outline_tex = 0;
-
-	glm::uvec2 size = glm::uvec2(0);
-
-	void resize(glm::uvec2 const& drawable_size) {
-		if (drawable_size == size) return;
-		size = drawable_size;
-=======
+		void resize(glm::uvec2 const& drawable_size) {
+			if (drawable_size == size) return;
+			size = drawable_size;
 
 			//helper to allocate a texture:
 			auto alloc_tex = [&](GLuint& tex, GLenum internal_format, GLenum format) {
@@ -331,57 +316,23 @@ struct FB
 				GL_ERRORS();
 				//set up framebuffer: (don't need to do when resizing)
 				glBindFramebuffer(GL_FRAMEBUFFER, outline_fb);
-				GL_ERRORS(); 
+				GL_ERRORS();
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, outline_tex, 0);
 				GLenum bufs[1] = { GL_COLOR_ATTACHMENT0 };
 				glDrawBuffers(1, bufs);
 				check_fb();
 				glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			}
+		}
 
 
-			/*
-			//if depth_rb does not have a name, name it:
-			if (depth_rb == 0) glGenRenderbuffers(1, &depth_rb);
-			//set up depth_rb as a 24-bit fixed-point depth buffer:
-			glBindRenderbuffer(GL_RENDERBUFFER, depth_rb);
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size.x, size.y);
-			glBindRenderbuffer(GL_RENDERBUFFER, 0);*/
->>>>>>> Stashed changes
+	} fb;
 
-		//helper to allocate a texture:
-		auto alloc_tex = [&](GLuint& tex, GLenum internal_format) {
-			if (tex == 0) glGenTextures(1, &tex);
-			glBindTexture(GL_TEXTURE_2D, tex);
-			glTexImage2D(GL_TEXTURE_2D, 0, internal_format, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			glBindTexture(GL_TEXTURE_2D, 0);
-		};
-
-		alloc_tex(depth_tex, GL_DEPTH_COMPONENT32F);
-		alloc_tex(outline_tex, GL_R8);
-
-<<<<<<< Updated upstream
-=======
-	//Frame buffer data type to be used in the following programs:
-	//Depth Texture
-	//Outline
-	//
-
-	//Triangle drawing
+	void updateDrawables(Scene::Drawable::Pipeline pipeline, GLuint program);//Set up all drawables to point to different pipeline and program
 	GLuint VBO, VAO, EBO;
+
 };
->>>>>>> Stashed changes
 
-	}
-} fb;
 
-void updateDrawables(GLuint pipeline, GLuint program); //Set up all drawables to point to different pipeline and program
 
-//Frame buffer data type to be used in the following programs:
-//Depth Texture
-//Outline
-//
+
