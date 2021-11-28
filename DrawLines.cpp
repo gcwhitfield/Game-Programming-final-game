@@ -14,22 +14,26 @@ static GLuint vertex_buffer_for_color_program = 0;
 
 static Load< void > setup_buffers(LoadTagDefault, [](){
 	//you may recognize this init code from DrawSprites.cpp:
-
+	GL_ERRORS();
 	{ //set up vertex buffer:
 		glGenBuffers(1, &vertex_buffer);
 		//for now, buffer will be un-filled.
 	}
+	GL_ERRORS();
 
 	{ //vertex array mapping buffer for color_program:
 		//ask OpenGL to fill vertex_buffer_for_color_program with the name of an unused vertex array object:
 		glGenVertexArrays(1, &vertex_buffer_for_color_program);
 
+		GL_ERRORS();
 		//set vertex_buffer_for_color_program as the current vertex array object:
 		glBindVertexArray(vertex_buffer_for_color_program);
 
+		GL_ERRORS();
 		//set vertex_buffer as the source of glVertexAttribPointer() commands:
 		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 
+		GL_ERRORS();
 		//set up the vertex array object to describe arrays of PongMode::Vertex:
 		glVertexAttribPointer(
 			color_program->Position_vec4, //attribute
@@ -42,6 +46,7 @@ static Load< void > setup_buffers(LoadTagDefault, [](){
 		glEnableVertexAttribArray(color_program->Position_vec4);
 		//[Note that it is okay to bind a vec3 input to a vec4 attribute -- the w component will be filled with 1.0 automatically]
 
+		GL_ERRORS();
 		glVertexAttribPointer(
 			color_program->Color_vec4, //attribute
 			4, //size
@@ -52,11 +57,14 @@ static Load< void > setup_buffers(LoadTagDefault, [](){
 		);
 		glEnableVertexAttribArray(color_program->Color_vec4);
 
+		GL_ERRORS();
 		//done referring to vertex_buffer, so unbind it:
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+		GL_ERRORS();
 		//done setting up vertex array object, so unbind it:
 		glBindVertexArray(0);
+		GL_ERRORS();
 	}
 
 	GL_ERRORS(); //PARANOIA: make sure nothing strange happened during setup

@@ -1,6 +1,9 @@
 #include "PlayMode.hpp"
 
 #include "LitColorTextureProgram.hpp"
+#include "DepthTextureProgram.hpp"
+#include "OutlineProgram.hpp"
+#include "DrawOutlineProgram.hpp"
 
 #include "DrawLines.hpp"
 #include "Mesh.hpp"
@@ -18,13 +21,18 @@
 #define ERROR_F 0.000001f
 #define HEIGHT_CLIP 0.255f
 
+
 // -----------------------------------
 // ---------- Asset Loading ----------
 // -----------------------------------
 GLuint starbucks_meshes_for_lit_color_texture_program = 0;
+GLuint starbucks_meshes_for_depth_texture_program = 0;
+GLuint starbucks_meshes_for_outline_program = 0;
 Load<MeshBuffer> starbucks_meshes(LoadTagDefault, []() -> MeshBuffer const * {
 	MeshBuffer const *ret = new MeshBuffer(data_path("starbucks.pnct"));
 	starbucks_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
+	starbucks_meshes_for_depth_texture_program = ret->make_vao_for_program(depth_texture_program->program);
+	starbucks_meshes_for_outline_program = ret->make_vao_for_program(outline_program->program);
 	return ret;
 });
 
@@ -151,6 +159,45 @@ bool collide(Scene::Transform *trans_a, Scene::Transform *trans_b, float radius 
 
 PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 {
+	//Initialize framebuffersint w, h;
+	int w, h;
+	SDL_GetWindowSize(window, &w, &h);
+	glm::uvec2 newSize = glm::uvec2(w, h);
+	fb.resize(newSize);
+
+	//Outline drawing outline creation 
+	//Vertices
+	float vertices[] = {
+		//Pos				//Tex coords
+		 1.0f, 1.0f, 0.0f,  1.0f, 1.0f, //Top right
+		 1.0f,-1.0f, 0.0f,  1.0f, 0.0f, //Bottom right
+		-1.0f,-1.0f, 0.0f,  0.0f, 0.0f, //Bottom left
+		-1.0, 1.0f, 0.0f,  0.0f, 1.0f  //Top left
+	};
+
+	uint32_t indices[] = {
+		0,1,3, //Triangle 1
+		1,2,3  //Triangle 2
+	};
+
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
+
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)3);
+	glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
 	//create a player transform:
 	scene.transforms.emplace_back();
 	player.transform = &scene.transforms.back();
@@ -310,6 +357,9 @@ PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 
 PlayMode::~PlayMode()
 {
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
 }
 
 //Order Related Function
@@ -686,6 +736,11 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 
 void PlayMode::update(float elapsed)
 {
+	//Set all framebuffer sizes for the current frame
+	int w, h;
+	SDL_GetWindowSize(window, &w, &h);
+	glm::uvec2 newSize = glm::uvec2(w, h);
+	fb.resize(newSize);
 
 	assert(player.cat);
 	assert(player.cat->transform);
@@ -1018,7 +1073,7 @@ void PlayMode::update(float elapsed)
 				{
 					catch_message = std::string("Customer [") + customer.name + "] has waited too long :( and left!";
 					//std::cout << "Customer [" << customer.name << "] has waited too long :(. Customer is leaving..." << std::endl;
-					state.score -= std::min(50.0f, (float)this->day_index * 10.0f);
+					state.score -= (int)std::min(50.0f, (float)this->day_index * 10.0f);
 					state.score = std::max(state.score, 0);
 					customer.status = Customer::Status::Finished;
 					player.bag.clear_item();
@@ -1064,12 +1119,77 @@ void PlayMode::update(float elapsed)
 	}
 }
 
-void PlayMode::draw(glm::uvec2 const &drawable_size)
+//Temp until I decide if this is the place for it
+//Shader Preperation
+
+void PlayMode::updateDrawables(Scene::Drawable::Pipeline pipeline, GLuint program) {
+	for (auto& drawable : scene.drawables) {
+		GLuint count = drawable.pipeline.count;
+		GLuint start = drawable.pipeline.start;
+		GLuint type = drawable.pipeline.type;
+
+		drawable.pipeline = pipeline;
+		drawable.pipeline.vao = program;
+		drawable.pipeline.count = count;
+		drawable.pipeline.type = type;
+		drawable.pipeline.start = start;
+	}
+}
+
+void PlayMode::draw(glm::uvec2 const& drawable_size)
 {
 
 	//update camera aspect ratio for drawable:
 	player.orbitCamera.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 
+	//First get depth texture
+	GL_ERRORS();
+	glDepthMask(true);
+	updateDrawables(depth_texture_program_pipeline, starbucks_meshes_for_depth_texture_program); //Set drawables to use depth program
+	glBindFramebuffer(GL_FRAMEBUFFER, fb.depth_fb);
+	GL_ERRORS();
+
+
+	GL_ERRORS();
+	glClearDepth(1.0); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
+
+	GL_ERRORS();
+	glClear(GL_DEPTH_BUFFER_BIT);
+	GL_ERRORS();
+
+	glEnable(GL_DEPTH_TEST);
+	GL_ERRORS();
+	glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
+	GL_ERRORS();
+
+	scene.draw(*player.orbitCamera.camera);
+	GL_ERRORS();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	GL_ERRORS();
+
+
+	updateDrawables(outline_program_pipeline, starbucks_meshes_for_outline_program); //Set drawables to use lit color texture program
+	glBindFramebuffer(GL_FRAMEBUFFER, fb.outline_fb);
+	GL_ERRORS();
+
+	outline_program_pipeline.textures[0].texture = fb.depth_tex;
+	outline_program_pipeline.textures[0].target = GL_TEXTURE_2D;
+
+	GL_ERRORS();
+
+	glClearColor(255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f); //We want black outlines, so the background should be white
+	GL_ERRORS();
+	glClearDepth(1.0f); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
+	GL_ERRORS();
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	GL_ERRORS();
+	scene.draw(*player.orbitCamera.camera);
+	GL_ERRORS();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	GL_ERRORS();
+
+
+	updateDrawables(lit_color_texture_program_pipeline, starbucks_meshes_for_lit_color_texture_program); //Set drawables to use lit color texture program
 	glUseProgram(lit_color_texture_program->program);
 
 	//Load light arrays
@@ -1087,8 +1207,9 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 	light_energy.reserve(lightCount);
 	std::vector<float> light_cutoff;
 	light_cutoff.reserve(lightCount);
+	GL_ERRORS();
 
-	for (auto const &light : scene.lights)
+	for (auto const& light : scene.lights)
 	{
 		glm::mat4 light_to_world = light.transform->make_local_to_world();
 		//set up lighting information for this light:
@@ -1123,28 +1244,37 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 	}
 
 	glUniform1ui(lit_color_texture_program->LIGHT_COUNT_uint, lightCount);
+	GL_ERRORS();
 
 	GL_ERRORS();
 	glUniform1f(lit_color_texture_program->LIGHT_COUNT_float, (float)lightCount);
 
 	GL_ERRORS();
+	GL_ERRORS();
 
+	GL_ERRORS();
 	glUniform1iv(lit_color_texture_program->LIGHT_TYPE_int_array, lightCount, light_type.data());
 	glUniform3fv(lit_color_texture_program->LIGHT_LOCATION_vec3_array, lightCount, glm::value_ptr(light_location[0]));
 	glUniform3fv(lit_color_texture_program->LIGHT_DIRECTION_vec3_array, lightCount, glm::value_ptr(light_direction[0]));
 	glUniform3fv(lit_color_texture_program->LIGHT_ENERGY_vec3_array, lightCount, glm::value_ptr(light_energy[0]));
 	glUniform1fv(lit_color_texture_program->LIGHT_CUTOFF_float_array, lightCount, light_cutoff.data());
 
+	GL_ERRORS();
 	// set uniforms for color explosion effect 
 	glUniform3fv(lit_color_texture_program->COLOR_EXPLOSION_ORIGIN_vec3, 1, glm::value_ptr(player.transform->position));
 	color_explosion_timer_normalized = color_explosion_timer / color_explosion_anim_time;
 	glUniform1f(lit_color_texture_program->COLOR_EXPLOSION_T_float, color_explosion_timer_normalized);
 
+
+	GL_ERRORS();
+	lit_color_texture_program_pipeline.textures[0].texture = fb.outline_tex;
+	lit_color_texture_program_pipeline.textures[0].target = GL_TEXTURE_2D;
+
 	GL_ERRORS();
 
 	glUseProgram(0);
 
-	glClearColor(37/255.0, 25/255.0, 12/255.0, 0/255.0); // brown background color
+	glClearColor(37.f / 255.0f, 25.f / 255.0f, 12.f / 255.0f, 255.f / 255.0f); // brown background color
 	glClearDepth(1.0f); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1153,6 +1283,13 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 
 	scene.draw(*player.orbitCamera.camera);
 	GL_ERRORS();
+
+	//Drawing outline overtop the current scene
+	//https://learnopengl.com/code_viewer_gh.php?code=src/1.getting_started/2.2.hello_triangle_indexed/hello_triangle_indexed.cpp
+	//Unused but referencing since was used earlier
+
+	glUseProgram(0);
+
 
 	/*//In case you are wondering if your walkmesh is lining up with your scene, try:
 	{
@@ -1167,13 +1304,16 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 
 	{ //use DrawLines to overlay some text:
 		glDisable(GL_DEPTH_TEST);
+		GL_ERRORS();
 		float aspect = float(drawable_size.x) / float(drawable_size.y);
 		float ofs = 2.0f / drawable_size.y;
+		GL_ERRORS();
 		DrawLines lines(glm::mat4(
 			1.0f / aspect, 0.0f, 0.0f, 0.0f,
 			0.0f, 1.0f, 0.0f, 0.0f,
 			0.0f, 0.0f, 1.0f, 0.0f,
 			0.0f, 0.0f, 0.0f, 1.0f));
+		GL_ERRORS();
 
 		constexpr float H = 0.09f;
 
@@ -1213,7 +1353,9 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 		// draw item
 		{
 			draw_item(player.cur_order, glm::vec3(0.1f, 0.85f, 0.0f));
+			GL_ERRORS();
 			draw_item(player.bag, glm::vec3(0.75f, 0.85f, 0.0f));
+			GL_ERRORS();
 		}
 		// draw score
 		{

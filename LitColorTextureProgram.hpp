@@ -39,6 +39,7 @@ struct LitColorTextureProgram {
 	
 	//Textures:
 	//TEXTURE0 - texture that is accessed by TexCoord
+	GLuint DEPTH_TEXTURE = -1U;
 };
 
 extern Load< LitColorTextureProgram > lit_color_texture_program;

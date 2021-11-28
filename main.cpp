@@ -32,6 +32,18 @@
 #include <memory>
 #include <algorithm>
 
+//Include play mode to access global window
+#include "PlayMode.hpp"
+
+SDL_Window* window = SDL_CreateWindow(
+	"CodeBrew: A Starbuck Simulator", //TODO: remember to set a title for your game!
+	SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+	1280, 720, //TODO: modify window size if you'd like
+	SDL_WINDOW_OPENGL
+	| SDL_WINDOW_RESIZABLE //uncomment to allow resizing
+	| SDL_WINDOW_ALLOW_HIGHDPI //uncomment for full resolution on high-DPI screens
+);
+
 #ifdef _WIN32
 extern "C" { uint32_t GetACP(); }
 #endif
@@ -71,15 +83,6 @@ int main(int argc, char **argv) {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
 	//create window:
-	SDL_Window *window = SDL_CreateWindow(
-		"CodeBrew: A Starbuck Simulator", //TODO: remember to set a title for your game!
-		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-		1280, 720, //TODO: modify window size if you'd like
-		SDL_WINDOW_OPENGL
-		| SDL_WINDOW_RESIZABLE //uncomment to allow resizing
-		| SDL_WINDOW_ALLOW_HIGHDPI //uncomment for full resolution on high-DPI screens
-	);
-
 	//prevent exceedingly tiny windows when resizing:
 	SDL_SetWindowMinimumSize(window,100,100);
 
