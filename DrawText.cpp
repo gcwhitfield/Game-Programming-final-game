@@ -1,3 +1,10 @@
+// Drawtext.cpp is heavily based on https://github.com/ChunanGang/TextBasedGame/blob/main/TextRenderer.cpp, 
+// which is based on these resources:
+// https://github.com/15-466/15-466-f21-base4
+// https://github.com/harfbuzz/harfbuzz-tutorial/blob/master/hello-harfbuzz-freetype.c 
+// https://www.freetype.org/freetype2/docs/tutorial/step1.html 
+// https://learnopengl.com/In-Practice/Text-Rendering
+// https://github.com/GenBrg/MarryPrincess/blob/master/DrawFont.cpp
 #include "DrawText.hpp"
 
 // The vertex class was copied from the NEST framework
@@ -69,6 +76,7 @@ DrawText::DrawText(std::string font_file_name) {
         // done referring to vertex_attributes_for_render_text_program, so 
         // unbind it
         glBindVertexArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
         GL_ERRORS();
     }
 
@@ -101,17 +109,6 @@ DrawText::DrawText(std::string font_file_name) {
             GLuint newTex = 0;
             glGenTextures(1, &newTex);
             glBindTexture(GL_TEXTURE_2D, newTex);
-            // glm::uvec2 size = glm::uvec2(face->glyph->bitmap.rows, face->glyph->bitmap.width);
-            // // glm::uvec2 size = glm::uvec2(1, 1);
-            // std::vector<glm::u8> data(size.x*size.y, glm::u8(0xff));
-            // assert(data.size() == size.x * size.y);
-            // for (size_t y = 0; y < size.y; y++) {
-            //     for (size_t x = 0; x < size.x; x++) {
-            //         size_t index = y * size.y + x;
-            //         uint8_t val = face->glyph->bitmap.buffer[x * std::abs(face->glyph->bitmap.pitch) + y]; // copied from professor mccan's example code for printing bitmap buffer
-            //         data[index] = val;
-            //     }
-            // }
             glTexImage2D(
                 GL_TEXTURE_2D, 
                 0, 
@@ -158,7 +155,7 @@ DrawText::~DrawText() {
 
 }
 
-void DrawText::draw_text(glm::vec2 drawable_size, std::string text, glm::vec3 text_pos) {
+void DrawText::draw_text(glm::vec2 drawable_size, std::string text, glm::vec2 text_pos, glm::u8vec4 color) {
     // shape the text using Harfbuzz
     {
         hb_font = hb_ft_font_create(face, NULL);
@@ -179,20 +176,21 @@ void DrawText::draw_text(glm::vec2 drawable_size, std::string text, glm::vec3 te
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glDisable(GL_DEPTH_TEST);
         glUseProgram(render_text_program.program);
-        glm::mat4 projection = glm::ortho(0, 500, 0, 500);
+        glActiveTexture(GL_TEXTURE0);
+        glm::mat4 projection = glm::ortho(0, (int)floor(drawable_size.x), 0, (int)floor(drawable_size.y));
         glUniformMatrix4fv(render_text_program.OBJECT_TO_CLIP_mat4, 1, GL_FALSE, glm::value_ptr(projection));
         // use the mapping vertex_buffer_for_render_text_program to fetch vertex data
         glBindVertexArray(vertex_buffer_for_render_text_program);
 
         std::vector<Vertex> vertices;
-        vertices.clear();
         { // copied from https://github.com/ChunanGang/TextBasedGame/blob/main/TextRenderer.cpp
             uint16_t i = 0;
-            float x = drawable_size.x / 2.0f;
-            float y = drawable_size.y / 2.0f;
+            float x = 0;
+            float y = 0;
             // loop over all of the characters in the text and draw them with 
             // RenderTextProgram
             for (char c : text) {
+                vertices.clear();
                 // get the Harfbuzz shaping information
                 float x_offset = pos[i].x_offset / 64.0f;
                 float y_offset = pos[i].y_offset / 64.0f;
@@ -201,13 +199,13 @@ void DrawText::draw_text(glm::vec2 drawable_size, std::string text, glm::vec3 te
 
                 // draw the character
                 Character ch = characters[c];
-                glm::vec2 scale(10, 10);
+                glm::vec2 scale(1, 1);
                 draw_rectangle(vertices, glm::ivec2(x + x_offset + text_pos.x, y + y_offset + text_pos.y), scale, glm::u8vec4(0xff, 0xff, 0xff, 0xff));
                 // render the glyoh texture over a quad
                 glBindTexture(GL_TEXTURE_2D, ch.TextureID);
                 glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
                 glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_DYNAMIC_DRAW);
-
+                
                 glDrawArrays(GL_TRIANGLES, 0, 6);
 
                 glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -218,8 +216,12 @@ void DrawText::draw_text(glm::vec2 drawable_size, std::string text, glm::vec3 te
                 i++;
             }
         }
+
         glBindVertexArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
+        glUseProgram(0);
+        glDisable(GL_BLEND);
         GL_ERRORS();
     }
 }

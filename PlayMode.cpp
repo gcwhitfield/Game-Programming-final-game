@@ -1066,7 +1066,6 @@ void PlayMode::update(float elapsed)
 
 void PlayMode::draw(glm::uvec2 const &drawable_size)
 {
-
 	//update camera aspect ratio for drawable:
 	player.orbitCamera.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 
@@ -1302,6 +1301,9 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 		break;
 		}
 	}
+
+	draw_text.draw_text(drawable_size, "Coffee", glm::vec2(drawable_size.x/2, drawable_size.y/2), glm::u8vec4(0xff, 0xff, 0xff, 0xff));
+
 
 	GL_ERRORS();
 }

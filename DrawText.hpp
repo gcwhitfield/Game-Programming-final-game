@@ -22,7 +22,7 @@ struct DrawText {
     DrawText(std::string font_file_name);
     ~DrawText();
 
-    void draw_text(glm::vec2 drawable_size, std::string text, glm::vec3 text_pos);
+    void draw_text(glm::vec2 drawable_size, std::string text, glm::vec2 text_pos, glm::u8vec4 color);
 
     RenderTextProgram render_text_program;
     GLuint vertex_buffer = 0;
