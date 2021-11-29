@@ -135,9 +135,9 @@ int main(int argc, char **argv) {
 	auto on_resize = [&](){
 		int w,h;
 		SDL_GL_GetDrawableSize(window, &w, &h);
-		window_size = glm::uvec2(w, h);
-		SDL_GetWindowSize(window, &w, &h);
 		drawable_size = glm::uvec2(w, h);
+		SDL_GetWindowSize(window, &w, &h);
+		window_size = glm::uvec2(w, h);
 		glViewport(0, 0, drawable_size.x , drawable_size.y);
 	};
 	on_resize();
