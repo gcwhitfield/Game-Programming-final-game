@@ -160,7 +160,7 @@ PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 	paused = false;
 	//Initialize framebuffersint w, h;
 	int w, h;
-	SDL_GetWindowSize(window, &w, &h);
+	SDL_GL_GetDrawableSize(window, &w, &h);
 	glm::uvec2 newSize = glm::uvec2(w, h);
 	fb.resize(newSize);
 
