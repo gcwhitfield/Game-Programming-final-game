@@ -89,11 +89,13 @@ void Scene::draw(Camera const &camera) const {
 
 void Scene::draw(glm::mat4 const &world_to_clip, glm::mat4x3 const &world_to_light) const {
 
+	GL_ERRORS();
 	//Iterate through all drawables, sending each one to OpenGL:
 	for (auto const &drawable : drawables) {
 		//Reference to drawable's pipeline for convenience:
 		Scene::Drawable::Pipeline const &pipeline = drawable.pipeline;
 
+		
 		//skip any drawables without a shader program set:
 		if (pipeline.program == 0) continue;
 		//skip any drawables that don't reference any vertex array:
@@ -103,40 +105,50 @@ void Scene::draw(glm::mat4 const &world_to_clip, glm::mat4x3 const &world_to_lig
 		//skip any drawable that has been made invisible
 		if (!drawable.shouldDraw) continue;
 
+
 		//Set shader program:
 		glUseProgram(pipeline.program);
 
+		GL_ERRORS();
+
 		//Set attribute sources:
 		glBindVertexArray(pipeline.vao);
+		GL_ERRORS();
 
 		//Configure program uniforms:
 
 		//the object-to-world matrix is used in all three of these uniforms:
 		assert(drawable.transform); //drawables *must* have a transform
 		glm::mat4x3 object_to_world = drawable.transform->make_local_to_world();
+		GL_ERRORS();
 
 		//OBJECT_TO_CLIP takes vertices from object space to clip space:
 		if (pipeline.OBJECT_TO_CLIP_mat4 != -1U) {
 			glm::mat4 object_to_clip = world_to_clip * glm::mat4(object_to_world);
 			glUniformMatrix4fv(pipeline.OBJECT_TO_CLIP_mat4, 1, GL_FALSE, glm::value_ptr(object_to_clip));
 		}
+		GL_ERRORS();
 
 		//the object-to-light matrix is used in the next two uniforms:
 		glm::mat4x3 object_to_light = world_to_light * glm::mat4(object_to_world);
+		GL_ERRORS();
 
 		//OBJECT_TO_CLIP takes vertices from object space to light space:
 		if (pipeline.OBJECT_TO_LIGHT_mat4x3 != -1U) {
 			glUniformMatrix4x3fv(pipeline.OBJECT_TO_LIGHT_mat4x3, 1, GL_FALSE, glm::value_ptr(object_to_light));
 		}
+		GL_ERRORS();
 
 		//NORMAL_TO_CLIP takes normals from object space to light space:
 		if (pipeline.NORMAL_TO_LIGHT_mat3 != -1U) {
 			glm::mat3 normal_to_light = glm::inverse(glm::transpose(glm::mat3(object_to_light)));
 			glUniformMatrix3fv(pipeline.NORMAL_TO_LIGHT_mat3, 1, GL_FALSE, glm::value_ptr(normal_to_light));
 		}
+		GL_ERRORS();
 
 		//set any requested custom uniforms:
 		if (pipeline.set_uniforms) pipeline.set_uniforms();
+		GL_ERRORS();
 
 		//set up textures:
 		for (uint32_t i = 0; i < Drawable::Pipeline::TextureCount; ++i) {
@@ -145,9 +157,11 @@ void Scene::draw(glm::mat4 const &world_to_clip, glm::mat4x3 const &world_to_lig
 				glBindTexture(pipeline.textures[i].target, pipeline.textures[i].texture);
 			}
 		}
+		GL_ERRORS();
 
 		//draw the object:
 		glDrawArrays(pipeline.type, pipeline.start, pipeline.count);
+		GL_ERRORS();
 
 		//un-bind textures:
 		for (uint32_t i = 0; i < Drawable::Pipeline::TextureCount; ++i) {
@@ -157,6 +171,7 @@ void Scene::draw(glm::mat4 const &world_to_clip, glm::mat4x3 const &world_to_lig
 			}
 		}
 		glActiveTexture(GL_TEXTURE0);
+		GL_ERRORS();
 
 	}
 
