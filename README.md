@@ -1,8 +1,9 @@
 # Project COLDBREW
 
-Author: (TODO: your name)
+Author: Lingxi Zhang, George Whitfield, Ben C, Lambert 
 
-Design: (TODO: In two sentences or fewer, describe what is new and interesting about your game.)
+Design: A flying cat serving starbuck drinks to the customers while avoiding the overseeing of the stubborn manager at the same time. 
+
 
 Screen Shot:
 
@@ -10,9 +11,9 @@ Screen Shot:
 
 How To Play:
 
-(TODO: describe the controls and (if needed) goals/strategy.)
+WASD move, space jump in cat form, left click receieve order/serve order/collect ingredients, right click switching from cat form/human form
 
-Sources: (TODO: list a source URL for any assets you did not create yourself. Make sure you have a license for the asset.)
+Sources:
 Bike ding sound clip, used for the "order complete" SFX - https://freesound.org/people/JohnsonBrandEditing/sounds/173932/
 Slide whistle sound clip, used for "order spilled and cat flying" SFX - https://freesound.org/people/jcookvoice/sounds/586529/
 Manager footsteps sound - https://www.fesliyanstudios.com/royalty-free-sound-effects-download/footsteps-31
