@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
 		SDL_GL_GetDrawableSize(window, &w, &h);
 		drawable_size = glm::uvec2(w, h);
 		SDL_GetWindowSize(window, &w, &h);
-		window_size = glm::uvec2(w, h);
+		window_size = drawable_size;
 		glViewport(0, 0, drawable_size.x , drawable_size.y);
 	};
 	on_resize();
