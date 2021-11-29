@@ -243,6 +243,7 @@ PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 		else if (ingredients.find(str) != ingredients.end())
 		{
 			ingredient_transforms[str] = d.transform;
+			d.pipeline.count = 0;
 		}
 		// add the "CustomerWaypoint" transforms from the starbucks.blend scene into a
 		// vector
