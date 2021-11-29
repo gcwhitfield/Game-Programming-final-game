@@ -21,7 +21,6 @@
 #define ERROR_F 0.000001f
 #define HEIGHT_CLIP 0.255f
 
-
 // -----------------------------------
 // ---------- Asset Loading ----------
 // -----------------------------------
@@ -156,28 +155,28 @@ bool collide(Scene::Transform *trans_a, Scene::Transform *trans_b, float radius 
 	return distance2(a_pos, b_pos) < radius;
 }
 
-
 PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 {
+	paused = false;
 	//Initialize framebuffersint w, h;
 	int w, h;
 	SDL_GetWindowSize(window, &w, &h);
 	glm::uvec2 newSize = glm::uvec2(w, h);
 	fb.resize(newSize);
 
-	//Outline drawing outline creation 
+	//Outline drawing outline creation
 	//Vertices
 	float vertices[] = {
 		//Pos				//Tex coords
-		 1.0f, 1.0f, 0.0f,  1.0f, 1.0f, //Top right
-		 1.0f,-1.0f, 0.0f,  1.0f, 0.0f, //Bottom right
-		-1.0f,-1.0f, 0.0f,  0.0f, 0.0f, //Bottom left
-		-1.0, 1.0f, 0.0f,  0.0f, 1.0f  //Top left
+		1.0f, 1.0f, 0.0f, 1.0f, 1.0f,	//Top right
+		1.0f, -1.0f, 0.0f, 1.0f, 0.0f,	//Bottom right
+		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f, //Bottom left
+		-1.0, 1.0f, 0.0f, 0.0f, 1.0f	//Top left
 	};
 
 	uint32_t indices[] = {
-		0,1,3, //Triangle 1
-		1,2,3  //Triangle 2
+		0, 1, 3, //Triangle 1
+		1, 2, 3	 //Triangle 2
 	};
 
 	glGenVertexArrays(1, &VAO);
@@ -191,8 +190,8 @@ PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)3);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)3);
 	glEnableVertexAttribArray(0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -338,12 +337,12 @@ PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 
 	/* Different level has different goal and day time*/
 	this->day_index = level;
-	state.day_period_time = std::min(300.0f, state.day_period_time + (float)(level) * 40.0f) * 100;
+	state.day_period_time = std::min(300.0f, state.day_period_time + (float)(level)*40.0f) * 100;
 	// initialize timer
 	state.game_timer = state.day_period_time;
 	// mechanism of setting revenue goal
 	state.goal = std::min(level * 2 * 50, 1000);
-	manager_appearance_frequency = std::max(30.0f,(float)(130.0f - (float)level * 2));
+	manager_appearance_frequency = std::max(30.0f, (float)(130.0f - (float)level * 2));
 	manager_next_appearance_timer = manager_appearance_frequency;
 
 	//Orders
@@ -375,12 +374,11 @@ bool PlayMode::take_order()
 			close_customers.insert(std::make_pair(name, distance2(customer.transform->position, player.transform->position)));
 	}
 
-	Customer closest_customer = customers[
-		std::min_element(close_customers.begin(), close_customers.end(), 
-			[] (const std::pair<std::string, float> c1, const std::pair<std::string, float> c2) {
-				return c1.second < c2.second; 
-			})->first
-		]; 
+	Customer closest_customer = customers[std::min_element(close_customers.begin(), close_customers.end(),
+														   [](const std::pair<std::string, float> c1, const std::pair<std::string, float> c2) {
+															   return c1.second < c2.second;
+														   })
+											  ->first];
 
 	{ //take the order
 		player.cur_order = closest_customer.order;
@@ -396,8 +394,8 @@ bool PlayMode::grab_ingredient()
 {
 	for (auto &[name, ingredient_transform] : ingredient_transforms)
 	{
-		if (collide(ingredient_transform, player.transform,5.0f) && // distance close
-			order_status == OrderStatus::Executing				  //player has an order in hand
+		if (collide(ingredient_transform, player.transform, 5.0f) && // distance close
+			order_status == OrderStatus::Executing					 //player has an order in hand
 		)
 		{
 			if (player.bag.add_item(name) != 0)
@@ -428,10 +426,11 @@ bool PlayMode::serve_order()
 					order_status = OrderStatus::Empty;
 					order_message = std::string("Succeeded in serving : ") + customer.order.item_name + "!";
 					// increase score
-					auto dist = sqrt(distance2(glm::vec3(-6.0f, 0.0f, customer.transform->position.z),customer.transform->position));
+					auto dist = sqrt(distance2(glm::vec3(-6.0f, 0.0f, customer.transform->position.z), customer.transform->position));
 					// std::cout << dist << std::endl;
 					state.score += (int)(50.0f * dist / (player.PlayerSpeed * 4.0f));
-					if(player.playerStatus == Cat) state.score = (int)((float)state.score * 1.1f);
+					if (player.playerStatus == Cat)
+						state.score = (int)((float)state.score * 1.1f);
 					// clear player bag, because order is served
 					player.bag.clear_item();
 					// also clear the last served order
@@ -443,8 +442,7 @@ bool PlayMode::serve_order()
 
 					// play a random sound from the "customer order served" sounds
 					std::vector<Load<Sound::Sample>> customer_order_samples = {
-						mmm1_sample, mmm2_sample, slurp_ahhh_sample, sip_ahhh_sample
-					};
+						mmm1_sample, mmm2_sample, slurp_ahhh_sample, sip_ahhh_sample};
 					size_t r = rand() % customer_order_samples.size(); // index of random sample
 					assert(r < customer_order_samples.size());
 					Sound::play(*(customer_order_samples[r]));
@@ -493,7 +491,8 @@ void PlayMode::updateProximity()
 	//customer_waypoints
 	for (auto &[name, customer] : customers)
 	{
-		if (name == player.cur_customer && !player.bag.recipe.empty()) {
+		if (name == player.cur_customer && !player.bag.recipe.empty())
+		{
 			orderCustDist = getDistance(customer.transform, player.transform);
 		}
 		if (collide(customer.transform, player.transform, 20.0f))
@@ -506,12 +505,15 @@ void PlayMode::updateProximity()
 			}
 		}
 	}
-	if (orderCustDist > 13.5f) {
-		for (auto& [waypoint, filled] : customer_waypoints) {
-			if (collide(waypoint, player.transform,7.5f)) {
+	if (orderCustDist > 13.5f)
+	{
+		for (auto &[waypoint, filled] : customer_waypoints)
+		{
+			if (collide(waypoint, player.transform, 7.5f))
+			{
 				float dist = getDistance(waypoint, player.transform);
-				if ((player.playerStatus != PlayMode::Status::Cat && dist < 5.5f) || 
-				    (player.playerStatus == PlayMode::Status::Cat && player.lastCollision == true)) //spill the coffee
+				if ((player.playerStatus != PlayMode::Status::Cat && dist < 5.5f) ||
+					(player.playerStatus == PlayMode::Status::Cat && player.lastCollision == true)) //spill the coffee
 				{
 					catch_message = "Spilt the coffee! You ran into the wrong customer!";
 					player.bag.clear_item();
@@ -526,7 +528,7 @@ void PlayMode::updateProximity()
 	for (auto &[name, ingredient_transform] : ingredient_transforms)
 	{
 		// cnt++;
-		if (collide(ingredient_transform, player.transform,5.0f))
+		if (collide(ingredient_transform, player.transform, 5.0f))
 		{
 			float dist = getDistance(ingredient_transform, player.transform);
 			if (!closestI.first || dist < closestI.second)
@@ -554,98 +556,101 @@ void PlayMode::play_color_explosion(glm::vec3 location)
 bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 {
 	/*z take order, x serve order, c copy ingredient*/
+	if(paused)
+	{
+		if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_p)
+		{
+			paused = false;
+			return true;
+		}
+		return false;
+	}
 	if (evt.type == SDL_KEYDOWN)
 	{
-		if (evt.key.keysym.sym == SDLK_ESCAPE)
+		switch (evt.key.keysym.sym)
 		{
+		case SDLK_ESCAPE:
 			SDL_SetRelativeMouseMode(SDL_FALSE);
-			return true;
-		}
-		else if (evt.key.keysym.sym == SDLK_a)
-		{
+			break;
+		case SDLK_a:
 			left.downs += 1;
 			left.pressed = true;
-			return true;
-		}
-		else if (evt.key.keysym.sym == SDLK_d)
-		{
+			break;
+		case SDLK_d:
 			right.downs += 1;
 			right.pressed = true;
-			return true;
-		}
-		else if (evt.key.keysym.sym == SDLK_w)
-		{
+			break;
+		case SDLK_w:
 			up.downs += 1;
 			up.pressed = true;
-			return true;
-		}
-		else if (evt.key.keysym.sym == SDLK_s)
-		{
+			break;
+		case SDLK_s:
 			down.downs += 1;
 			down.pressed = true;
-			return true;
-		}
-		else if (evt.key.keysym.sym == SDLK_SPACE)
-		{
+			break;
+		case SDLK_SPACE:
 			if (state.flapTimer > state.flapCooldown && !space.pressed)
 			{
 				space.downs += 1;
 				space.pressed = true;
 				state.flapTimer = 0.0f;
 			}
-			return true;
-		}
-		else if (evt.key.keysym.sym == SDLK_r)
-		{
-			if(state.playing == lost){
+			break;
+		case SDLK_r:
+			if (state.playing == lost)
+			{
 				Sound::stop_all_samples();
 				Mode::set_current(std::make_shared<PlayMode>(1));
 			}
-			else if (state.playing == won){
+			else if (state.playing == won)
+			{
 				Sound::stop_all_samples();
 				Mode::set_current(std::make_shared<PlayMode>(day_index + 1));
 			}
-				
-            return true;
+			break;
+		case SDLK_p:
+			if(!paused)
+			{
+				paused = true;
+			}
+			break;
+		default:
+			return false;
 		}
+		return true;
 	}
 	else if (evt.type == SDL_KEYUP)
 	{
-		if (evt.key.keysym.sym == SDLK_a)
+		switch (evt.key.keysym.sym)
 		{
+		case SDLK_a:
 			left.pressed = false;
-			return true;
-		}
-		else if (evt.key.keysym.sym == SDLK_d)
-		{
+			break;
+		case SDLK_d:
 			right.pressed = false;
-			return true;
-		}
-		else if (evt.key.keysym.sym == SDLK_w)
-		{
+			break;
+		case SDLK_w:
 			up.pressed = false;
-			return true;
-		}
-		else if (evt.key.keysym.sym == SDLK_s)
-		{
+			break;
+		case SDLK_s:
 			down.pressed = false;
-			return true;
-		}
-		else if (evt.key.keysym.sym == SDLK_SPACE)
-		{
+			break;
+		case SDLK_SPACE:
 			space.pressed = false;
-			return true;
-		}
-		else if (evt.key.keysym.sym == SDLK_1) // print debug stuff
-		{
-			// print customer data
+			break;
+		case SDLK_1:
 			std::cout << "Customers" << std::endl;
 			std::cout << "Num customers: " << customers.size();
 			for (auto &[name, customer] : customers)
 			{
-				std::cout << name << " " << glm::to_string(customer.transform->position) << std::endl << std::endl;
+				std::cout << name << " " << glm::to_string(customer.transform->position) << std::endl
+						  << std::endl;
 			}
+			break;
+		default:
+			return false;
 		}
+		return true;
 	}
 	else if (evt.type == SDL_MOUSEBUTTONDOWN)
 	{
@@ -670,7 +675,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 					serve_order();
 				}
 
-				else 
+				else
 				{
 					std::cerr << "INVALID ORDER STATUS" << std::endl;
 					throw;
@@ -737,6 +742,10 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 void PlayMode::update(float elapsed)
 {
 	//Set all framebuffer sizes for the current frame
+	if(paused)
+	{
+		return;
+	}
 	int w, h;
 	SDL_GetWindowSize(window, &w, &h);
 	glm::uvec2 newSize = glm::uvec2(w, h);
@@ -808,7 +817,7 @@ void PlayMode::update(float elapsed)
 	//player walking:
 	glm::vec2 move = glm::vec2(0.0f);
 	//combine inputs into a move:
-	
+
 	if (left.pressed && !right.pressed)
 		move.x = -1.0f;
 	if (!left.pressed && right.pressed)
@@ -958,7 +967,7 @@ void PlayMode::update(float elapsed)
 			manager_next_appearance_timer -= elapsed;
 			if (manager_next_appearance_timer < 0)
 			{
-				
+
 				manager_state = HERE;
 				// stop manager footstep sfx
 				manager_footstep_sfx->stop();
@@ -1114,7 +1123,8 @@ void PlayMode::update(float elapsed)
 	updateProximity(); //Update nearest action for next control event
 
 	//update color explosion effect
-	if (color_explosion_timer < color_explosion_anim_time) {
+	if (color_explosion_timer < color_explosion_anim_time)
+	{
 		color_explosion_timer += elapsed;
 	}
 }
@@ -1122,8 +1132,10 @@ void PlayMode::update(float elapsed)
 //Temp until I decide if this is the place for it
 //Shader Preperation
 
-void PlayMode::updateDrawables(Scene::Drawable::Pipeline pipeline, GLuint program) {
-	for (auto& drawable : scene.drawables) {
+void PlayMode::updateDrawables(Scene::Drawable::Pipeline pipeline, GLuint program)
+{
+	for (auto &drawable : scene.drawables)
+	{
 		GLuint count = drawable.pipeline.count;
 		GLuint start = drawable.pipeline.start;
 		GLuint type = drawable.pipeline.type;
@@ -1136,7 +1148,7 @@ void PlayMode::updateDrawables(Scene::Drawable::Pipeline pipeline, GLuint progra
 	}
 }
 
-void PlayMode::draw(glm::uvec2 const& drawable_size)
+void PlayMode::draw(glm::uvec2 const &drawable_size)
 {
 
 	//update camera aspect ratio for drawable:
@@ -1148,7 +1160,6 @@ void PlayMode::draw(glm::uvec2 const& drawable_size)
 	updateDrawables(depth_texture_program_pipeline, starbucks_meshes_for_depth_texture_program); //Set drawables to use depth program
 	glBindFramebuffer(GL_FRAMEBUFFER, fb.depth_fb);
 	GL_ERRORS();
-
 
 	GL_ERRORS();
 	glClearDepth(1.0); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
@@ -1166,7 +1177,6 @@ void PlayMode::draw(glm::uvec2 const& drawable_size)
 	GL_ERRORS();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	GL_ERRORS();
-
 
 	updateDrawables(outline_program_pipeline, starbucks_meshes_for_outline_program); //Set drawables to use lit color texture program
 	glBindFramebuffer(GL_FRAMEBUFFER, fb.outline_fb);
@@ -1188,8 +1198,6 @@ void PlayMode::draw(glm::uvec2 const& drawable_size)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	GL_ERRORS();
 
-
-
 	//Thickening outline
 	//https://learnopengl.com/code_viewer_gh.php?code=src/1.getting_started/2.2.hello_triangle_indexed/hello_triangle_indexed.cpp
 
@@ -1205,11 +1213,8 @@ void PlayMode::draw(glm::uvec2 const& drawable_size)
 	glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-
-
 	glUseProgram(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
 
 	updateDrawables(lit_color_texture_program_pipeline, starbucks_meshes_for_lit_color_texture_program); //Set drawables to use lit color texture program
 	glUseProgram(lit_color_texture_program->program);
@@ -1231,7 +1236,7 @@ void PlayMode::draw(glm::uvec2 const& drawable_size)
 	light_cutoff.reserve(lightCount);
 	GL_ERRORS();
 
-	for (auto const& light : scene.lights)
+	for (auto const &light : scene.lights)
 	{
 		glm::mat4 light_to_world = light.transform->make_local_to_world();
 		//set up lighting information for this light:
@@ -1282,11 +1287,10 @@ void PlayMode::draw(glm::uvec2 const& drawable_size)
 	glUniform1fv(lit_color_texture_program->LIGHT_CUTOFF_float_array, lightCount, light_cutoff.data());
 
 	GL_ERRORS();
-	// set uniforms for color explosion effect 
+	// set uniforms for color explosion effect
 	glUniform3fv(lit_color_texture_program->COLOR_EXPLOSION_ORIGIN_vec3, 1, glm::value_ptr(player.transform->position));
 	color_explosion_timer_normalized = color_explosion_timer / color_explosion_anim_time;
 	glUniform1f(lit_color_texture_program->COLOR_EXPLOSION_T_float, color_explosion_timer_normalized);
-
 
 	GL_ERRORS();
 	lit_color_texture_program_pipeline.textures[0].texture = fb.outline_thick_tex;
@@ -1297,7 +1301,7 @@ void PlayMode::draw(glm::uvec2 const& drawable_size)
 	glUseProgram(0);
 
 	glClearColor(37.f / 255.0f, 25.f / 255.0f, 12.f / 255.0f, 255.f / 255.0f); // brown background color
-	glClearDepth(1.0f); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
+	glClearDepth(1.0f);														   //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glEnable(GL_DEPTH_TEST);
@@ -1305,7 +1309,6 @@ void PlayMode::draw(glm::uvec2 const& drawable_size)
 
 	scene.draw(*player.orbitCamera.camera);
 	GL_ERRORS();
-
 
 	/*//In case you are wondering if your walkmesh is lining up with your scene, try:
 	{
@@ -1421,7 +1424,7 @@ void PlayMode::draw(glm::uvec2 const& drawable_size)
 		break;
 		case won:
 		{
-			draw_text("You successfully got through day " + std::to_string(day_index) +"! Press R to continue.",
+			draw_text("You successfully got through day " + std::to_string(day_index) + "! Press R to continue.",
 					  glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0));
 		}
 		break;

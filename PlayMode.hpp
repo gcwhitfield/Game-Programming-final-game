@@ -31,6 +31,7 @@ struct PlayMode : Mode {
 	//----- game state -----
 	int day_index;
 	std::map<std::string, Scene::Drawable> ingredients_drawables;
+	bool paused = false;
 
 	float manager_next_appearance_timer = 12.5f; // seconds
 	float manager_appearance_frequency;
@@ -182,7 +183,7 @@ struct PlayMode : Mode {
 
 
 	} player;
-	float gravity = -9.81f / 2.f;
+	float gravity = -9.80f / 2.f;
 	void decidePos(glm::vec3 bounds, glm::vec3 at);
 	void getBoundedPos(glm::vec2 move, WalkMesh const* boundWalkmesh, WalkMesh const* walkmesh);
 	float objectHeight = 3.0f;
