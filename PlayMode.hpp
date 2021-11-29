@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 #include "Check_FB.hpp"
 #include "gl_errors.hpp"
+#include "textgenerator.hpp"
 
 #include <vector>
 #include <deque>
@@ -351,6 +352,10 @@ struct PlayMode : Mode {
 	void updateDrawables(Scene::Drawable::Pipeline pipeline, GLuint program);//Set up all drawables to point to different pipeline and program
 	GLuint VBO, VAO, EBO;
 
+	GLuint VCO;
+	Textgenerator textgenerator;
+	glm::uvec2 drawable_sz;
+	void drawtext(Textgenerator &tex);
 };
 
 

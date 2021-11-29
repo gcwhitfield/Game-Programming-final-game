@@ -154,10 +154,12 @@ bool collide(Scene::Transform *trans_a, Scene::Transform *trans_b, float radius 
 	auto b_pos = trans_b->position;
 	return distance2(a_pos, b_pos) < radius;
 }
-
 PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 {
 	paused = false;
+	textgenerator.font_size = 50 / 3;
+	textgenerator.load_font(data_path("../font/ArialCE.ttf"));
+
 	//Initialize framebuffersint w, h;
 	int w, h;
 	SDL_GetWindowSize(window, &w, &h);
@@ -556,7 +558,7 @@ void PlayMode::play_color_explosion(glm::vec3 location)
 bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 {
 	/*z take order, x serve order, c copy ingredient*/
-	if(paused)
+	if (paused)
 	{
 		if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_p)
 		{
@@ -609,7 +611,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			}
 			break;
 		case SDLK_p:
-			if(!paused)
+			if (!paused)
 			{
 				paused = true;
 			}
@@ -742,7 +744,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 void PlayMode::update(float elapsed)
 {
 	//Set all framebuffer sizes for the current frame
-	if(paused)
+	if (paused)
 	{
 		return;
 	}
@@ -1150,6 +1152,7 @@ void PlayMode::updateDrawables(Scene::Drawable::Pipeline pipeline, GLuint progra
 
 void PlayMode::draw(glm::uvec2 const &drawable_size)
 {
+	drawable_sz = drawable_size;
 
 	//update camera aspect ratio for drawable:
 	player.orbitCamera.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
@@ -1463,6 +1466,63 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 		break;
 		}
 	}
-
+	textgenerator.println(std::string("fffffffffuck"), {0.0f,0.0f});
+	drawtext(textgenerator);
 	GL_ERRORS();
+}
+//reuse Lingxi Zhang(One of the group member's text code from game 4)
+void PlayMode::drawtext(Textgenerator &tex)
+{
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable(GL_DEPTH_TEST);
+	// DRAW
+	float cursor_x = 0;
+	float cursor_y = 0;
+	double line = -1;
+	float y_offset = -100.0f;
+	for (size_t i = 0; i < tex.characters.size(); ++i)
+	{
+		Textgenerator::Character c = tex.characters[i];
+		glm::mat4 to_clip = glm::mat4(
+			1 * 2.0f / float(drawable_sz.x), 0.0f, 0.0f, 0.0f,
+			0.0f, 1 * 2.0f / float(drawable_sz.y), 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f, 0.0f,
+			2.0f / float(drawable_sz.x), 2.0f / float(drawable_sz.y), 0.0f, 1.0f);
+		glUseProgram(lit_color_texture_program->program);
+		glUniform3f(glGetUniformLocation(lit_color_texture_program->program, "textColor"), c.red, c.green, c.blue);
+		glUniformMatrix4fv(color_texture_program->OBJECT_TO_CLIP_mat4, 1, GL_FALSE, glm::value_ptr(to_clip));
+		glBindVertexArray(VAO);
+
+		if (c.line != line)
+		{
+			cursor_x = drawable_sz.x / 2.0f * c.start_x;
+			cursor_y = drawable_sz.y / 2.0f * c.start_y + (float)c.line * y_offset;
+			line = c.line;
+		}
+
+		float xpos = cursor_x + c.x_offset + c.bearing_x;
+		float ypos = cursor_y + c.y_offset - (c.height - c.bearing_y);
+		int w = c.width;
+		int h = c.height;
+
+		float vertices[6][4] = {
+			{xpos, ypos + h, 0.0f, 0.0f},
+			{xpos, ypos, 0.0f, 1.0f},
+			{xpos + w, ypos, 1.0f, 1.0f},
+			{xpos, ypos + h, 0.0f, 0.0f},
+			{xpos + w, ypos, 1.0f, 1.0f},
+			{xpos + w, ypos + h, 1.0f, 0.0f}};
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, c.texture);
+
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		cursor_x += c.x_advance;
+		cursor_y += c.y_advance;
+	}
 }
