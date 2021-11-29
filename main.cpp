@@ -121,8 +121,8 @@ int main(int argc, char **argv) {
 	call_load_functions();
 
 	//------------ create game mode + make current --------------
-	// Mode::set_current(std::make_shared< GP21IntroMode >( std::make_shared< TutorialMode >() ));
-	Mode::set_current(std::make_shared< PlayMode >(1));
+	Mode::set_current(std::make_shared< GP21IntroMode >( std::make_shared< TutorialMode >() ));
+	// Mode::set_current(std::make_shared< PlayMode >(1));
 
 
 	//------------ main loop ------------
@@ -134,11 +134,11 @@ int main(int argc, char **argv) {
 	//On non-highDPI displays, window_size will always equal drawable_size.
 	auto on_resize = [&](){
 		int w,h;
-		SDL_GetWindowSize(window, &w, &h);
-		window_size = glm::uvec2(w, h);
 		SDL_GL_GetDrawableSize(window, &w, &h);
+		window_size = glm::uvec2(w, h);
+		SDL_GetWindowSize(window, &w, &h);
 		drawable_size = glm::uvec2(w, h);
-		glViewport(0, 0, drawable_size.x, drawable_size.y);
+		glViewport(0, 0, drawable_size.x , drawable_size.y);
 	};
 	on_resize();
 
