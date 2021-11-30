@@ -33,6 +33,7 @@ Customer noises for food delivery
 "Slurp, aaahhh" - https://freesound.org/people/abstraktgeneriert/sounds/194466/
 "Sip, aaahhh" - https://freesound.org/people/OwlStorm/sounds/320139/
 
+All of the music 3D models were made by us. 
 
 This game was built with [NEST](NEST.md).
 
