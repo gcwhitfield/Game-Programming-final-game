@@ -72,7 +72,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install ftjam libgl-dev
           ls
-          jam -dx -q && cp README.md dist
+          jam clean
+          jam -j3 -q && cp README.md dist
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
         with:
