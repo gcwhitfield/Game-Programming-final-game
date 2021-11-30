@@ -91,7 +91,7 @@ Load<Sound::Sample> sip_ahhh_sample(LoadTagDefault, []() -> Sound::Sample const 
 });
 
 Load<Sound::Sample> clapping_sample(LoadTagDefault, []() -> Sound::Sample const * {
-	return new Sound::Sample(data_path("clapping.wav"));
+	return new Sound::Sample(data_path("Clapping.wav"));
 });
 
 Load<Sound::Sample> slide_whistle_down_sample(LoadTagDefault, []() -> Sound::Sample const * {
@@ -565,6 +565,11 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	/*z take order, x serve order, c copy ingredient*/
 	if(paused)
 	{
+		left.pressed = false;
+		right.pressed = false;
+		up.pressed = false;
+		down.pressed = false;
+		space.pressed = false;
 		if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_p)
 		{
 			paused = false;

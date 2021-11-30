@@ -102,8 +102,8 @@ void TutorialMode::draw(glm::uvec2 const &drawable_size) {
 							glm::u8vec4(0xff, 0xff, 0xff, 0x00));
 		};
 
-        float spacing = 0.2f;
-        float left_align = -0.8f;
+        float spacing = 0.27f;
+        float left_align = -1.3f;
         switch (state)
         {
             case SCREEN_0:
