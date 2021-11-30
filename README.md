@@ -11,7 +11,15 @@ Screen Shot:
 
 How To Play:
 
-WASD move, space jump in cat form, left click receieve order/serve order/collect ingredients, right click switching from cat form/human form
+WASD move, space jump in cat form, left click receieve order/serve order/collect ingredients, right click switching between cat form/human form.
+
+You can fly using a balloon in cat form.
+
+You want to avoid spilling the coffee by not colliding with anyone who is not your
+order recipient and being caught in cat form by the manager who comes 
+occasionally.
+
+You will receive a higher score if you serve someone who is further away from the bar.
 
 Sources:
 Bike ding sound clip, used for the "order complete" SFX - https://freesound.org/people/JohnsonBrandEditing/sounds/173932/
