@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
 	//On non-highDPI displays, window_size will always equal drawable_size.
 	auto on_resize = [&](){
 		int w,h;
-		SDL_GL_GetDrawableSize(window, &w, &h);
+		SDL_GetWindowSize(window, &w, &h);
 		drawable_size = glm::uvec2(w, h);
 		SDL_GetWindowSize(window, &w, &h);
 		window_size = drawable_size;
