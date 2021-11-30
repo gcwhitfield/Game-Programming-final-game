@@ -13,12 +13,20 @@
 
 void PlayMode::Player::updateDrawable() {
 	if (playerStatus == Cat || playerStatus == toHuman) {
-		cat->shouldDraw = true;
-		human->shouldDraw = false;
+		if (grounded) {
+			cat->shouldDraw = true;
+			human->shouldDraw = false;
+			cat_balloon->shouldDraw = false;
+		} else {
+			cat->shouldDraw = false;
+			human->shouldDraw = false;
+			cat_balloon->shouldDraw = true;
+		}
 	}
 	else{
 		cat->shouldDraw = false;
 		human->shouldDraw = true;
+		cat_balloon->shouldDraw = false;
 	}
 }
 

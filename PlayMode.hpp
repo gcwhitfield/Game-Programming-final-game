@@ -137,8 +137,9 @@ struct PlayMode : Mode {
 		WalkPoint outOfBounds;
 		//transform is at player's feet and will be yawed by mouse left/right motion:
 		Scene::Transform *transform = nullptr;
-		Scene::Drawable* cat;
-		Scene::Drawable* human;
+		Scene::Drawable* cat = nullptr;
+		Scene::Drawable* cat_balloon = nullptr;
+		Scene::Drawable* human = nullptr;
 		void updateDrawable();
 
 		//Camera is an orbit camera

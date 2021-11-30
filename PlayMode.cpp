@@ -240,6 +240,10 @@ PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 		{
 			player.cat = &d;
 		}
+		else if (str == "CatWithBalloon")
+		{
+			player.cat_balloon = &d;
+		}
 		//store ingredients information and location
 		else if (ingredients.find(str) != ingredients.end())
 		{
@@ -330,12 +334,16 @@ PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 	assert(player.human);
 	assert(player.human->transform);
 	//assert(player.human->transform->parent);
+	assert(player.cat_balloon);
+	assert(player.cat_balloon->transform);
 
 	// set cat/human transform parent
 	player.cat->transform->parent = player.transform;
 	player.human->transform->parent = player.transform;
+	player.cat_balloon->transform->parent = player.transform;
 	player.cat->transform->position = glm::vec3(0.0f, 0.0f, 0.44f);
 	player.human->transform->position = glm::vec3(0.0f, 0.0f, 1.34f);
+	player.cat_balloon->transform->position = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	/* Different level has different goal and day time*/
 	this->day_index = level;
@@ -384,6 +392,7 @@ bool PlayMode::take_order()
 			}
 	
 	}
+	return false;
 }
 bool PlayMode::grab_ingredient()
 {
