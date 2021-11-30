@@ -384,7 +384,6 @@ bool PlayMode::take_order()
 			}
 	
 	}
-	return false;
 }
 bool PlayMode::grab_ingredient()
 {
@@ -424,9 +423,8 @@ bool PlayMode::serve_order()
 					// increase score
 					auto dist = sqrt(distance2(glm::vec3(-6.0f, 0.0f, customer.transform->position.z), customer.transform->position));
 					// std::cout << dist << std::endl;
-					state.score += (int)(50.0f * dist / (player.PlayerSpeed * 4.0f));
-					if (player.playerStatus == Cat)
-						state.score = (int)((float)state.score * 1.1f);
+					float multiplier = (player.playerStatus == Cat) ? 1.1f : 1.0f;
+					state.score += (int)(50.0f * multiplier * dist / (player.PlayerSpeed * 4.0f));
 					// clear player bag, because order is served
 					player.bag.clear_item();
 					// also clear the last served order
@@ -586,7 +584,8 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			down.pressed = true;
 			break;
 		case SDLK_m:
-			state.qualityMode = !state.qualityMode;
+			if(state.mReleased) state.qualityMode = !state.qualityMode;
+			state.mReleased = false;
 			break;
 		case SDLK_SPACE:
 			if (state.flapTimer > state.flapCooldown && !space.pressed)
@@ -634,6 +633,9 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			break;
 		case SDLK_s:
 			down.pressed = false;
+			break;
+		case SDLK_m:
+			state.mReleased = true;
 			break;
 		case SDLK_SPACE:
 			space.pressed = false;
