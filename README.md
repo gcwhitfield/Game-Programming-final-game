@@ -37,5 +37,7 @@ Customer noises for food delivery
 
 All of the music and 3D models were made by us. 
 
+Code references cited in comments in source code
+
 This game was built with [NEST](NEST.md).
 
