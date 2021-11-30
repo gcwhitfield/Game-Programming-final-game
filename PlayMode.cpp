@@ -589,7 +589,8 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			down.pressed = true;
 			break;
 		case SDLK_m:
-			state.qualityMode = !state.qualityMode;
+			if(state.mReleased) state.qualityMode = !state.qualityMode;
+			state.mReleased = false;
 			break;
 		case SDLK_SPACE:
 			if (state.flapTimer > state.flapCooldown && !space.pressed)
@@ -637,6 +638,9 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			break;
 		case SDLK_s:
 			down.pressed = false;
+			break;
+		case SDLK_m:
+			state.mReleased = true;
 			break;
 		case SDLK_SPACE:
 			space.pressed = false;
