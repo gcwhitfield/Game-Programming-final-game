@@ -1,6 +1,6 @@
 # Project COLDBREW
 
-Author: Lingxi Zhang, George Whitfield, Ben C, Tianjian Huang
+Author: Lingxi Zhang, George Whitfield, Ben Cagan, Tianjian Huang
 
 Design: A flying cat serving starbuck drinks to the customers while avoiding the overseeing of the stubborn manager at the same time. 
 
