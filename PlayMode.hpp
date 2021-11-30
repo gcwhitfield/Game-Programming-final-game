@@ -211,6 +211,7 @@ struct PlayMode : Mode {
 		PlayState playing = ongoing; 
 		Proximity proximity = NoProx;
 		bool qualityMode = true;
+		bool mReleased = true;
 	} ;
 
 	State state;
