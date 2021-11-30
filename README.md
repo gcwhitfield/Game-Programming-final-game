@@ -1,5 +1,7 @@
 # Project COLDBREW
 
+Game Title: Coffee CAT-tastrophe
+
 Author: Lingxi Zhang, George Whitfield, Ben Cagan, Tianjian Huang
 
 Design: A flying cat serving starbuck drinks to the customers while avoiding the overseeing of the stubborn manager at the same time. 
