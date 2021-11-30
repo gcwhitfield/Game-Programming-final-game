@@ -209,6 +209,7 @@ struct PlayMode : Mode {
 		float catchTimer = 0.0f; //time for the deduction of cat caught by the manager 
 		PlayState playing = ongoing; 
 		Proximity proximity = NoProx;
+		bool qualityMode = true;
 	} ;
 
 	State state;

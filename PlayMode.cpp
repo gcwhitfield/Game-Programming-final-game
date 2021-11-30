@@ -585,6 +585,9 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			down.downs += 1;
 			down.pressed = true;
 			break;
+		case SDLK_m:
+			state.qualityMode = !state.qualityMode;
+			break;
 		case SDLK_SPACE:
 			if (state.flapTimer > state.flapCooldown && !space.pressed)
 			{
@@ -1154,65 +1157,69 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 	//update camera aspect ratio for drawable:
 	player.orbitCamera.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 
-	//First get depth texture
-	GL_ERRORS();
-	glDepthMask(true);
-	updateDrawables(depth_texture_program_pipeline, starbucks_meshes_for_depth_texture_program); //Set drawables to use depth program
-	glBindFramebuffer(GL_FRAMEBUFFER, fb.depth_fb);
-	GL_ERRORS();
+	if (state.qualityMode) {
 
-	GL_ERRORS();
-	glClearDepth(1.0); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
+		//First get depth texture
+		GL_ERRORS();
+		glDepthMask(true);
+		updateDrawables(depth_texture_program_pipeline, starbucks_meshes_for_depth_texture_program); //Set drawables to use depth program
+		glBindFramebuffer(GL_FRAMEBUFFER, fb.depth_fb);
+		GL_ERRORS();
 
-	GL_ERRORS();
-	glClear(GL_DEPTH_BUFFER_BIT);
-	GL_ERRORS();
+		GL_ERRORS();
+		glClearDepth(1.0); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
 
-	glEnable(GL_DEPTH_TEST);
-	GL_ERRORS();
-	glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
-	GL_ERRORS();
+		GL_ERRORS();
+		glClear(GL_DEPTH_BUFFER_BIT);
+		GL_ERRORS();
 
-	scene.draw(*player.orbitCamera.camera);
-	GL_ERRORS();
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	GL_ERRORS();
+		glEnable(GL_DEPTH_TEST);
+		GL_ERRORS();
+		glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
+		GL_ERRORS();
 
-	updateDrawables(outline_program_pipeline, starbucks_meshes_for_outline_program); //Set drawables to use lit color texture program
-	glBindFramebuffer(GL_FRAMEBUFFER, fb.outline_fb);
-	GL_ERRORS();
+		scene.draw(*player.orbitCamera.camera);
+		GL_ERRORS();
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		GL_ERRORS();
 
-	outline_program_pipeline.textures[0].texture = fb.depth_tex;
-	outline_program_pipeline.textures[0].target = GL_TEXTURE_2D;
+		updateDrawables(outline_program_pipeline, starbucks_meshes_for_outline_program); //Set drawables to use lit color texture program
+		glBindFramebuffer(GL_FRAMEBUFFER, fb.outline_fb);
+		GL_ERRORS();
 
-	GL_ERRORS();
+		outline_program_pipeline.textures[0].texture = fb.depth_tex;
+		outline_program_pipeline.textures[0].target = GL_TEXTURE_2D;
 
-	glClearColor(255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f); //We want black outlines, so the background should be white
-	GL_ERRORS();
-	glClearDepth(1.0f); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
-	GL_ERRORS();
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	GL_ERRORS();
-	scene.draw(*player.orbitCamera.camera);
-	GL_ERRORS();
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	GL_ERRORS();
+		GL_ERRORS();
 
-	//Thickening outline
-	//https://learnopengl.com/code_viewer_gh.php?code=src/1.getting_started/2.2.hello_triangle_indexed/hello_triangle_indexed.cpp
+		glClearColor(255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f); //We want black outlines, so the background should be white
+		GL_ERRORS();
+		glClearDepth(1.0f); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
+		GL_ERRORS();
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		GL_ERRORS();
+		scene.draw(*player.orbitCamera.camera);
+		GL_ERRORS();
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		GL_ERRORS();
 
+		//Thickening outline
+		//https://learnopengl.com/code_viewer_gh.php?code=src/1.getting_started/2.2.hello_triangle_indexed/hello_triangle_indexed.cpp
+	}
 	glBindFramebuffer(GL_FRAMEBUFFER, fb.outline_thick_fb);
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	glUseProgram(draw_outline_program->program);
+	if (state.qualityMode) {
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, fb.outline_tex);
+		glUseProgram(draw_outline_program->program);
 
-	glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, fb.outline_tex);
 
+		glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	}
 	glUseProgram(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
