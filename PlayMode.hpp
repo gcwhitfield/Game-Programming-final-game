@@ -196,7 +196,6 @@ struct PlayMode : Mode {
 		CustomerProx, IngredientProx, NoProx
 	};
 
-
 	struct State //Game state
 	{
 		int score = 0;	// player's total score until now

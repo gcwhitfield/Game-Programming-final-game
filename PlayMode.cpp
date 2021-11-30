@@ -18,6 +18,7 @@
 #include <random>
 #include <iostream>
 #include <algorithm>
+
 #define ERROR_F 0.000001f
 #define HEIGHT_CLIP 0.255f
 
@@ -372,22 +373,16 @@ bool PlayMode::take_order()
 		if (collide(customer.transform, player.transform) && // distance close
 			customer.status == Customer::Status::New &&		 // customer is new, has not given order yet
 			order_status == OrderStatus::Empty)				 //player does not have order in hand
-			close_customers.insert(std::make_pair(name, distance2(customer.transform->position, player.transform->position)));
-	}
-
-	Customer closest_customer = customers[std::min_element(close_customers.begin(), close_customers.end(),
-														   [](const std::pair<std::string, float> c1, const std::pair<std::string, float> c2) {
-															   return c1.second < c2.second;
-														   })
-											  ->first];
-
-	{ //take the order
-		player.cur_order = closest_customer.order;
-		player.cur_customer = closest_customer.name;
-		order_status = OrderStatus::Executing;
-		customers[closest_customer.name].status = Customer::Status::Wait;
-		order_message = std::string("Taking order ...... : ") + closest_customer.name + ", " + closest_customer.order.item_name + "!";
-		return true;
+			{
+				player.cur_order = customer.order;
+				player.cur_customer = customer.name;
+				order_status = OrderStatus::Executing;
+				customers[customer.name].status = Customer::Status::Wait;
+				order_message = std::string("Taking order ...... : ") + customer.name + ", " + customer.order.item_name + "!";
+				
+				return true;
+			}
+	
 	}
 	return false;
 }
@@ -481,7 +476,8 @@ void PlayMode::Player::OrbitCamera::walkCamera()
 
 void PlayMode::updateProximity()
 {
-	auto getDistance = [](Scene::Transform *a, Scene::Transform *b) {
+	auto getDistance = [this](Scene::Transform *a, Scene::Transform *b) {
+		(void)this;
 		return glm::length(a->position - b->position);
 	};
 	std::pair<bool, float> closestC, closestI;
@@ -1022,6 +1018,7 @@ void PlayMode::update(float elapsed)
 			new_customer->transform->position = customer_spawn_point->position;
 			//std::string new_customer_name = "Customer" + std::to_string(customers.size() + 1);
 			Customer c = Customer(new_customer_name(), new_customer->transform, this->day_index);
+			assert(c.transform != nullptr);
 			c.order = new_item().second;
 			c.init();
 			// std::cout << "max wait time:" << c.max_wait_time << std::endl;
@@ -1077,6 +1074,8 @@ void PlayMode::update(float elapsed)
 			case Customer::Status::Wait:
 			{
 				customer.t_wait += elapsed;
+				assert(customer.transform != nullptr);
+				assert(customer.waypoint != nullptr);
 				customer.transform->position = customer.waypoint->position;
 				// the customer gets angry if it waits too longs, score gets deducted
 				if (customer.t_wait > customer.max_wait_time)
