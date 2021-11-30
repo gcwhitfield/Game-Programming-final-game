@@ -108,7 +108,7 @@ void TutorialMode::draw(glm::uvec2 const &drawable_size) {
         {
             case SCREEN_0:
             {
-                draw_text("COLDBREW", glm::vec3(left_align, spacing * 2, 0), 0.1f);
+                draw_text("Coffee CAT-tastrophe", glm::vec3(left_align, spacing * 2, 0), 0.1f);
                 draw_text("a Starbucks Simulator", glm::vec3(left_align, 0, 0), 0.1f);
                 draw_text(" Press E to continue", glm::vec3(left_align, -spacing * 2, 0), 0.1f);
             } break;

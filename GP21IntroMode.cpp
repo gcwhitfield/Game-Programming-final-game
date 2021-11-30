@@ -307,12 +307,14 @@ GP21IntroMode::~GP21IntroMode() {
 }
 
 bool GP21IntroMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
-	if (evt.type == SDL_KEYDOWN) {
-		//on any key press, skip the rest of the intro:
-		music->set_volume(0.0f, 1.0f / 10.0f);
-		Mode::set_current(next_mode);
-		return true;
-	}
+	
+	// The game crashes if you try to skip using this code, so we comment it out for now
+	// if (evt.type == SDL_KEYDOWN) {
+	// 	//on any key press, skip the rest of the intro:
+	// 	music->set_volume(0.0f, 1.0f / 10.0f);
+	// 	Mode::set_current(next_mode);
+	// 	return true;
+	// }
 	return false;
 }
 
