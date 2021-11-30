@@ -21,7 +21,7 @@ occasionally.
 
 You will receive a higher score if you serve someone who is further away from the bar.
 
-Other Controls: R - Restart P - Pause M - Swap between Performance Mode/Quality Mode
+Other Controls: R - Restart, P - Pause, M - Swap between Performance Mode/Quality Mode
 
 Sources:
 Bike ding sound clip, used for the "order complete" SFX - https://freesound.org/people/JohnsonBrandEditing/sounds/173932/
