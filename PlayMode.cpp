@@ -339,7 +339,7 @@ PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 
 	/* Different level has different goal and day time*/
 	this->day_index = level;
-	state.day_period_time = std::min(300.0f, state.day_period_time + (float)(level)*40.0f);
+	state.day_period_time = std::min(300.0f, state.day_period_time + (float)(level)*40.0f) * 100;
 	// initialize timer
 	state.game_timer = state.day_period_time;
 	// mechanism of setting revenue goal
