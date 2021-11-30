@@ -1,11 +1,14 @@
 #include "PlayMode.hpp"
 #include "gl_errors.hpp"
+#include "Load.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 #define ERROR_F 0.000001f
 #define MAX_SPEED_H 2.25f
 #define MAX_HEIGHT 8.5f
+
+extern Load<Sound::Sample> slide_whistle_up_sample;
 
 //To do: Resolve issues with bounded walkmesh, test control speed for flight
 
@@ -132,6 +135,12 @@ void PlayMode::updateCat(PlayMode::Keys keys, float elapsed, float gravity) {
 			player.grounded = true;
 		}
 		else {
+			// play the slide whistle up sound if we are grounded and we want to move up
+			if (keys.space && player.airTime <= 0.001)
+			{
+				Sound::play(*slide_whistle_up_sample);
+			}
+
 			player.grounded = false;
 			player.airTime += elapsed;
 			velocity += gravity * player.airTime;

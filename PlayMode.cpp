@@ -90,6 +90,21 @@ Load<Sound::Sample> sip_ahhh_sample(LoadTagDefault, []() -> Sound::Sample const 
 	return new Sound::Sample(data_path("sip_ahhh.wav"));
 });
 
+Load<Sound::Sample> clapping_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("clapping.wav"));
+});
+
+Load<Sound::Sample> slide_whistle_down_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("slide_whistle_down.wav"));
+});
+
+Load<Sound::Sample> wah_wah_wah_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("wah_wah_wah.wav"));
+});
+
+Load<Sound::Sample> slide_whistle_up_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("slide_whistle_up.wav"));
+});
 // -----------------------------------
 // ---- Small Helper Functions ----
 // -----------------------------------
@@ -347,7 +362,7 @@ PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 
 	/* Different level has different goal and day time*/
 	this->day_index = level;
-	state.day_period_time = std::min(300.0f, state.day_period_time + (float)(level)*40.0f) * 100;
+	state.day_period_time = std::min(300.0f, state.day_period_time + (float)(level)*40.0f);
 	// initialize timer
 	state.game_timer = state.day_period_time;
 	// mechanism of setting revenue goal
@@ -523,7 +538,7 @@ void PlayMode::updateProximity()
 					player.bag.clear_item();
 					state.score -= 15;
 					state.score = std::max(state.score, 0);
-					//todo Sound::play messed up
+					Sound::play(*slide_whistle_down_sample);
 				}
 			}
 		}
@@ -795,10 +810,12 @@ void PlayMode::update(float elapsed)
 	{
 		if (state.score >= state.goal)
 		{
+			Sound::play(*clapping_sample);
 			state.playing = won;
 		}
 		else
 		{
+			Sound::play(*wah_wah_wah_sample);
 			state.playing = lost;
 		}
 		return;
@@ -818,6 +835,7 @@ void PlayMode::update(float elapsed)
 				}
 			}
 
+			Sound::play(*wah_wah_wah_sample);
 			state.playing = lost;
 			return;
 		}
