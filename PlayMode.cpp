@@ -279,14 +279,12 @@ PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 		else if (str == "CustomerSpawnPoint" && str != "CustomerBase")
 		{
 			assert(str == "CustomerSpawnPoint");
-			//std::cout << "CustomerSpawnPoint has been found" << std::endl;
 			customer_spawn_point = d.transform;
 			d.pipeline.count = 0; // do not draw customer spawn points
 		}
 		//store customers ingredients information and location
 		else if (str.length() >= 8 && str.substr(0, 8) == "Customer" && str.find("CustomerBase") >= str.size() && str.find("CustomerWaypoint") > str.size() && str != "CustomerSpawnPoint")
 		{
-			//std::cout << str << std::endl;
 			assert(str != "CustomerBase");
 			assert(str != "CustomerWaypoint");
 			assert(str != "CustomerSpawnPoint");
@@ -298,7 +296,6 @@ PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 		// transforms in the starbucks.blend scene
 		else if (str.find("CustomerBase") < str.size())
 		{
-			std::cout << "CustomerBase '" << str << "' has been found!" << std::endl;
 			customer_base.push_back(&d);
 		}
 		// the player starts at the location of the "Player" object in the Blender scene
@@ -345,10 +342,8 @@ PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 
 	assert(player.cat);
 	assert(player.cat->transform);
-	//assert(player.cat->transform->parent);
 	assert(player.human);
 	assert(player.human->transform);
-	//assert(player.human->transform->parent);
 	assert(player.cat_balloon);
 	assert(player.cat_balloon->transform);
 
@@ -372,9 +367,6 @@ PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 
 	//Orders
 	player.bag.item_name = "bag";
-	/*for (auto& light : scene.lights) {
-		std::cout << light.energy.x << " " << light.energy.y << " " << light.energy.z << std::endl;
-	}*/
 
 	Sound::loop(*background_music_sample);
 }
@@ -446,7 +438,6 @@ bool PlayMode::serve_order()
 					order_message = std::string("Succeeded in serving : ") + customer.order.item_name + "!";
 					// increase score
 					auto dist = sqrt(distance2(glm::vec3(-6.0f, 0.0f, customer.transform->position.z), customer.transform->position));
-					// std::cout << dist << std::endl;
 					float multiplier = (player.playerStatus == Cat) ? 1.1f : 1.0f;
 					state.score += (int)(50.0f * multiplier * dist / (player.PlayerSpeed * 4.0f));
 					// clear player bag, because order is served
@@ -543,10 +534,8 @@ void PlayMode::updateProximity()
 			}
 		}
 	}
-	//int cnt = 0;
 	for (auto &[name, ingredient_transform] : ingredient_transforms)
 	{
-		// cnt++;
 		if (collide(ingredient_transform, player.transform, 5.0f))
 		{
 			float dist = getDistance(ingredient_transform, player.transform);
@@ -557,7 +546,6 @@ void PlayMode::updateProximity()
 			}
 		}
 	}
-	//std::cout<<cnt<<' '<<closestC.second<<' '<<closestI.second<<std::endl;
 	if (!(closestC.first || closestI.first))
 		state.proximity = Proximity::NoProx;
 	else if (!closestC.first || closestI.second < closestC.second)
@@ -880,7 +868,7 @@ void PlayMode::update(float elapsed)
 		glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
 
 		//using a for() instead of a while() here so that if walkpoint gets stuck in
-		// some awkward case, code will not infinite loop:
+		//some awkward case, code will not infinite loop:
 		for (uint32_t iter = 0; iter < 10; ++iter)
 		{
 			if (remain == glm::vec3(0.0f))
@@ -953,15 +941,6 @@ void PlayMode::update(float elapsed)
 			player.transform->rotation = glm::normalize(adjust * player.transform->rotation);
 		}
 		player.transform->position += glm::vec3(0.0f, 0.0f, player.height + HEIGHT_CLIP);
-
-		/*
-		glm::mat4x3 frame = camera->transform->make_local_to_parent();
-		glm::vec3 right = frame[0];
-		//glm::vec3 up = frame[1];
-		glm::vec3 forward = -frame[2];
-
-		camera->transform->position += move.x * right + move.y * forward;
-		*/
 	}
 	else
 	{
@@ -987,7 +966,6 @@ void PlayMode::update(float elapsed)
 				manager_state = ARRIVING;
 				// Play manager footstep sound queue
 				manager_footstep_sfx = Sound::loop(*manager_footstep_sample, manager_footstep_volume_min, 0.0f);
-				// play sound queue 3 seconds before the manager appears
 			}
 		}
 		break;
@@ -996,7 +974,6 @@ void PlayMode::update(float elapsed)
 			manager_next_appearance_timer -= elapsed;
 			if (manager_next_appearance_timer < 0)
 			{
-
 				manager_state = HERE;
 				// stop manager footstep sfx
 				manager_footstep_sfx->stop();
@@ -1031,7 +1008,6 @@ void PlayMode::update(float elapsed)
 		customer_spawn_timer -= elapsed;
 		if (customer_spawn_timer < 0)
 		{
-			//std::cout << "A new customer has been spawned!" << std::endl;
 			size_t r = rand() % 100;
 			// the amount of time until the next customer spawns is governed by the
 			// random variable 'rand_time'. 'rand_time' is uniformly distributed
@@ -1053,7 +1029,7 @@ void PlayMode::update(float elapsed)
 			assert(c.transform != nullptr);
 			c.order = new_item().second;
 			c.init();
-			// std::cout << "max wait time:" << c.max_wait_time << std::endl;
+
 			// give the customer a waypoint from one of the open waypoint
 			bool has_set_cwaypoint = false;
 			for (auto &[waypoint, is_open] : customer_waypoints)
