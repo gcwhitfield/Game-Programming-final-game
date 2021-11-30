@@ -374,13 +374,23 @@ bool PlayMode::take_order()
 			order_status == OrderStatus::Empty)				 //player does not have order in hand
 			close_customers.insert(std::make_pair(name, distance2(customer.transform->position, player.transform->position)));
 	}
-
-	Customer closest_customer = customers[std::min_element(close_customers.begin(), close_customers.end(),
-														   [](const std::pair<std::string, float> c1, const std::pair<std::string, float> c2) {
-															   return c1.second < c2.second;
-														   })
-											  ->first];
-
+	if(close_customers.empty())
+	{
+		return false;
+	}
+	Customer closest_customer;
+	std::pair<std::string, float> ans;
+	ans.second = 1e9;
+	for(auto &customer: close_customers)
+	{
+		if(customer.second < ans.second)
+		{
+			ans = customer;
+		}
+	}
+	
+	closest_customer = customers[ans.first];
+	
 	{ //take the order
 		player.cur_order = closest_customer.order;
 		player.cur_customer = closest_customer.name;
@@ -389,7 +399,6 @@ bool PlayMode::take_order()
 		order_message = std::string("Taking order ...... : ") + closest_customer.name + ", " + closest_customer.order.item_name + "!";
 		return true;
 	}
-	return false;
 }
 bool PlayMode::grab_ingredient()
 {
