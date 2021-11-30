@@ -91,7 +91,7 @@ Load<Sound::Sample> sip_ahhh_sample(LoadTagDefault, []() -> Sound::Sample const 
 });
 
 Load<Sound::Sample> clapping_sample(LoadTagDefault, []() -> Sound::Sample const * {
-	return new Sound::Sample(data_path("clapping.wav"));
+	return new Sound::Sample(data_path("Clapping.wav"));
 });
 
 Load<Sound::Sample> slide_whistle_down_sample(LoadTagDefault, []() -> Sound::Sample const * {
