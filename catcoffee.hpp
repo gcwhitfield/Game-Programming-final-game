@@ -124,17 +124,24 @@ public:
 
 //real items
 const StarbuckItem IceWater({V(IceWater),{"Cups","Ice","Water"}});
+const StarbuckItem IceMilk({V(IceMilk),{"Cups","Ice","Milk"}});
+const StarbuckItem VanillaWater({V(VanillaWater),{"Cups", "Vanilla", "Water"}});
 const StarbuckItem Frappuccino({V(Frappuccino),{"Cups","CoffeeBeans","Milk","Sugar", "Ice"}});
 const StarbuckItem VanillaMilk({V(VanillaMilk),{"Cups", "Vanilla", "Milk"}});
 const StarbuckItem PureCoffee({V(PureCoffee),{"Cups", "CoffeeBeans"}});
 const StarbuckItem EspressoFrappuccino({V(EspressoFrappuccino),{"Cups","EspressoShot","CoffeeBeans","Milk", "Ice"}});
-
+const StarbuckItem SugarWater({V(Sugar), {"Cups", "Sugar"}});
+const StarbuckItem BigMix({V(BigMix), {"Cups","CoffeeBeans","Milk","Sugar", "Ice", "EspressoShot","CoffeeBeans"}});
 const std::map<std::string, StarbuckItem> RotationList = {
     {V(IceWater), IceWater},
+    {V(IceMilk), IceMilk},
+    {V(VanillaWater), VanillaWater},
     {V(Frappuccino), Frappuccino},
     {V(VanillaMilk), VanillaMilk},
     {V(PureCoffee), PureCoffee},
     {V(EspressoFrappuccino), EspressoFrappuccino},
+    {V(SugarWater), SugarWater},
+    {V(BigMix), BigMix}
 };
 
 
