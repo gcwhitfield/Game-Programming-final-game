@@ -22,6 +22,7 @@
 #define ERROR_F 0.000001f
 #define HEIGHT_CLIP 0.255f
 
+#define MAX_HEIGHT 8.5f
 // -----------------------------------
 // ---------- Asset Loading ----------
 // -----------------------------------
@@ -727,7 +728,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	{
 		if (SDL_GetRelativeMouseMode() == SDL_TRUE)
 		{
-			//SDL_WarpMouseGlobal(window_size.x / 2, window_size.y / 2); //Allows moust to not get caught on window edge
+			SDL_WarpMouseInWindow(window,window_size.x / 2, window_size.y / 2); //Allows moust to not get caught on window edge
 			glm::vec2 motion = glm::vec2(
 				evt.motion.xrel / float(window_size.y),
 				-evt.motion.yrel / float(window_size.y));
@@ -745,6 +746,14 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 				if (player.orbitCamera.curPitch >= PI_F / 2.f + theta - ERROR_F)
 				{ //If at or above minimum angle, cap so can't see below walkmesh
 					player.orbitCamera.curPitch = PI_F / 2.f + theta;
+				}
+			}
+			if (player.height >= MAX_HEIGHT - (player.orbitCamera.distance + ERROR_F)) {
+				//roof clipping check
+				float theta = asin((MAX_HEIGHT - player.height) / player.orbitCamera.distance);
+ 				if (player.orbitCamera.curPitch <= PI_F / 2.f - theta + ERROR_F)
+				{ //If at or below maximum angle, cap so can't see above roof
+					player.orbitCamera.curPitch = PI_F / 2.f - theta;
 				}
 			}
 			player.orbitCamera.camera->transform->rotation = glm::angleAxis(player.orbitCamera.curPitch, glm::vec3(1.0f, 0.0f, 0.0f));
@@ -784,9 +793,18 @@ void PlayMode::update(float elapsed)
 		if (player.orbitCamera.truePitch >= PI_F / 2.f + theta - ERROR_F - 0.1f)
 		{
 			player.orbitCamera.curPitch = PI_F / 2.f + theta - 0.1f;
-			player.orbitCamera.camera->transform->rotation = glm::angleAxis(player.orbitCamera.curPitch, glm::vec3(1.0f, 0.0f, 0.0f));
 		}
 	}
+
+	if (player.height >= MAX_HEIGHT - (player.orbitCamera.distance + ERROR_F)) {
+		//roof clipping check
+		float theta = asin((MAX_HEIGHT - player.height) / player.orbitCamera.distance);
+		if (player.orbitCamera.curPitch <= PI_F / 2.f - theta + ERROR_F)
+		{ //If at or below maximum angle, cap so can't see above roof
+			player.orbitCamera.curPitch = PI_F / 2.f - theta;
+		}
+	}
+	player.orbitCamera.camera->transform->rotation = glm::angleAxis(player.orbitCamera.curPitch, glm::vec3(1.0f, 0.0f, 0.0f));
 
 	player.orbitCamera.updateCamera();
 	player.orbitCamera.walkCamera();
