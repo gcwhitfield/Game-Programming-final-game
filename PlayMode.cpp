@@ -366,7 +366,7 @@ PlayMode::PlayMode(int level) : scene(*starbucks_scene)
 	state.game_timer = state.day_period_time;
 	// mechanism of setting revenue goal
 	state.goal = std::min(level * 2 * 50, 1000);
-	manager_appearance_frequency = std::max(30.0f, (float)(130.0f - (float)level * 2));
+	manager_appearance_frequency = std::max(30.0f, (float)(130.0f - (float)level * 20));
 	manager_next_appearance_timer = manager_appearance_frequency;
 
 	//Orders
@@ -1019,7 +1019,7 @@ void PlayMode::update(float elapsed)
 			manager_stay_timer -= elapsed;
 			if (manager_stay_timer < 0)
 			{
-				manager_stay_timer = 3.5f;
+				manager_stay_timer = std::max(3.5f + (float)(level), 15.0f);
 				// set manager_next_appearance_timer to a random time between 7.5 and 15 seconds
 				size_t r = rand() % 100;
 				manager_next_appearance_timer = -5.0f + 10.0f * (r / (float)100) + manager_appearance_frequency;
