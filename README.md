@@ -1,4 +1,4 @@
-# Project COLDBREW
+# Coffee Cat-tastrophe
 
 Game Title: Coffee CAT-tastrophe
 
