@@ -14,7 +14,7 @@
 #include <array>
 #include <unordered_map>
 
-GP21IntroMode::GP21IntroMode(std::shared_ptr< Mode > const &next_mode_) : next_mode(next_mode_) {
+GP21IntroMode::GP21IntroMode(std::shared_ptr< Mode > const& next_mode_) : next_mode(next_mode_) {
 	{ // ------ music ------
 		std::vector< float > data(10 * 48000, 0.0f);
 
@@ -27,16 +27,16 @@ GP21IntroMode::GP21IntroMode(std::shared_ptr< Mode > const &next_mode_) : next_m
 		auto sine = [](float t) -> float {
 			t -= std::floor(t);
 			t = std::round(t * 32.0f) / 32.0f;
-			return std::round( std::sin(t * 2.0f * float(M_PI)) * 16.0f ) / 16.0f;
+			return std::round(std::sin(t * 2.0f * float(M_PI)) * 16.0f) / 16.0f;
 		};
 
-		constexpr float Attack  = 0.02f;
-		constexpr float Decay   = 0.1f;
+		constexpr float Attack = 0.02f;
+		constexpr float Decay = 0.1f;
 		constexpr float Sustain = 0.8f;
 		constexpr float Release = 0.2f;
 
 		//play synth at given time for given length at given frequency with given wave:
-		auto tone = [&](float start, float len, float hz, float vol, std::function< float(float) > const &wave){
+		auto tone = [&](float start, float len, float hz, float vol, std::function< float(float) > const& wave) {
 			int32_t begin = int32_t(start * 48000);
 			int32_t end = begin + int32_t((len + Release) * 48000);
 
@@ -59,52 +59,53 @@ GP21IntroMode::GP21IntroMode(std::shared_ptr< Mode > const &next_mode_) : next_m
 
 		//midi note number to frequency (based on A4 being 440hz)
 		auto midi2hz = [](float midi) -> float {
-			return 440.0f * std::exp2( (midi - 69.0f) / 12.0f );
+			return 440.0f * std::exp2((midi - 69.0f) / 12.0f);
 		};
 
 		[[maybe_unused]] auto C = [](int32_t oct) { return 12.0f + 12.0f * oct; };
-		[[maybe_unused]] auto Cs= [](int32_t oct) { return 13.0f + 12.0f * oct; };
+		[[maybe_unused]] auto Cs = [](int32_t oct) { return 13.0f + 12.0f * oct; };
 		[[maybe_unused]] auto D = [](int32_t oct) { return 14.0f + 12.0f * oct; };
-		[[maybe_unused]] auto Ds= [](int32_t oct) { return 15.0f + 12.0f * oct; };
+		[[maybe_unused]] auto Ds = [](int32_t oct) { return 15.0f + 12.0f * oct; };
 		[[maybe_unused]] auto E = [](int32_t oct) { return 16.0f + 12.0f * oct; };
 		[[maybe_unused]] auto F = [](int32_t oct) { return 17.0f + 12.0f * oct; };
-		[[maybe_unused]] auto Fs= [](int32_t oct) { return 18.0f + 12.0f * oct; };
+		[[maybe_unused]] auto Fs = [](int32_t oct) { return 18.0f + 12.0f * oct; };
 		[[maybe_unused]] auto G = [](int32_t oct) { return 19.0f + 12.0f * oct; };
-		[[maybe_unused]] auto Gs= [](int32_t oct) { return 20.0f + 12.0f * oct; };
+		[[maybe_unused]] auto Gs = [](int32_t oct) { return 20.0f + 12.0f * oct; };
 		[[maybe_unused]] auto A = [](int32_t oct) { return 21.0f + 12.0f * oct; };
-		[[maybe_unused]] auto As= [](int32_t oct) { return 22.0f + 12.0f * oct; };
+		[[maybe_unused]] auto As = [](int32_t oct) { return 22.0f + 12.0f * oct; };
 		[[maybe_unused]] auto B = [](int32_t oct) { return 23.0f + 12.0f * oct; };
-		
+
 		float bpm = 100.0f;
 
-		auto tones = [&]( std::function< float(float) > const &wave, float hz, float step, std::string const &score ) {
+		auto tones = [&](std::function< float(float) > const& wave, float hz, float step, std::string const& score) {
 			for (uint32_t begin = 0; begin < score.size(); /* later */) {
 				if (score[begin] == '#') {
 					uint32_t end = begin + 1;
 					while (end < score.size() && score[end] == '=') ++end;
-					tone( begin * step, (end - begin - 0.5f) * step, hz, 0.5f, wave );
+					tone(begin * step, (end - begin - 0.5f) * step, hz, 0.5f, wave);
 					begin = end;
-				} else {
+				}
+				else {
 					++begin;
 				}
 			}
 		};
 
 		//some sort of basic fanfare:
-		tones( triangle, midi2hz( C(5) ), 0.5f * 60.0f / bpm, "1 . #=. 2 . . . 3#==. . 4 . . . ");
-		tones( triangle, midi2hz( B(4) ), 0.5f * 60.0f / bpm, "1 . . . 2 . . .#= . . . 4 . . . ");
-		tones( triangle, midi2hz( A(4) ), 0.5f * 60.0f / bpm, "1 .#. . 2 . . . 3 . . . 4#. . . ");
-		tones( triangle, midi2hz( G(4) ), 0.5f * 60.0f / bpm, "1 . . . 2 . . .#=#==. . 4 . . . ");
-		tones( triangle, midi2hz( F(4) ), 0.5f * 60.0f / bpm, "1 . . . 2 . . . 3 . . . 4 . . . ");
-		tones( triangle, midi2hz( E(4) ), 0.5f * 60.0f / bpm, "1 . . . 2 . . . 3 . . . 4 . . . ");
-		tones( triangle, midi2hz( D(4) ), 0.5f * 60.0f / bpm, "1 # . . 2 . . .#=#==. . 4 #== . ");
-		tones( triangle, midi2hz( C(4) ), 0.5f * 60.0f / bpm, "1 . . . 2 . . . 3 . . .#4 . . . ");
-		tones( triangle, midi2hz( G(3) ), 0.5f * 60.0f / bpm, "1 . . . 2 . . . 3#==. . 4 . . . ");
+		tones(triangle, midi2hz(C(5)), 0.5f * 60.0f / bpm, "1 . #=. 2 . . . 3#==. . 4 . . . ");
+		tones(triangle, midi2hz(B(4)), 0.5f * 60.0f / bpm, "1 . . . 2 . . .#= . . . 4 . . . ");
+		tones(triangle, midi2hz(A(4)), 0.5f * 60.0f / bpm, "1 .#. . 2 . . . 3 . . . 4#. . . ");
+		tones(triangle, midi2hz(G(4)), 0.5f * 60.0f / bpm, "1 . . . 2 . . .#=#==. . 4 . . . ");
+		tones(triangle, midi2hz(F(4)), 0.5f * 60.0f / bpm, "1 . . . 2 . . . 3 . . . 4 . . . ");
+		tones(triangle, midi2hz(E(4)), 0.5f * 60.0f / bpm, "1 . . . 2 . . . 3 . . . 4 . . . ");
+		tones(triangle, midi2hz(D(4)), 0.5f * 60.0f / bpm, "1 # . . 2 . . .#=#==. . 4 #== . ");
+		tones(triangle, midi2hz(C(4)), 0.5f * 60.0f / bpm, "1 . . . 2 . . . 3 . . .#4 . . . ");
+		tones(triangle, midi2hz(G(3)), 0.5f * 60.0f / bpm, "1 . . . 2 . . . 3#==. . 4 . . . ");
 
 		//sub-bass:
-		tones( sine, midi2hz( C(3) ), 0.5f * 60.0f / bpm, "1 . #=. 2 . . . 3#==. . 4 . . . ");
-		tones( sine, midi2hz( A(2) ), 0.5f * 60.0f / bpm, "1 .#. . 2 . . . 3 . . . 4 . . . ");
-		tones( sine, midi2hz( D(2) ), 0.5f * 60.0f / bpm, "1 # . . 2 . . .#= . . . 4 . . . ");
+		tones(sine, midi2hz(C(3)), 0.5f * 60.0f / bpm, "1 . #=. 2 . . . 3#==. . 4 . . . ");
+		tones(sine, midi2hz(A(2)), 0.5f * 60.0f / bpm, "1 .#. . 2 . . . 3 . . . 4 . . . ");
+		tones(sine, midi2hz(D(2)), 0.5f * 60.0f / bpm, "1 # . . 2 . . .#= . . . 4 . . . ");
 
 		/*
 		//too dense:
@@ -123,15 +124,15 @@ GP21IntroMode::GP21IntroMode(std::shared_ptr< Mode > const &next_mode_) : next_m
 		{ //run a basic 'digital reverb' over stuff:
 			//use a delay line with a few different taps and feedbacks:
 			std::array< float, 2 * 48000 > delay;
-			for (auto &s : delay) s = 0.0f; //clear delay line
+			for (auto& s : delay) s = 0.0f; //clear delay line
 			uint32_t head = 0;
 			auto tap = [&](float offset) -> float {
 				return delay[(head + int32_t(delay.size()) - int32_t(std::floor(offset * 48000.0f))) % delay.size()];
 			};
 			float smoothed = 0.0f;
-			for (float &s : data) {
+			for (float& s : data) {
 				float wet = 1.0f * s + (
-					+ 6.0f * tap(0.43f)
+					+6.0f * tap(0.43f)
 					+ 5.0f * tap(0.21f)
 					+ 3.0f * tap(0.13f)
 					+ 1.0f * tap(0.07f)
@@ -145,16 +146,18 @@ GP21IntroMode::GP21IntroMode(std::shared_ptr< Mode > const &next_mode_) : next_m
 
 		{ //do a gentle low-pass filter on output:
 			float smoothed = 0.0f;
-			for (float &s : data) {
+			for (float& s : data) {
 				smoothed += 0.3f * (s - smoothed);
 				s = smoothed;
 			}
 		}
 
-		{ //DEBUG:
+		/*{ //DEBUG:
 			std::ofstream dump("music-dump.f32", std::ios::binary);
 			dump.write(reinterpret_cast< const char * >(data.data()), data.size() * 4);
-		}
+		}*/
+
+		static std::unique_ptr< Sound::Sample > music_sample; //making static so it lives past lifetime of IntroMode
 
 		music_sample = std::make_unique< Sound::Sample >(data);
 
@@ -173,7 +176,7 @@ GP21IntroMode::GP21IntroMode(std::shared_ptr< Mode > const &next_mode_) : next_m
 		"	gl_Position = OBJECT_TO_CLIP * Position;\n"
 		"	color = Color;\n"
 		"}\n"
-	,
+		,
 		//fragment shader:
 		"#version 330\n"
 		"in vec4 color;\n"
@@ -205,7 +208,7 @@ GP21IntroMode::GP21IntroMode(std::shared_ptr< Mode > const &next_mode_) : next_m
 		GL_FLOAT, //type
 		GL_FALSE, //normalized
 		sizeof(GP21IntroMode::Vertex), //stride
-		(GLbyte *)0 + offsetof(GP21IntroMode::Vertex, Position) //offset
+		(GLbyte*)0 + offsetof(GP21IntroMode::Vertex, Position) //offset
 	);
 	glEnableVertexAttribArray(Position_vec4);
 
@@ -215,7 +218,7 @@ GP21IntroMode::GP21IntroMode(std::shared_ptr< Mode > const &next_mode_) : next_m
 		GL_UNSIGNED_BYTE, //type
 		GL_TRUE, //normalized
 		sizeof(GP21IntroMode::Vertex), //stride
-		(GLbyte *)0 + offsetof(GP21IntroMode::Vertex, Color) //offset
+		(GLbyte*)0 + offsetof(GP21IntroMode::Vertex, Color) //offset
 	);
 	glEnableVertexAttribArray(Color_vec4);
 
@@ -227,24 +230,25 @@ GP21IntroMode::GP21IntroMode(std::shared_ptr< Mode > const &next_mode_) : next_m
 
 	// ------ gp21 logo ------
 
-	auto add_cubes = [this](glm::ivec3 const &upper_left, glm::ivec3 const &col_dir, std::string const &img) {
+	auto add_cubes = [this](glm::ivec3 const& upper_left, glm::ivec3 const& col_dir, std::string const& img) {
 		int32_t row = 0;
 		int32_t col = 0;
 		for (char c : img) {
 			if (c == '#') {
 				Cube cube;
-				cube.target = upper_left + row * glm::ivec3(0,0,-1) + col * col_dir;
+				cube.target = upper_left + row * glm::ivec3(0, 0, -1) + col * col_dir;
 				cubes.emplace_back(cube);
 			}
 			if (c == '\n') {
 				row += 1;
 				col = 0;
-			} else {
+			}
+			else {
 				col += 1;
 			}
 		}
 	};
-	add_cubes(glm::ivec3(-4,-3,4), glm::ivec3(1,0,0),
+	add_cubes(glm::ivec3(-4, -3, 4), glm::ivec3(1, 0, 0),
 		" # \n"
 		"# #\n"
 		" ##\n"
@@ -252,7 +256,7 @@ GP21IntroMode::GP21IntroMode(std::shared_ptr< Mode > const &next_mode_) : next_m
 		"# #\n"
 		" # \n"
 	);
-	add_cubes(glm::ivec3(-1,-2,2), glm::ivec3(0,1,0),
+	add_cubes(glm::ivec3(-1, -2, 2), glm::ivec3(0, 1, 0),
 		"## \n"
 		"# #\n"
 		"## \n"
@@ -260,7 +264,7 @@ GP21IntroMode::GP21IntroMode(std::shared_ptr< Mode > const &next_mode_) : next_m
 		"#  \n"
 	);
 
-	add_cubes(glm::ivec3(0,0,4), glm::ivec3(1,0,0),
+	add_cubes(glm::ivec3(0, 0, 4), glm::ivec3(1, 0, 0),
 		" # \n"
 		"# #\n"
 		"  #\n"
@@ -268,7 +272,7 @@ GP21IntroMode::GP21IntroMode(std::shared_ptr< Mode > const &next_mode_) : next_m
 		"#  \n"
 		"###\n"
 	);
-	add_cubes(glm::ivec3(1,2,4), glm::ivec3(0,1,0),
+	add_cubes(glm::ivec3(1, 2, 4), glm::ivec3(0, 1, 0),
 		" # \n"
 		"## \n"
 		" # \n"
@@ -278,17 +282,17 @@ GP21IntroMode::GP21IntroMode(std::shared_ptr< Mode > const &next_mode_) : next_m
 	);
 
 	//depth sort cubes:
-	std::sort(cubes.begin(), cubes.end(), [](Cube const &a, Cube const &b){
+	std::sort(cubes.begin(), cubes.end(), [](Cube const& a, Cube const& b) {
 		if (a.target.x != b.target.x) return a.target.x < b.target.x; //smaller x first
 		else if (a.target.y != b.target.y) return a.target.y > b.target.y; //at same x, larger y first
 		else return a.target.z < b.target.z; //at same x,y: smaller z first
-	});
+		});
 
 	//set up 'animation start' key values for each cube:
 
 	float min_key = std::numeric_limits< float >::infinity();
 	float max_key = -std::numeric_limits< float >::infinity();
-	for (auto &cube : cubes) {
+	for (auto& cube : cubes) {
 		cube.at = cube.target.z + 20.0f;
 		cube.velocity = -4.0f;
 
@@ -298,7 +302,7 @@ GP21IntroMode::GP21IntroMode(std::shared_ptr< Mode > const &next_mode_) : next_m
 	}
 
 	//normalize keys to [0,1] range:
-	for (auto &cube : cubes) {
+	for (auto& cube : cubes) {
 		cube.key = (cube.key - min_key) / (max_key - min_key);
 	}
 }
@@ -306,15 +310,13 @@ GP21IntroMode::GP21IntroMode(std::shared_ptr< Mode > const &next_mode_) : next_m
 GP21IntroMode::~GP21IntroMode() {
 }
 
-bool GP21IntroMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
-	
-	// The game crashes if you try to skip using this code, so we comment it out for now
-	// if (evt.type == SDL_KEYDOWN) {
-	// 	//on any key press, skip the rest of the intro:
-	// 	music->set_volume(0.0f, 1.0f / 10.0f);
-	// 	Mode::set_current(next_mode);
-	// 	return true;
-	// }
+bool GP21IntroMode::handle_event(SDL_Event const& evt, glm::uvec2 const& window_size) {
+	if (evt.type == SDL_KEYDOWN) {
+		//on any key press, skip the rest of the intro:
+		music->set_volume(0.0f, 1.0f / 10.0f);
+		Mode::set_current(next_mode);
+		return true;
+	}
 	return false;
 }
 
@@ -334,8 +336,8 @@ void GP21IntroMode::update(float elapsed) {
 	float fall_off_key = (time - 6.0f) / 2.4f;
 
 	constexpr float Gravity = -25.0f;
-	std::unordered_map< glm::ivec2, Cube * > tops;
-	for (Cube &cube : cubes) {
+	std::unordered_map< glm::ivec2, Cube* > tops;
+	for (Cube& cube : cubes) {
 		//if cube isn't falling on yet, default values:
 		if (fall_on_key < cube.key) {
 			cube.velocity = -4.0f;
@@ -365,7 +367,7 @@ void GP21IntroMode::update(float elapsed) {
 		//cube-cube collisions:
 		auto f = tops.find(glm::ivec2(cube.target));
 		if (f != tops.end()) {
-			Cube &below = *f->second;
+			Cube& below = *f->second;
 			if (below.at + 1.0f > cube.at) {
 				float rel = below.velocity - cube.velocity;
 				if (rel > 0.0f) {
@@ -381,10 +383,10 @@ void GP21IntroMode::update(float elapsed) {
 
 }
 
-void GP21IntroMode::draw(glm::uvec2 const &drawable_size) {
+void GP21IntroMode::draw(glm::uvec2 const& drawable_size) {
 	//requested visible bounds:
 	glm::vec2 scene_min = glm::vec2(-9.0f, -4.0f);
-	glm::vec2 scene_max = glm::vec2( 7.0f,  6.5f);
+	glm::vec2 scene_max = glm::vec2(7.0f, 6.5f);
 
 	{ //actually, zoom those bounds out a bit:
 		glm::vec2 center = 0.5f * (scene_min + scene_max);
@@ -424,7 +426,7 @@ void GP21IntroMode::draw(glm::uvec2 const &drawable_size) {
 
 	//compute triangles to draw:
 	std::vector< Vertex > attribs;
-	
+
 	//--- stripes ---
 
 	//helper for rectangles:
@@ -442,22 +444,22 @@ void GP21IntroMode::draw(glm::uvec2 const &drawable_size) {
 	auto stripe = [&](float on_amt, float off_amt, float y, glm::u8vec4 color) {
 		float min_x = glm::mix(screen_min.x, screen_max.x, glm::clamp(off_amt, 0.0f, 1.0f));
 		float max_x = glm::mix(screen_min.x, screen_max.x, glm::clamp(on_amt, 0.0f, 1.0f));
-		draw_rectangle(glm::vec2(min_x, y), glm::vec2(max_x, y+1), color);
+		draw_rectangle(glm::vec2(min_x, y), glm::vec2(max_x, y + 1), color);
 	};
 
-	stripe( (time - 0.3f) / 0.4f,  (time - 7.6f) / 1.1f,  3.0f, Fg1);
-	stripe( (time - 0.2f) / 0.4f,  (time - 7.7f) / 1.1f,  2.0f, Fg2);
-	stripe( (time - 0.0f) / 0.4f,  (time - 7.8f) / 1.1f,  1.0f, Fg3);
-	stripe( (time - 0.1f) / 0.4f,  (time - 7.9f) / 1.1f,  0.0f, Fg1);
+	stripe((time - 0.3f) / 0.4f, (time - 7.6f) / 1.1f, 3.0f, Fg1);
+	stripe((time - 0.2f) / 0.4f, (time - 7.7f) / 1.1f, 2.0f, Fg2);
+	stripe((time - 0.0f) / 0.4f, (time - 7.8f) / 1.1f, 1.0f, Fg3);
+	stripe((time - 0.1f) / 0.4f, (time - 7.9f) / 1.1f, 0.0f, Fg1);
 
 	//--- cubes ---
 	glm::mat4x2 cubes_to_world = glm::mat4x2(
-		glm::vec2( std::cos(M_PI / 6.0f),-std::sin(M_PI / 6.0f)),
-		glm::vec2( std::cos(M_PI / 6.0f), std::sin(M_PI / 6.0f)),
-		glm::vec2( 0.0f, 1.0f),
-		glm::vec2( 0.0f, 0.0f)
+		glm::vec2(std::cos(M_PI / 6.0f), -std::sin(M_PI / 6.0f)),
+		glm::vec2(std::cos(M_PI / 6.0f), std::sin(M_PI / 6.0f)),
+		glm::vec2(0.0f, 1.0f),
+		glm::vec2(0.0f, 0.0f)
 	);
-	auto draw_cube = [&](GP21IntroMode::Cube const &cube) {
+	auto draw_cube = [&](GP21IntroMode::Cube const& cube) {
 		glm::vec2 c = cubes_to_world * glm::vec4(cube.target.x, cube.target.y, cube.at, 1.0f);
 		glm::vec2 rx = 0.5f * cubes_to_world[0];
 		glm::vec2 ry = 0.5f * cubes_to_world[1];
@@ -485,7 +487,7 @@ void GP21IntroMode::draw(glm::uvec2 const &drawable_size) {
 		attribs.emplace_back(c + rx + ry + rz, Fg3);
 	};
 
-	for (Cube const &cube : cubes) {
+	for (Cube const& cube : cubes) {
 		draw_cube(cube);
 	}
 
