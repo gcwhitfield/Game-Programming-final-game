@@ -732,6 +732,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			glm::vec2 motion = glm::vec2(
 				evt.motion.xrel / float(window_size.y),
 				-evt.motion.yrel / float(window_size.y));
+			std::cout << "motion is " << motion.x << " " << motion.y << " window size is " << window_size.x << " " << window_size.y << " relative motion is " << evt.motion.xrel << " " << evt.motion.yrel << std::endl;
 			glm::vec3 up = walkmesh->to_world_smooth_normal(player.at);
 			player.transform->rotation = glm::angleAxis(-motion.x * player.orbitCamera.camera->fovy, up) * player.transform->rotation;
 			player.orbitCamera.truePitch += motion.y * player.orbitCamera.camera->fovy;
