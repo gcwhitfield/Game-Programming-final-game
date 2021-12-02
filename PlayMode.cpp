@@ -728,7 +728,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	{
 		if (SDL_GetRelativeMouseMode() == SDL_TRUE)
 		{
-			SDL_WarpMouseInWindow(window,window_size.x / 2, window_size.y / 2); //Allows moust to not get caught on window edge
+			//SDL_WarpMouseInWindow(window,window_size.x / 2, window_size.y / 2); //Allows moust to not get caught on window edge
 			glm::vec2 motion = glm::vec2(
 				evt.motion.xrel / float(window_size.y),
 				-evt.motion.yrel / float(window_size.y));
