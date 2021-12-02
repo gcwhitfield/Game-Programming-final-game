@@ -1019,7 +1019,7 @@ void PlayMode::update(float elapsed)
 			manager_stay_timer -= elapsed;
 			if (manager_stay_timer < 0)
 			{
-				manager_stay_timer = std::max(3.5f + (float)(level), 15.0f);
+				manager_stay_timer = std::max(3.5f + (float)(this->day_index), 15.0f);
 				// set manager_next_appearance_timer to a random time between 7.5 and 15 seconds
 				size_t r = rand() % 100;
 				manager_next_appearance_timer = -5.0f + 10.0f * (r / (float)100) + manager_appearance_frequency;
