@@ -2,10 +2,14 @@
 
 Game Title: Coffee CAT-tastrophe
 
-Author: Lingxi Zhang, George Whitfield, Ben Cagan, Tianjian Huang
-
+Author: 
+Lingxi Zhang (lingxiz), 
+George Whitfield (gwhitfie), 
+Ben Cagan (bcagan), 
+Tianjian Huang (thuang2)
+  
 Design: A flying cat serving starbuck drinks to the customers while avoiding the overseeing of the stubborn manager at the same time. 
-
+  
 
 Screen Shot:
 
