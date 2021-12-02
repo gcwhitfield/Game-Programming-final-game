@@ -102,9 +102,9 @@ void TutorialMode::draw(glm::uvec2 const &drawable_size) {
 							glm::u8vec4(0xff, 0xff, 0xff, 0x00));
 		};
 
-        float spacing = std::max(0.2f, aspect / 20);
-        float left_align = -aspect / 1.5;
-        float size = std::min(0.1f, aspect/10);
+        float spacing = std::max(0.2f, aspect / 20.0f);
+        float left_align = -aspect / 1.5f;
+        float size = std::min(0.1f, aspect/10.0f);
         switch (state)
         {
             case SCREEN_0:
