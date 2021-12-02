@@ -1,4 +1,4 @@
-# Coffee Cat-tastrophe
+# Coffee CAT-tastrophe
 
 Game Title: Coffee CAT-tastrophe
 
